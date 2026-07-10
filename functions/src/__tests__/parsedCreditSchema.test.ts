@@ -36,4 +36,12 @@ describe('validateParsedCredit', () => {
     expect(() => validateParsedCredit(null)).toThrow()
     expect(() => validateParsedCredit('{"x":1}')).toThrow()
   })
+  it('throws on a negative totalHours', () => {
+    expect(() => validateParsedCredit({ ...valid, totalHours: -1.5 })).toThrow()
+  })
+  it('throws on a negative categoryHours value', () => {
+    expect(() =>
+      validateParsedCredit({ ...valid, categoryHours: { technology: -1, general: 0.5 } }),
+    ).toThrow()
+  })
 })

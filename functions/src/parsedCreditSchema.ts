@@ -23,13 +23,15 @@ export function validateParsedCredit(input: unknown): ParsedCredit {
   if (typeof activityTitle !== 'string') throw new Error('ParsedCredit.activityTitle must be a string')
   if (typeof completionDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(completionDate))
     throw new Error('ParsedCredit.completionDate must be YYYY-MM-DD')
-  if (typeof totalHours !== 'number' || Number.isNaN(totalHours)) throw new Error('ParsedCredit.totalHours must be a number')
+  if (typeof totalHours !== 'number' || !Number.isFinite(totalHours) || totalHours < 0)
+    throw new Error('ParsedCredit.totalHours must be a non-negative number')
   if (typeof participatory !== 'boolean') throw new Error('ParsedCredit.participatory must be a boolean')
 
   if (!isObj(categoryHours)) throw new Error('ParsedCredit.categoryHours must be an object')
   for (const [k, v] of Object.entries(categoryHours)) {
     if (!(CATEGORY_KEYS as string[]).includes(k)) throw new Error(`ParsedCredit.categoryHours: unknown key ${k}`)
-    if (typeof v !== 'number') throw new Error(`ParsedCredit.categoryHours.${k} must be a number`)
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0)
+      throw new Error(`ParsedCredit.categoryHours.${k} must be a non-negative number`)
   }
 
   if (!isObj(confidence)) throw new Error('ParsedCredit.confidence must be an object')
