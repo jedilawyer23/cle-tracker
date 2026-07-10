@@ -1,2 +1,7 @@
 node_modules/
 lib/
+
+# Secrets and local env — NEVER commit (repo is public)
+.env
+.env.*
+.secret.local
