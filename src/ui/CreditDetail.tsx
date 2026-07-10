@@ -4,10 +4,8 @@ import { useState } from 'react'
 import type { Credit, RequirementRule } from '../domain/types'
 import { REQUIREMENT_RULES } from '../domain/requirements'
 import { requirementsForCredit, hoursToward } from '../domain/creditContribution'
-// Explicit extensions: on case-insensitive filesystems, extensionless './creditForm' and
-// './CreditForm' specifiers in the same file are ambiguous with each other (see CreditForm.tsx).
-import { creditToForm } from './creditForm.ts'
-import { CreditForm } from './CreditForm.tsx'
+import { creditToForm } from './creditFormValues'
+import { CreditForm } from './CreditForm'
 import { formatDate } from './formatDate'
 
 interface Props {

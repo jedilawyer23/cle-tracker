@@ -2,12 +2,10 @@
 // ABOUTME: Ports the field/toggle/switch markup from mockups.html #s-add.
 import { useState } from 'react'
 import type { Credit } from '../domain/types'
-// Explicit .ts extension: on case-insensitive filesystems, an extensionless
-// './creditForm' import is ambiguous with this file's own name (CreditForm.tsx).
 import {
   type CreditFormValues, emptyCreditForm, formToCredit, validateCreditForm,
   FORM_CATEGORIES, CATEGORY_LABELS,
-} from './creditForm.ts'
+} from './creditFormValues'
 
 interface Props {
   submitLabel: string

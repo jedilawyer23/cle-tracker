@@ -1,9 +1,7 @@
 // ABOUTME: The blank manual "Confirm & save" screen for adding a credit by hand.
 // ABOUTME: Ports mockups.html #s-add; writes via the injected onSave (the credit store).
 import type { Credit } from '../domain/types'
-// Explicit .tsx extension: on case-insensitive filesystems, an extensionless
-// './CreditForm' import is ambiguous with the sibling pure module (creditForm.ts).
-import { CreditForm } from './CreditForm.tsx'
+import { CreditForm } from './CreditForm'
 
 interface Props {
   onSave: (credit: Omit<Credit, 'id'>) => void

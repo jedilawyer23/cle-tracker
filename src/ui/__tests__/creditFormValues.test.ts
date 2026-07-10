@@ -1,9 +1,9 @@
 // ABOUTME: Tests conversion and validation between the credit form fields and a Credit.
 import { describe, it, expect } from 'vitest'
-import { emptyCreditForm, creditToForm, formToCredit, validateCreditForm } from '../creditForm'
+import { emptyCreditForm, creditToForm, formToCredit, validateCreditForm } from '../creditFormValues'
 import type { Credit } from '../../domain/types'
 
-describe('creditForm', () => {
+describe('creditFormValues', () => {
   it('emptyCreditForm has blank fields and participatory true by default', () => {
     const f = emptyCreditForm()
     expect(f.provider).toBe('')
