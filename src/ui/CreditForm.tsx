@@ -7,16 +7,32 @@ import {
   FORM_CATEGORIES, CATEGORY_LABELS,
 } from './creditFormValues'
 
+// Field names a certificate parse can flag as low-confidence (mirrors ParsedCredit['confidence']
+// in ../domain/types, kept as a plain string union here so this form has no parsing dependency).
+export type FlaggableField =
+  | 'provider' | 'activityTitle' | 'completionDate' | 'totalHours' | 'participatory' | 'categoryHours'
+
 interface Props {
   submitLabel: string
   initial?: CreditFormValues
+  lowConfidenceFields?: FlaggableField[]
   onSave: (credit: Omit<Credit, 'id'>) => void
   onCancel?: () => void
 }
 
-export function CreditForm({ submitLabel, initial, onSave, onCancel }: Props) {
+function LowConfidenceHint({ flagged }: { flagged: boolean }) {
+  if (!flagged) return null
+  return (
+    <div className="note" style={{ color: 'var(--warn)', textAlign: 'left', margin: '2px 0 0', fontSize: 13 }}>
+      Couldn't read — please confirm
+    </div>
+  )
+}
+
+export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], onSave, onCancel }: Props) {
   const [values, setValues] = useState<CreditFormValues>(initial ?? emptyCreditForm())
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const flagged = (field: FlaggableField) => lowConfidenceFields.includes(field)
 
   const set = (patch: Partial<CreditFormValues>) => setValues(v => ({ ...v, ...patch }))
   const setCat = (k: string, val: string) =>
@@ -35,21 +51,30 @@ export function CreditForm({ submitLabel, initial, onSave, onCancel }: Props) {
         <div className="field">
           <label htmlFor="provider">Provider</label>
           <input id="provider" value={values.provider} onChange={e => set({ provider: e.target.value })} />
+          <LowConfidenceHint flagged={flagged('provider')} />
         </div>
         <div className="field">
           <label htmlFor="activityTitle">Activity title</label>
           <input id="activityTitle" value={values.activityTitle} onChange={e => set({ activityTitle: e.target.value })} />
+          <LowConfidenceHint flagged={flagged('activityTitle')} />
         </div>
         <div className="field">
           <label htmlFor="completionDate">Completion date</label>
           <input id="completionDate" type="date" value={values.completionDate} onChange={e => set({ completionDate: e.target.value })} />
+          <LowConfidenceHint flagged={flagged('completionDate')} />
         </div>
         <div className="field">
           <label htmlFor="totalHours">Total hours</label>
           <input id="totalHours" inputMode="decimal" value={values.totalHours} onChange={e => set({ totalHours: e.target.value })} />
+          <LowConfidenceHint flagged={flagged('totalHours')} />
         </div>
         <div className="toggle">
-          <div className="t"><div className="n">Participatory</div><div className="m q">live hours, not self-study</div></div>
+          <div className="t">
+            <div className="n">Participatory</div>
+            {flagged('participatory')
+              ? <div className="m">Couldn't read — please confirm</div>
+              : <div className="m q">live hours, not self-study</div>}
+          </div>
           <button type="button" className={`switch${values.participatory ? ' on' : ''}`}
             aria-pressed={values.participatory} aria-label="Participatory"
             onClick={() => set({ participatory: !values.participatory })} />
@@ -57,6 +82,7 @@ export function CreditForm({ submitLabel, initial, onSave, onCancel }: Props) {
       </div>
 
       <div className="label">Category hours</div>
+      <LowConfidenceHint flagged={flagged('categoryHours')} />
       <div className="list">
         {FORM_CATEGORIES.map(k => (
           <div className="field" key={k}>
