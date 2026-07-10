@@ -6,7 +6,8 @@ function earnedFor(rule: RequirementRule, credits: Credit[]): number {
   if (rule.key === 'total') return credits.reduce((s, c) => s + c.totalHours, 0)
   if (rule.key === 'participatory')
     return credits.reduce((s, c) => s + (c.participatory ? c.totalHours : 0), 0)
-  return credits.reduce((s, c) => s + (c.categoryHours[rule.key] ?? 0), 0)
+  const key = rule.key
+  return credits.reduce((s, c) => s + (c.categoryHours[key] ?? 0), 0)
 }
 
 export function calculateCompliance(rules: RequirementRule[], credits: Credit[]): ComplianceResult {
