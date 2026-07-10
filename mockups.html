@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLE Tracker — Apple direction</title>
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #8E8E93; --faint: #C7C7CC;
+    --sep: rgba(60,60,67,.29); --accent: #007AFF; --good: #34C759; --warn: #FF9500;
+    --track: #E9E9EB;
+    --card-elev: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+  button { font: inherit; cursor: pointer; }
+
+  .bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(242,242,247,.82); border-bottom: .5px solid var(--sep); backdrop-filter: saturate(160%) blur(18px); }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
+  .brand .mk { width: 24px; height: 24px; display: grid; place-items: center; font-weight: 600; font-size: 15px; color: #fff; background: var(--accent); border-radius: 6px; }
+  .bar .sp { flex: 1; }
+  .seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--track); border-radius: 9px; }
+  .seg button { border: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 500; padding: 7px 12px; border-radius: 7px; }
+  .seg button[aria-selected="true"] { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+  .hint { text-align: center; font-size: 12px; color: var(--muted); padding: 10px 20px 0; line-height: 1.5; }
+
+  .wrap { max-width: 600px; margin: 0 auto; padding: 16px 16px 72px; }
+  .screen { display: none; }
+  .screen.show { display: block; }
+
+  .topline { display: flex; align-items: center; min-height: 44px; }
+  .topline .sp { flex: 1; }
+  .h1 { font-size: 34px; line-height: 1.21; letter-spacing: -.021em; font-weight: 700; margin: 4px 0 0; text-wrap: balance; }
+  .sub { font-size: 17px; color: var(--muted); margin-top: 6px; letter-spacing: -.01em; }
+
+  .navbtn { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--accent); text-decoration: none; font-size: 15px; font-weight: 400; }
+
+  .label { font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); margin: 24px 16px 8px; }
+  .list { background: var(--card); border-radius: 12px; box-shadow: var(--card-elev); }
+  .list > * { position: relative; }
+  .list > *:not(:first-child)::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: 1px; background: var(--sep); transform: scaleY(.5); transform-origin: top; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .row .t { flex: 1; min-width: 0; }
+  .row .n { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
+  .row .m { font-size: 13px; color: var(--warn); margin-top: 2px; }
+  .row .m.q { color: var(--muted); }
+  .val { font-size: 17px; font-weight: 400; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+  .val.met { color: var(--good); font-weight: 500; }
+  .need { font-size: 17px; font-weight: 600; color: var(--warn); }
+  .ck { width: 22px; height: 22px; border-radius: 50%; background: var(--good); color: #fff; display: grid; place-items: center; font-size: 13px; flex: none; }
+  .chev { color: var(--faint); flex: none; display: block; }
+  .row.tap { cursor: pointer; } .row.tap:active, .crow:active { background: #FAFAFB; }
+
+  .item .chev { transition: transform .22s ease; }
+  .item.open > .row .chev { transform: rotate(180deg); }
+  .credits { max-height: 0; overflow: hidden; opacity: 0; transition: max-height .24s ease, opacity .2s ease; padding: 0 16px 0 32px; }
+  .item.open .credits { max-height: 340px; opacity: 1; padding-top: 2px; padding-bottom: 8px; }
+  .crow { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: .5px solid var(--sep); cursor: pointer; }
+  .crow .t { flex: 1; min-width: 0; }
+  .crow .cn { font-size: 15px; font-weight: 400; letter-spacing: -.01em; }
+  .crow .cm { font-size: 13px; color: var(--muted); margin-top: 1px; }
+  .crow .chn { font-size: 15px; font-weight: 400; color: var(--muted); }
+  .empty { padding: 12px 0 6px; font-size: 15px; color: var(--muted); }
+
+  .btn { display: block; width: 100%; text-align: center; margin-top: 24px; background: var(--accent); color: #fff; border: 0; border-radius: 12px; font-size: 17px; font-weight: 600; padding: 16px 18px; }
+  .btn:active { filter: brightness(.92); }
+  .link { display: block; width: 100%; min-height: 44px; text-align: center; background: none; border: 0; color: var(--accent); font-size: 16px; font-weight: 400; margin-top: 6px; padding: 12px; }
+  .link:active { opacity: .4; }
+  .note { font-size: 13px; color: var(--muted); text-align: center; margin-top: 24px; line-height: 1.5; }
+
+  .field { padding: 12px 16px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .field input { font: inherit; font-size: 17px; font-weight: 400; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none; letter-spacing: -.01em; }
+  .field.date { display: none; }
+  .field.date.show { display: block; }
+  .toggle { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+  .toggle .t { flex: 1; }
+  .switch { width: 51px; height: 31px; border-radius: 999px; background: var(--track); position: relative; flex: none; border: 0; padding: 0; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: left .2s; }
+  .switch.on { background: var(--good); } .switch.on::after { left: 22px; }
+
+  .file { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .file .doc { color: var(--accent); flex: none; } .file .fn { flex: 1; font-size: 16px; font-weight: 400; }
+  .file .rep { border: 0; background: none; font-size: 16px; color: var(--accent); font-weight: 400; padding: 12px 4px; min-height: 44px; }
+  .seg2 { display: inline-flex; background: var(--track); border-radius: 9px; padding: 2px; gap: 2px; flex: none; }
+  .seg2 button { border: 0; background: transparent; color: var(--ink); font-size: 15px; font-weight: 500; padding: 7px 18px; border-radius: 7px; }
+  .seg2 button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+  .back { border: 0; background: none; color: var(--accent); font-size: 17px; font-weight: 400; min-height: 44px; padding: 0 6px 0 0; display: inline-flex; align-items: center; gap: 2px; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="brand"><span class="mk">§</span> CLE Tracker</div>
+    <div class="sp"></div>
+    <div class="seg scr" role="tablist">
+      <button role="tab" aria-selected="false" onclick="show('setup', this)">First run</button>
+      <button role="tab" aria-selected="true" onclick="show('dash', this)">Dashboard</button>
+      <button role="tab" aria-selected="false" onclick="show('add', this)">Add credit</button>
+      <button role="tab" aria-selected="false" onclick="show('empty', this)">Empty</button>
+    </div>
+  </div>
+  <div class="hint">Preview switcher only — not app navigation. The real app is Dashboard-first: “Add” is a button, First run happens once, credits open from a row.</div>
+
+  <!-- DASHBOARD -->
+  <section class="screen dash show" id="s-dash">
+    <div class="wrap">
+      <div class="topline"><div class="sp"></div><a class="navbtn" href="#">Sign in to save</a></div>
+      <h1 class="h1">4 requirements left</h1>
+      <div class="sub">Group 2 · 263 days left · 18 of 25 hours logged</div>
+
+      <div class="label">Still needed</div>
+      <div class="list">
+        <div class="item"><div class="row"><div class="t"><div class="n">Total hours</div><div class="m q">18 of 25</div></div><div class="need">+7 hrs</div></div></div>
+        <div class="item"><div class="row tap" onclick="toggleItem(this)"><div class="t"><div class="n">Competence</div><div class="m q">incl. 1 hr Prevention &amp; Detection</div></div><div class="need">+1 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 6 8 10.75 12.75 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="credits">
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Attorney Wellness &amp; Competence</div><div class="cm">State Bar of CA · Oct 2, 2025</div></div><div class="chn">1.0 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="empty">Still need 1 hr, including Prevention &amp; Detection.</div>
+          </div>
+        </div>
+        <div class="item"><div class="row tap" onclick="toggleItem(this)"><div class="t"><div class="n">Civility</div><div class="m q">0 of 1</div></div><div class="need">+1 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 6 8 10.75 12.75 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="credits"><div class="empty">No civility CLE yet — add one to close this.</div></div>
+        </div>
+        <div class="item"><div class="row"><div class="t"><div class="n">Participatory</div><div class="m q">live hours, not self-study · 10 of 12.5</div></div><div class="need">+2.5 hrs</div></div></div>
+      </div>
+
+      <div class="label">Complete</div>
+      <div class="list">
+        <div class="item"><div class="row tap" onclick="toggleItem(this)"><div class="t"><div class="n">Legal Ethics</div></div><div class="val">4/4</div><div class="ck">✓</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 6 8 10.75 12.75 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="credits">
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Ethics in the Age of AI</div><div class="cm">Practising Law Institute · Mar 4, 2026</div></div><div class="chn">2.0 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Conflicts of Interest</div><div class="cm">CEB · Jan 22, 2026</div></div><div class="chn">1.5 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Client Trust Accounting</div><div class="cm">State Bar of CA · Nov 10, 2025</div></div><div class="chn">0.5 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+        </div>
+        <div class="item"><div class="row tap" onclick="toggleItem(this)"><div class="t"><div class="n">Elimination of Bias</div></div><div class="val">2/2</div><div class="ck">✓</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 6 8 10.75 12.75 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="credits">
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Implicit Bias in Practice</div><div class="cm">Bar Association · Feb 12, 2026</div></div><div class="chn">1.0 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">Fair Housing &amp; Bias</div><div class="cm">CEB · Dec 3, 2025</div></div><div class="chn">1.0 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+        </div>
+        <div class="item"><div class="row tap" onclick="toggleItem(this)"><div class="t"><div class="n">Technology</div></div><div class="val">1/1</div><div class="ck">✓</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.25 6 8 10.75 12.75 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="credits">
+            <div class="crow" onclick="show('credit', null)"><div class="t"><div class="cn">AI and the Practice of Law</div><div class="cm">Practising Law Institute · Jun 18, 2026</div></div><div class="chn">1.0 hr</div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="show('add', scr(2))">Add a certificate</button>
+      <div class="note">Not legal advice — confirm your compliance with the State Bar of California.</div>
+    </div>
+  </section>
+
+  <!-- EMPTY DASHBOARD (first run, nothing logged) -->
+  <section class="screen empty" id="s-empty">
+    <div class="wrap">
+      <div class="topline"><div class="sp"></div></div>
+      <h1 class="h1">Add your first credit</h1>
+      <div class="sub">Group 2 · 25 hours due by Mar 30, 2027</div>
+
+      <div class="label">Your requirement</div>
+      <div class="list">
+        <div class="row"><div class="t"><div class="n">Total hours</div></div><div class="need">0 / 25</div></div>
+        <div class="row"><div class="t"><div class="n">Legal Ethics</div></div><div class="need">0 / 4</div></div>
+        <div class="row"><div class="t"><div class="n">Competence</div><div class="m q">incl. 1 hr Prevention &amp; Detection</div></div><div class="need">0 / 2</div></div>
+        <div class="row"><div class="t"><div class="n">Elimination of Bias</div><div class="m q">incl. 1 hr implicit bias</div></div><div class="need">0 / 2</div></div>
+        <div class="row"><div class="t"><div class="n">Technology</div></div><div class="need">0 / 1</div></div>
+        <div class="row"><div class="t"><div class="n">Civility</div></div><div class="need">0 / 1</div></div>
+        <div class="row"><div class="t"><div class="n">Participatory</div><div class="m q">live hours, not self-study</div></div><div class="need">0 / 12.5</div></div>
+      </div>
+
+      <button class="btn" onclick="show('add', scr(2))">Add a certificate</button>
+      <div class="note">Upload a certificate and we'll sort it into the right categories. Not legal advice — verify with the State Bar of California.</div>
+    </div>
+  </section>
+
+  <!-- SINGLE CREDIT -->
+  <section class="screen credit" id="s-credit">
+    <div class="wrap">
+      <div class="topline"><button class="back" onclick="show('dash', scr(1))">‹ Back</button><div class="sp"></div></div>
+      <h1 class="h1">Ethics in the Age of AI</h1>
+      <div class="sub">Practising Law Institute · Mar 4, 2026</div>
+
+      <div class="label">Details</div>
+      <div class="list">
+        <div class="row"><div class="t"><div class="n">Hours</div></div><div class="val">2.0</div></div>
+        <div class="row"><div class="t"><div class="n">Participatory</div></div><div class="val met">Yes</div></div>
+        <div class="row"><div class="t"><div class="n">Counts toward</div><div class="m q">Legal Ethics · 2.0 hrs</div></div></div>
+      </div>
+
+      <button class="btn">Edit credit</button>
+      <button class="link" style="color:#FF3B30">Remove credit</button>
+      <div class="note">One certificate can count toward more than one requirement.</div>
+    </div>
+  </section>
+
+  <!-- FIRST RUN -->
+  <section class="screen setup" id="s-setup">
+    <div class="wrap">
+      <div class="topline"><div class="sp"></div></div>
+      <h1 class="h1">Get started</h1>
+      <div class="sub">Enter your name and we'll set your California MCLE requirement.</div>
+
+      <div class="label">Your name</div>
+      <div class="list"><div class="field"><label>Full name</label><input value="Maya Hoffman"></div></div>
+
+      <div class="label">Your requirement</div>
+      <div class="list">
+        <div class="row"><div class="t"><div class="n">Group 2 · H–M</div></div><div class="val">due Mar 30, 2027</div></div>
+        <div class="row"><div class="t"><div class="n">Total</div></div><div class="val">25 hours</div></div>
+        <div class="toggle"><div class="t"><div class="n">Admitted in the last 3 years?</div><div class="m q">We'll prorate your requirement.</div></div><button class="switch" onclick="toggleDate(this)" aria-label="Admitted recently"></button></div>
+        <div class="field date" id="dateField"><label>Bar admission date</label><input type="date" value="2016-12-04"></div>
+      </div>
+
+      <button class="btn" onclick="show('dash', scr(1))">Continue</button>
+      <div class="note">No sign-in needed — save with Google later.</div>
+    </div>
+  </section>
+
+  <!-- ADD / CONFIRM -->
+  <section class="screen add" id="s-add">
+    <div class="wrap">
+      <div class="topline"><div class="sp"></div><a class="navbtn" href="#">Sign in to save</a></div>
+      <h1 class="h1">Confirm &amp; save</h1>
+      <div class="sub">We read the certificate. The file is never stored.</div>
+
+      <div class="label">Certificate</div>
+      <div class="list"><div class="file">
+        <svg class="doc" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13.5h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="fn">PLI-certificate.pdf</span><button class="rep">Replace</button></div></div>
+
+      <div class="label">Detected — tap to fix anything</div>
+      <div class="list">
+        <div class="row tap"><div class="t"><div class="n">AI and the Practice of Law</div><div class="m q">Practising Law Institute · Jun 18, 2026</div></div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="row tap"><div class="t"><div class="n">1.5 hours</div><div class="m q">Technology 1.0 · General 0.5</div></div><svg class="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.25 10.75 8 6 12.75" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="row"><div class="t"><div class="n">Participatory?</div><div class="m">couldn't read — please confirm</div></div><div class="seg2"><button class="on">Yes</button><button>No</button></div></div>
+      </div>
+      <div class="note" style="text-align:left; margin-top:10px">Completes your <b style="color:var(--ink)">Technology</b> requirement.</div>
+
+      <button class="btn" onclick="show('dash', scr(1))">Save credit</button>
+      <button class="link">Enter manually instead</button>
+    </div>
+  </section>
+
+<script>
+  function show(name, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+    document.getElementById('s-' + name).classList.add('show');
+    if (btn) document.querySelectorAll('.seg.scr button').forEach(b => b.setAttribute('aria-selected', b === btn));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function scr(i) { return document.querySelectorAll('.seg.scr button')[i]; }
+  function toggleDate(el) { el.classList.toggle('on'); document.getElementById('dateField').classList.toggle('show', el.classList.contains('on')); }
+  function toggleItem(rowEl) { rowEl.closest('.item').classList.toggle('open'); }
+</script>
+</body>
+</html>

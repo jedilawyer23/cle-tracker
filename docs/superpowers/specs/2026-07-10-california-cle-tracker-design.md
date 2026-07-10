@@ -1,6 +1,6 @@
 # California CLE Tracker — Design
 
-Status: Draft for review
+Status: Design locked 2026-07-10 (UI mockups approved; see `mockups.html`)
 Date: 2026-07-10
 Author: Shrut + Claude
 
@@ -20,8 +20,11 @@ categories still fall short.
 ## Goals
 
 - Know the current California MCLE requirements and the user's personal deadline.
-- Upload a certificate (PDF or image), parse it, review, and log it.
-- Track live progress per requirement category, with a plain-English compliance verdict.
+- Add a certificate by uploading a PDF, choosing an image, or taking a photo with
+  the device camera; parse it, review, and log it.
+- Track live progress per requirement, shown as a checklist of what's still needed
+  vs. complete, with a plain-English compliance verdict.
+- Let a user try the app with no account (guest), then save with Google when they choose.
 - Remind the user by email as the deadline nears or when a category is short.
 - Export a compliance report for the user's records or a State Bar audit.
 
@@ -89,9 +92,12 @@ does not attempt to encode every exemption rule.
 
 Single-page web app on Firebase, matching the stack already in use.
 
-- **Frontend:** React + Vite + Tailwind CSS. Apple/Tesla aesthetic — restraint,
-  generous whitespace, one accent color, progress shown as rings.
-- **Auth:** Firebase Authentication, Google sign-in.
+- **Frontend:** React + Vite + Tailwind CSS. Apple/iOS aesthetic — inset-grouped
+  lists on a system-gray canvas, large titles, SF system font, system colors,
+  one blue accent, content-first with chrome that recedes.
+- **Auth:** Firebase Authentication. Guests get an **anonymous** session; signing
+  in with Google **links** that anonymous account, which preserves the same uid
+  and all its data — so no manual guest→account data migration is needed.
 - **Data:** Cloud Firestore.
 - **Server:** Cloud Functions (Node) for certificate parsing, scheduled reminders,
   and report generation.
@@ -116,10 +122,26 @@ Single-page web app on Firebase, matching the stack already in use.
 The calculator is the heart of the system and is deliberately isolated from
 Firebase so it can be tested with plain data.
 
+## Accounts and guest mode
+
+The app is guest-first: a new user can enter their name, add certificates, and use
+the full tracker without signing in. Sign-in is a save/sync convenience, never a gate.
+
+- A first-time visitor is signed in **anonymously** (Firebase Anonymous Auth) and
+  gets a real uid; their profile and credits are written to Firestore under it.
+- A quiet "Sign in to save" affordance sits top-right on guest screens.
+- Choosing Google **links** the Google credential to the existing anonymous uid.
+  The uid and all data persist unchanged; the account simply gains durable,
+  cross-device identity. `accountState` flips guest -> linked.
+- Guest sessions are tied to the browser instance; if the user clears the browser
+  or switches devices before linking, the anonymous account (and its data) is lost.
+  This is what the "Sign in to save" prompt guards against.
+
 ## Data model (Firestore)
 
 - `users/{uid}`
   - name, lastName, `group` (derived from lastName), admissionDate
+  - `accountState`: guest | linked
   - status: active | inactive, exemptions/proration overrides
   - computed `currentPeriod { start, end, reportBy }`
   - `requirementsVersion` used for this user's current period
@@ -149,43 +171,72 @@ proration scales every minimum by the licensed fraction of the period.
 
 ## Core flows
 
-### 1. Onboarding
+The app has one home surface — the Dashboard. First run happens once; Add is a
+button; credit detail and sign-in hang off the Dashboard. No tab bar, no
+three-way navigation.
 
-Collect last name and bar admission date. Derive compliance group, current period
-dates, and (if admitted mid-period) prorated targets. Show the user their group,
-deadline, and personalized requirement table. Present the "not legal advice" disclaimer.
+### 1. First run (guest, no login)
 
-### 2. Upload -> parse -> confirm
+The user enters their name (heading: "Get started"). From the last name the app
+derives the compliance group, current period dates, reporting deadline, and the
+full requirement, shown back immediately. An optional "admitted in the last 3
+years?" toggle reveals a date field for proration; most users skip it. No account
+is created — the user is an anonymous guest. Disclaimer shown.
 
-1. User drops a PDF or photo of a certificate.
-2. The file is sent to the parsing Cloud Function; Claude returns a `ParsedCredit`:
-   the same fields as a stored credit (provider, title, completionDate, totalHours,
-   participatory, category hours) plus, per field, a `confidence` of high | medium | low.
-   Fields at `low` are treated as unconfirmed and flagged.
-3. The Confirm screen shows the extracted values for the user to edit and approve.
-   Low-confidence fields are flagged for attention.
-4. On approval, a `credit` document is written and the dashboard updates.
-5. The uploaded file is discarded.
+### 2. Empty dashboard
 
-### 3. Manual entry
+Before any credit is logged, the Dashboard shows the full requirement under "Your
+requirement" (every category at 0 of its minimum, plus Total and Participatory)
+and one primary action, "Add a certificate."
 
-The Confirm screen opened blank (no parsing step). This is the fallback when a
-parse fails or there is no certificate. Same validation, same write path.
+### 3. Add credit (upload / photo / manual)
 
-### 4. Dashboard
+The user adds a certificate by choosing a PDF, choosing an image, or **taking a
+photo with the device camera**. Implemented as a file input accepting
+`application/pdf,image/*` with `capture` so mobile offers Take Photo / Photo
+Library / Files. The file is sent to the parsing Cloud Function; Claude returns a
+`ParsedCredit` (provider, title, completionDate, totalHours, participatory,
+category hours, plus a per-field `confidence` of high | medium | low). The file is
+discarded. Manual entry is the same Confirm screen opened blank — the fallback
+when a parse fails or there is no certificate.
 
-Rings/progress for total, participatory, and each sub-category; a plain-English
-verdict ("You still need 1 hr of Civility and 0.5 hr participatory"); days until
-`reportBy`; and a persistent disclaimer.
+### 4. Confirm & save
 
-### 5. Reminders
+The Confirm screen shows the parsed values (heading: "Confirm & save"). Fields
+read confidently are shown quietly; `low`-confidence fields (e.g. participatory)
+are the only ones that actively ask. Every field is editable. On save a `credit`
+document is written and the dashboard updates.
+
+### 5. Dashboard (populated)
+
+A checklist, not a meter. The heading states the binding constraint ("4
+requirements left"), never just the hours remainder. Two grouped lists: **Still
+needed** (each open requirement with the remaining amount, e.g. "Competence +1 hr"
+with its sub-minimum noted) over **Complete** (met requirements with a green
+check and count). Total hours and Participatory appear as roll-up rows. Tapping a
+category **expands inline** to reveal the CLEs that count toward it; tapping a CLE
+opens its Credit screen. Days until `reportBy` and a persistent disclaimer.
+
+### 6. Credit detail
+
+A single CLE's view: provider, date, hours, participatory, and which requirements
+it counts toward (one certificate can count toward more than one). Edit or remove.
+
+### 7. Save (guest -> account)
+
+A quiet "Sign in to save" affordance sits top-right on guest screens. Google
+sign-in links the anonymous account (see Accounts and guest mode) so data
+persists and syncs. Never a gate.
+
+### 8. Reminders
 
 A scheduled Cloud Function evaluates each user daily and sends email when the
 deadline approaches or a category remains short. Uses a transactional email
 provider (for example a Firebase email extension / SendGrid). Cadence tunable;
-sensible defaults (e.g. 90/30/7 days out, and when still non-compliant near the deadline).
+sensible defaults (e.g. 90/30/7 days out, and when still non-compliant near the
+deadline). Suppressed for users not required to report this cycle.
 
-### 6. Export
+### 9. Export
 
 One tap renders a compliance report (logged credits grouped by category, totals,
 verdict, period dates) to PDF for the user's records or an audit.
@@ -221,21 +272,37 @@ TDD throughout. Priorities:
 
 ## UI/UX direction
 
-Apple/Tesla: minimal, calm, high-contrast, one accent color, progress as rings,
-large type, few controls per screen. **Self-contained HTML mockups will be built
-and reviewed before any implementation begins** (per the build gate below).
+Apple/iOS, evaluated twice against Apple's design philosophy (clarity, deference,
+depth) and settled in `mockups.html` (the approved reference):
+
+- iOS inset-grouped lists: system-gray canvas (`#F2F2F7`), borderless white cards
+  defined by fill contrast, 0.5px hairline separators inset to the text.
+- Large titles (34px, SF), title-style headings of ~3 words, one blue accent
+  (`#007AFF`), system green (`#34C759`) for met, system orange (`#FF9500`) for
+  what's still needed; semantic color kept off decoration.
+- One primary action per screen; content leads, chrome recedes.
+- Dashboard progress is a **checklist** (Still needed / Complete), not rings or a
+  bar — chosen because a compliance tool should say exactly what's left, and it
+  avoids a meter implying "almost done" while specific gates remain open.
+- Requirement rows **expand inline** (animated) to show contributing CLEs.
+- SF-style SVG icons and controls (segmented control, 51×31 switch), 44px targets.
+
+`mockups.html` is the approved static reference for all screens and states
+(first run, empty dashboard, add/confirm, populated dashboard, credit detail).
 
 ## Build gate
 
-Implementation does not start until HTML UI mockups are reviewed and approved.
+Satisfied — UI mockups built and approved (`mockups.html`). Implementation may proceed.
 
 ## Open questions / risks
 
 - Certificate formats vary widely; parser quality is the main product risk.
-  Mitigated by the confirm step and manual-entry fallback.
+  Mitigated by the confirm step, per-field confidence, and manual-entry fallback.
 - Requirement rules and cycle dates change; the config must be kept current, and
   re-verified against calbar.ca.gov at build time.
 - Email deliverability and provider choice to be settled during implementation.
+- Guest data lives only in the anonymous session until linked; the "Sign in to
+  save" prompt is the only guard. Consider a milestone re-prompt cadence.
 
 ## Sources
 
