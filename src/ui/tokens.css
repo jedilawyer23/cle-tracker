@@ -1,0 +1,12 @@
+/* ABOUTME: Design tokens (CSS custom properties) and body base styles ported from mockups.html. */
+/* ABOUTME: Loaded after Tailwind so these tokens are available to all components. */
+:root {
+  --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #8E8E93; --faint: #C7C7CC;
+  --sep: rgba(60,60,67,.29); --accent: #007AFF; --good: #34C759; --warn: #FF9500;
+  --track: #E9E9EB;
+}
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
+}
