@@ -1,15 +1,18 @@
 // ABOUTME: Emulator test — FirestoreStore reads and writes the users/{uid} profile live.
-// ABOUTME: Requires the Firestore emulator (run via `npm run test:emulator`).
+// ABOUTME: Requires the Firestore + Auth emulators (run via `npm run test:emulator`); rules
+// ABOUTME: require a signed-in caller, so each test signs in anonymously for its own uid.
 import { beforeAll, afterAll, describe, it, expect } from 'vitest'
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 import { connectFirestoreEmulator } from 'firebase/firestore'
+import { getAuth, connectAuthEmulator, signInAnonymously, type Auth } from 'firebase/auth'
 import { FirestoreStore } from '../firestoreStore'
 import type { UserProfile } from '../types'
 import type { Credit } from '../../domain/types'
 
 let app: FirebaseApp
 let db: Firestore
+let auth: Auth
 
 const profile: UserProfile = {
   name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
@@ -19,15 +22,18 @@ const profile: UserProfile = {
 }
 
 beforeAll(() => {
-  app = initializeApp({ projectId: 'demo-cle' })
+  app = initializeApp({ apiKey: 'demo', projectId: 'demo-cle' })
   db = getFirestore(app)
   connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  auth = getAuth(app)
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
 })
 afterAll(() => deleteApp(app))
 
 describe('FirestoreStore profile', () => {
   it('saves a first-run profile and reads it back live', async () => {
-    const store = new FirestoreStore(db, `u-${Date.now()}`)
+    const { user } = await signInAnonymously(auth)
+    const store = new FirestoreStore(db, user.uid)
     await store.ready()
     expect(store.getProfile()).toBeNull()
     await store.saveProfile(profile)
@@ -45,7 +51,8 @@ const credit = (over: Partial<Credit>): Credit => ({
 
 describe('FirestoreStore credits', () => {
   it('adds, updates, removes credits and notifies subscribers live', async () => {
-    const store = new FirestoreStore(db, `u-${Date.now()}`)
+    const { user } = await signInAnonymously(auth)
+    const store = new FirestoreStore(db, user.uid)
     await store.ready()
     let notifications = 0
     const unsub = store.subscribe(() => { notifications++ })
