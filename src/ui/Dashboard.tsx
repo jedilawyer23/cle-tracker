@@ -3,7 +3,7 @@
 import { List } from './List'
 import { Row } from './Row'
 import { CategoryRow } from './CategoryRow'
-import { buildDashboardRows } from './dashboardRows'
+import { buildDashboardRows, type DashboardRow } from './dashboardRows'
 import { formatDate } from './formatDate'
 import type { ComplianceResult, Credit, Group, Period, RequirementProgress } from '../domain/types'
 
@@ -36,6 +36,35 @@ function RequirementRow({ row, all }: { row: RequirementProgress; all: Requireme
       meta={metaFor(row, all)}
       trailing={<div className="need">{row.earned} / {row.required}</div>}
     />
+  )
+}
+
+// Total hours and Participatory are plain, non-expandable rows in mockups.html#s-dash — no
+// chevron, no credit panel. Only the subject-matter category rows use the CategoryRow accordion.
+function isFlatRow(key: DashboardRow['key']): boolean {
+  return key === 'total' || key === 'participatory'
+}
+
+function flatRowMeta(row: DashboardRow): string | undefined {
+  if (row.met) return undefined
+  const base = `${row.earned} of ${row.required}`
+  return row.key === 'participatory' ? `live hours, not self-study · ${base}` : base
+}
+
+function FlatRequirementRow({ row }: { row: DashboardRow }) {
+  const meta = flatRowMeta(row)
+  return (
+    <div className="item">
+      <div className="row">
+        <div className="t">
+          <div className="n">{row.label}</div>
+          {meta ? <div className="m q">{meta}</div> : null}
+        </div>
+        {row.met
+          ? <><div className="val">{row.earned}/{row.required}</div><div className="ck">✓</div></>
+          : <div className="need">+{hoursLabel(row.remaining)}</div>}
+      </div>
+    </div>
   )
 }
 
@@ -89,7 +118,9 @@ export function Dashboard({ group, period, result, credits, today = new Date().t
           <div className="label">Still needed</div>
           <div className="list">
             {stillNeeded.map(row => (
-              <CategoryRow key={row.key} row={row} onOpenCredit={onOpenCredit} />
+              isFlatRow(row.key)
+                ? <FlatRequirementRow key={row.key} row={row} />
+                : <CategoryRow key={row.key} row={row} onOpenCredit={onOpenCredit} />
             ))}
           </div>
         </>
@@ -100,7 +131,9 @@ export function Dashboard({ group, period, result, credits, today = new Date().t
           <div className="label">Complete</div>
           <div className="list">
             {complete.map(row => (
-              <CategoryRow key={row.key} row={row} onOpenCredit={onOpenCredit} />
+              isFlatRow(row.key)
+                ? <FlatRequirementRow key={row.key} row={row} />
+                : <CategoryRow key={row.key} row={row} onOpenCredit={onOpenCredit} />
             ))}
           </div>
         </>

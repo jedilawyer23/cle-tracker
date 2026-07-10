@@ -57,3 +57,24 @@ it('excludes a parent from Complete when its sub-minimum is unmet, and the headl
   const completeList = screen.getByText('Complete').nextElementSibling!
   expect(completeList.querySelectorAll(':scope > .item')).toHaveLength(3)
 })
+
+// mockups.html#s-dash renders "Total hours" and "Participatory" as flat rows (no chevron,
+// no expandable credit panel) — only the subject-matter category rows are accordions.
+it('renders Total hours and Participatory as flat rows with no expand control', () => {
+  const credits: Credit[] = [
+    { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={credits} today="2026-07-10"
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+
+  const totalRow = screen.getByText('Total hours').closest('.item')!
+  const participatoryRow = screen.getByText('Participatory').closest('.item')!
+  for (const item of [totalRow, participatoryRow]) {
+    expect(item.querySelector('.chev')).not.toBeInTheDocument()
+    expect(item.querySelector('.credits')).not.toBeInTheDocument()
+    expect(item.querySelector('.row.tap')).not.toBeInTheDocument()
+  }
+})
