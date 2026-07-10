@@ -12,6 +12,31 @@
 
 ---
 
+## Carry-forward from the M1 code review (MUST address in this milestone)
+
+The M1 final review flagged issues in the *populated* dashboard path that were
+unreachable in M1 (credits were always empty) and become live here:
+
+1. **Headline count must match the visible rows, and a met parent with an unmet
+   sub-minimum is NOT complete.** The current empty-state `Dashboard` derived the
+   "N requirements left" count from `result.totalCount - result.metCount` over all
+   9 rules, but renders only the ~7 top-level rows. In the `dashboardRows` /
+   Dashboard tasks below: (a) compute the headline count from the same top-level
+   set that is rendered; (b) treat a top-level requirement as **complete only if it
+   AND all its child sub-minimums are met** — e.g. Competence 2/2 but Prevention &
+   Detection 0/1 must appear under **Still needed**, not Complete, with the sub-gap
+   shown. Add a unit test for exactly this scenario (mockup's "4 requirements left").
+2. **`formatDate` is duplicated** in `FirstRun.tsx` and `Dashboard.tsx` — extract to
+   one shared `src/ui/formatDate.ts` (keep the timezone-safe from-parts logic) and
+   import it from both while you are in these files.
+3. **Onboarding disclaimer is missing.** The spec requires the "not legal advice —
+   verify with the State Bar of California" notice in onboarding (it appears on the
+   dashboard already). Add it to `FirstRun` and to `mockups.html#s-setup`.
+4. **Test gaps to close:** `resolvePeriod` overlap tie-break (date inside two
+   periods → earliest), and `FirstRun` no-letter gating (Continue disabled).
+
+---
+
 ## File structure
 
 ```
