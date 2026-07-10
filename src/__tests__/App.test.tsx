@@ -1,9 +1,12 @@
-// ABOUTME: Verifies first-run -> dashboard navigation, and adding a credit end to end — both via
-// ABOUTME: manual entry and via a (fake) parsed certificate. No real network/function call is made.
+// ABOUTME: Verifies first-run -> dashboard navigation (persisting the derived profile to the
+// ABOUTME: store), adding/removing a credit end to end, and returning-session/sign-in behavior —
+// ABOUTME: all against the in-memory fake async Store. No real network/Firebase call is made.
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import App from '../App'
-import { createCreditStore } from '../store/creditStore'
+import { createFakeStore } from '../store/fakeStore'
+import type { UserProfile } from '../store/types'
+import type { Credit } from '../domain/types'
 
 vi.mock('../parsing/parseCertificate', () => ({ parseCertificate: vi.fn() }))
 vi.mock('../parsing/fileToBase64', () => ({
@@ -11,26 +14,40 @@ vi.mock('../parsing/fileToBase64', () => ({
 }))
 import { parseCertificate } from '../parsing/parseCertificate'
 
-it('goes from first run to the dashboard', () => {
-  render(<App store={createCreditStore(fakeStorage())} />)
-  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
-  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
-  expect(screen.getByText(/Legal Ethics/)).toBeInTheDocument()
+it('shows a loading state before the store is ready', () => {
+  render(<App store={createFakeStore()} />)
+  expect(screen.getByText(/loading/i)).toBeInTheDocument()
 })
 
-function fakeStorage(): Storage {
-  const map = new Map<string, string>()
-  return {
-    get length() { return map.size }, clear: () => map.clear(),
-    getItem: (k) => map.get(k) ?? null, key: (i) => [...map.keys()][i] ?? null,
-    removeItem: (k) => { map.delete(k) }, setItem: (k, v) => { map.set(k, v) },
-  }
-}
-
-it('adds a credit from the dashboard via manual entry and reflects it', () => {
-  render(<App store={createCreditStore(fakeStorage())} today="2026-07-10" />)
+it('goes from first run to the dashboard, persisting the derived profile to the store', async () => {
+  const store = createFakeStore()
+  render(<App store={store} />)
+  await screen.findByLabelText(/full name/i)
   fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
   fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await waitFor(() => expect(screen.getByText(/Legal Ethics/)).toBeInTheDocument())
+  expect(store.getProfile()).toMatchObject({ name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, accountState: 'guest' })
+})
+
+it('skips first run for a returning session that already has a saved profile', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/Legal Ethics/)).toBeInTheDocument())
+  expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument()
+})
+
+it('adds a credit from the dashboard via manual entry and reflects it', async () => {
+  const store = createFakeStore()
+  render(<App store={store} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
   // The Add screen offers upload/capture first; "Enter manually instead" reaches the blank form.
   fireEvent.click(screen.getByRole('button', { name: /enter manually instead/i }))
@@ -40,8 +57,9 @@ it('adds a credit from the dashboard via manual entry and reflects it', () => {
   fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '4' } })
   fireEvent.change(screen.getByLabelText(/^legal ethics$/i), { target: { value: '4' } })
   fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
-  expect(screen.getByText('Complete')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText('Complete')).toBeInTheDocument())
   expect(screen.getByText('Legal Ethics')).toBeInTheDocument()
+  expect(store.getCredits()).toHaveLength(1)
 })
 
 it('routes a parsed certificate into Confirm with low-confidence fields flagged, then saves it', async () => {
@@ -54,9 +72,11 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
       totalHours: 'high', participatory: 'low', categoryHours: 'high',
     },
   })
-  render(<App store={createCreditStore(fakeStorage())} today="2026-07-10" />)
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
   fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
   fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
   const fileInput = screen.getByLabelText(/certificate/i) as HTMLInputElement
@@ -67,15 +87,17 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
   expect(screen.getByText(/couldn.?t read — please confirm/i)).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
-  expect(screen.getByText('Complete')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText('Complete')).toBeInTheDocument())
   expect(screen.getByText('Technology')).toBeInTheDocument()
 })
 
 it('falls back to a blank Confirm screen with a message when parsing fails', async () => {
   ;(parseCertificate as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('unreadable'))
-  render(<App store={createCreditStore(fakeStorage())} today="2026-07-10" />)
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
   fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
   fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
   const fileInput = screen.getByLabelText(/certificate/i) as HTMLInputElement
@@ -84,4 +106,26 @@ it('falls back to a blank Confirm screen with a message when parsing fails', asy
 
   await waitFor(() => expect(screen.getByText(/couldn.?t read that certificate/i)).toBeInTheDocument())
   expect(screen.getByLabelText(/^provider$/i)).toHaveValue('')
+})
+
+it('shows "Sign in to save" for a guest and hides it once linked', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const onLinkGoogle = vi.fn(async () => ({ kind: 'linked' as const }))
+  render(
+    <App store={createFakeStore({ profile, credits })} today="2026-07-10" onLinkGoogle={onLinkGoogle} />,
+  )
+  await screen.findByRole('button', { name: /sign in to save/i })
+  fireEvent.click(screen.getByRole('button', { name: /sign in to save/i }))
+  expect(onLinkGoogle).toHaveBeenCalled()
+  await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
+  expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
 })

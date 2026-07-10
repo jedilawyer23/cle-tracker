@@ -8,6 +8,7 @@ import { resolvePeriod } from '../domain/resolvePeriod'
 import { GROUP_CALENDAR, REQUIREMENT_RULES } from '../domain/requirements'
 import type { Group, Period } from '../domain/types'
 import { formatDate } from './formatDate'
+import { lastToken } from './lastToken'
 
 export interface FirstRunResult {
   name: string
@@ -21,11 +22,6 @@ export interface FirstRunProps {
 }
 
 const LETTER_RANGE: Record<Group, string> = { 1: 'A–G', 2: 'H–M', 3: 'N–Z' }
-
-function lastToken(name: string): string {
-  const tokens = name.trim().split(/\s+/).filter(Boolean)
-  return tokens[tokens.length - 1] ?? ''
-}
 
 export function FirstRun({ onContinue, today = new Date().toISOString().slice(0, 10) }: FirstRunProps) {
   const [name, setName] = useState('')
