@@ -7,6 +7,7 @@ import { deriveGroup } from '../domain/deriveGroup'
 import { resolvePeriod } from '../domain/resolvePeriod'
 import { GROUP_CALENDAR, REQUIREMENT_RULES } from '../domain/requirements'
 import type { Group, Period } from '../domain/types'
+import { formatDate } from './formatDate'
 
 export interface FirstRunResult {
   name: string
@@ -24,13 +25,6 @@ const LETTER_RANGE: Record<Group, string> = { 1: 'A–G', 2: 'H–M', 3: 'N–Z'
 function lastToken(name: string): string {
   const tokens = name.trim().split(/\s+/).filter(Boolean)
   return tokens[tokens.length - 1] ?? ''
-}
-
-// Never pass a date-only ISO string to `new Date()` — it parses as UTC midnight and
-// renders a day early in every US timezone. Build the date from its parts instead.
-function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function FirstRun({ onContinue, today = new Date().toISOString().slice(0, 10) }: FirstRunProps) {
@@ -92,6 +86,7 @@ export function FirstRun({ onContinue, today = new Date().toISOString().slice(0,
         Continue
       </button>
       <div className="note">No sign-in needed — save with Google later.</div>
+      <div className="note">Not legal advice — verify your compliance with the State Bar of California.</div>
     </div>
   )
 }

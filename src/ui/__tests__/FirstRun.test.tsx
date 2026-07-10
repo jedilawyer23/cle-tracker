@@ -16,3 +16,9 @@ it('disables Continue when the name has no letters', () => {
   fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: '123' } })
   expect(screen.getByRole('button', { name: /continue/i })).toBeDisabled()
 })
+
+// Carry-forward (M1 review, item 3): onboarding must show the "not legal advice" disclaimer.
+it('shows the not-legal-advice disclaimer', () => {
+  render(<FirstRun onContinue={vi.fn()} />)
+  expect(screen.getByText(/not legal advice/i)).toBeInTheDocument()
+})
