@@ -25,7 +25,7 @@ function pickFile() {
 it('accepts pdf and images and offers device capture', () => {
   render(<AddCertificate onParsed={vi.fn()} onManual={vi.fn()} />)
   const input = screen.getByLabelText(/certificate/i) as HTMLInputElement
-  expect(input.accept).toBe('application/pdf,image/*')
+  expect(input.accept).toBe('application/pdf,image/png,image/jpeg,image/webp,image/gif')
   expect(input.hasAttribute('capture')).toBe(true)
 })
 

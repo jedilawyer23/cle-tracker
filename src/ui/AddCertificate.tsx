@@ -45,7 +45,7 @@ export function AddCertificate({ onParsed, onManual, onBack }: Props) {
         id="cert-input"
         aria-label="Certificate"
         type="file"
-        accept="application/pdf,image/*"
+        accept="application/pdf,image/png,image/jpeg,image/webp,image/gif"
         capture="environment"
         onChange={handleFile}
         disabled={busy}
