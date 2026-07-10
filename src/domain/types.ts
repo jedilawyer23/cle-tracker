@@ -49,3 +49,22 @@ export interface ComplianceResult {
   totalCount: number
   compliant: boolean
 }
+
+export type Confidence = 'high' | 'medium' | 'low'
+
+export interface ParsedCredit {
+  provider: string
+  activityTitle: string
+  completionDate: string
+  totalHours: number
+  participatory: boolean
+  categoryHours: Partial<Record<CategoryKey | 'general', number>>
+  confidence: {
+    provider: Confidence
+    activityTitle: Confidence
+    completionDate: Confidence
+    totalHours: Confidence
+    participatory: Confidence
+    categoryHours: Confidence
+  }
+}
