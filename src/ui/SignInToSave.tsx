@@ -5,11 +5,12 @@ import type { UserProfile } from '../store/types'
 export function SignInToSave(
   { accountState, onSignIn }: { accountState: UserProfile['accountState']; onSignIn: () => void },
 ) {
-  if (accountState === 'linked') return null
   return (
     <div className="topline">
       <div className="sp" />
-      <button type="button" className="navbtn" onClick={onSignIn}>Sign in to save</button>
+      {accountState !== 'linked' && (
+        <button type="button" className="navbtn" onClick={onSignIn}>Sign in to save</button>
+      )}
     </div>
   )
 }

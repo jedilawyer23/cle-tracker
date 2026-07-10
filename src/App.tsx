@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FirstRun, type FirstRunResult } from './ui/FirstRun'
 import { lastToken } from './ui/lastToken'
-import { SignInToSave } from './ui/SignInToSave'
 import { Dashboard } from './ui/Dashboard'
 import { AddCertificate } from './ui/AddCertificate'
 import { AddCredit } from './ui/AddCredit'
@@ -130,17 +129,16 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
 
   if (screen === 'confirm') {
     return (
-      <>
-        <SignInToSave accountState={profile.accountState} onSignIn={handleSignIn} />
-        {signInMessage && <div className="wrap"><div className="note">{signInMessage}</div></div>}
-        <AddCredit
-          initial={confirmSeed?.draft}
-          lowConfidenceFields={confirmSeed?.lowConfidenceFields}
-          message={confirmSeed?.message}
-          onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
-          onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
-        />
-      </>
+      <AddCredit
+        initial={confirmSeed?.draft}
+        lowConfidenceFields={confirmSeed?.lowConfidenceFields}
+        message={confirmSeed?.message}
+        accountState={profile.accountState}
+        onSignIn={handleSignIn}
+        signInMessage={signInMessage}
+        onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
+        onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
+      />
     )
   }
 
@@ -160,19 +158,18 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   }
 
   return (
-    <>
-      <SignInToSave accountState={profile.accountState} onSignIn={handleSignIn} />
-      {signInMessage && <div className="wrap"><div className="note">{signInMessage}</div></div>}
-      <Dashboard
-        group={profile.group}
-        period={profile.currentPeriod}
-        result={result}
-        credits={scopedCredits}
-        today={today}
-        onAddCredit={() => setScreen('add')}
-        onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
-      />
-    </>
+    <Dashboard
+      group={profile.group}
+      period={profile.currentPeriod}
+      result={result}
+      credits={scopedCredits}
+      today={today}
+      accountState={profile.accountState}
+      onSignIn={handleSignIn}
+      signInMessage={signInMessage}
+      onAddCredit={() => setScreen('add')}
+      onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+    />
   )
 }
 

@@ -146,3 +146,31 @@ it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
   expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
 })
+
+it('renders "Sign in to save" inside the content wrap, not as a bare sibling', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  expect(button.closest('.wrap')).not.toBeNull()
+})
+
+it('renders "Sign in to save" inside the Confirm screen wrap, next to the back control', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+  fireEvent.click(screen.getByRole('button', { name: /enter manually instead/i }))
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  expect(button.closest('.wrap')).not.toBeNull()
+  expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
+})

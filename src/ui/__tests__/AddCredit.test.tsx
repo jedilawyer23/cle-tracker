@@ -38,3 +38,33 @@ it('shows the fallback message when a parse failed', () => {
   render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} message="We couldn't read that certificate. Enter the details manually." />)
   expect(screen.getByText(/we couldn.?t read that certificate/i)).toBeInTheDocument()
 })
+
+it('shows the sign-in button to the right of the back control in the existing topline', () => {
+  const onSignIn = vi.fn()
+  const { container } = render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} accountState="guest" onSignIn={onSignIn} />,
+  )
+  const topline = container.querySelector('.topline')!
+  const backBtn = topline.querySelector('.back')!
+  const navBtn = topline.querySelector('.navbtn')!
+  expect(navBtn).toHaveTextContent(/sign in to save/i)
+  // Back control comes before the sign-in button in DOM order (sp spacer pushes it right).
+  expect(backBtn.compareDocumentPosition(navBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  fireEvent.click(navBtn)
+  expect(onSignIn).toHaveBeenCalled()
+})
+
+it('hides the sign-in button once linked', () => {
+  const { container } = render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} accountState="linked" onSignIn={vi.fn()} />,
+  )
+  expect(container.querySelector('.navbtn')).not.toBeInTheDocument()
+})
+
+it('renders the signInMessage note inside the wrap', () => {
+  render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} accountState="guest" onSignIn={vi.fn()}
+      signInMessage="Saved to your Google account." />,
+  )
+  expect(screen.getByText('Saved to your Google account.')).toBeInTheDocument()
+})
