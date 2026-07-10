@@ -11,7 +11,8 @@ export default defineConfig({
     setupFiles: './src/setupTests.ts',
     // functions/ is a separate npm package with its own Vitest config and
     // test runner (`cd functions && npm test`) — exclude it here so the root
-    // suite only ever runs the frontend tests.
-    exclude: ['**/node_modules/**', '**/functions/**'],
+    // suite only ever runs the frontend tests. *.emulator.test.ts files need
+    // the Firebase Local Emulator Suite — run those via `npm run test:emulator`.
+    exclude: ['**/node_modules/**', '**/functions/**', '**/*.emulator.test.ts'],
   },
 })
