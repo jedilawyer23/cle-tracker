@@ -8,7 +8,6 @@ import { formatDate } from './formatDate'
 import type { ComplianceResult, Credit, Group, Period, RequirementProgress } from '../domain/types'
 
 export interface DashboardProps {
-  name: string
   group: Group
   period: Period
   result: ComplianceResult

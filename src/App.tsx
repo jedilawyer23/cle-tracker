@@ -60,7 +60,6 @@ function App({ store, today = new Date().toISOString().slice(0, 10) }: AppProps)
 
   return (
     <Dashboard
-      name={onboarding.name}
       group={onboarding.group}
       period={onboarding.period}
       result={result}

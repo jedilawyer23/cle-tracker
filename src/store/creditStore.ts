@@ -2,6 +2,8 @@
 // ABOUTME: The list/add/update/remove interface is what a later milestone swaps onto Firestore.
 import type { Credit } from '../domain/types'
 
+// Synchronous because localStorage is synchronous; when M4 swaps this onto Firestore,
+// every method here becomes Promise-returning and callers will need to await them.
 export interface CreditStore {
   list(): Credit[]
   add(input: Omit<Credit, 'id'>): Credit
