@@ -11,6 +11,7 @@ import { AddCertificate } from './ui/AddCertificate'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
 import { calculateCompliance } from './domain/complianceCalculator'
+import { creditsInPeriod } from './domain/creditsInPeriod'
 import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import type { Store, UserProfile } from './store/types'
@@ -72,7 +73,13 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     }
   }, [store])
 
-  const result = useMemo(() => calculateCompliance(REQUIREMENT_RULES, credits), [credits])
+  // Only credits completed within the user's current compliance period count toward the
+  // requirement — older or future-dated credits stay in the store but don't count here.
+  const scopedCredits = useMemo(
+    () => (profile ? creditsInPeriod(credits, profile.currentPeriod) : []),
+    [credits, profile],
+  )
+  const result = useMemo(() => calculateCompliance(REQUIREMENT_RULES, scopedCredits), [scopedCredits])
 
   async function handleContinue(onboardingResult: FirstRunResult) {
     const newProfile: UserProfile = {
@@ -160,7 +167,7 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
         group={profile.group}
         period={profile.currentPeriod}
         result={result}
-        credits={credits}
+        credits={scopedCredits}
         today={today}
         onAddCredit={() => setScreen('add')}
         onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}

@@ -108,6 +108,23 @@ it('falls back to a blank Confirm screen with a message when parsing fails', asy
   expect(screen.getByLabelText(/^provider$/i)).toHaveValue('')
 })
 
+it('only counts credits completed within the current compliance period', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'in', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'out', provider: 'CEB', activityTitle: 'Old Ethics Course', completionDate: '2023-05-01', totalHours: 10, participatory: true, categoryHours: { ethics: 10 } },
+  ]
+  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+  expect(screen.getByText(/4 of 25 hours logged/i)).toBeInTheDocument()
+  expect(screen.queryByText(/Old Ethics Course/)).not.toBeInTheDocument()
+})
+
 it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
