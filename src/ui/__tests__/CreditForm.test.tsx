@@ -26,4 +26,11 @@ describe('CreditForm', () => {
       totalHours: 1.5, participatory: true, categoryHours: { ethics: 1.5 },
     }))
   })
+
+  it('flags low-confidence fields for attention and leaves others unflagged', () => {
+    render(<CreditForm submitLabel="Save credit" onSave={vi.fn()} lowConfidenceFields={['participatory']} />)
+    expect(screen.getAllByText(/couldn.?t read — please confirm/i)).toHaveLength(1)
+    expect(screen.queryByLabelText(/^provider$/i)?.closest('.field')?.textContent)
+      .not.toMatch(/couldn.?t read/i)
+  })
 })
