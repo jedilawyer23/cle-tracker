@@ -1,7 +1,10 @@
 // ABOUTME: Tests extractParsedCredit's orchestration using an injected fake Anthropic client.
-// ABOUTME: No network, no API key — the real API call is isolated behind the MessagesClient seam (Task 7, deferred).
+// ABOUTME: No network, no API key — the real API call is isolated behind the MessagesClient seam.
 import { describe, it, expect, vi } from 'vitest'
 import { extractParsedCredit, type MessagesClient } from '../extract'
+
+// Mirrors the default in extract.ts (PARSE_MODEL = process.env.PARSE_MODEL ?? this value).
+const DEFAULT_PARSE_MODEL = 'claude-opus-4-8'
 
 const validJson = JSON.stringify({
   provider: 'Practising Law Institute',
@@ -45,7 +48,7 @@ describe('extractParsedCredit', () => {
       messages: Array<{ role: string; content: unknown[] }>
       output_config: { format: { type: string } }
     }
-    expect(callArgs.model).toBe('claude-opus-4-8')
+    expect(callArgs.model).toBe(DEFAULT_PARSE_MODEL)
     expect(callArgs.messages[0].content[0]).toEqual({
       type: 'document',
       source: { type: 'base64', media_type: 'application/pdf', data: 'QUJD' },

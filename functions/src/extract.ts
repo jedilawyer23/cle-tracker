@@ -5,6 +5,10 @@ import { SYSTEM_PROMPT, PARSED_CREDIT_SCHEMA, buildMessages } from './prompt.js'
 import { validateParsedCredit } from './parsedCreditSchema.js'
 import type { ParsedCredit } from './types.js'
 
+// Overridable via env (e.g. for rollout to a different model); defaults to the
+// model this parser's prompt and schema were built against.
+const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-opus-4-8'
+
 export interface ExtractInput {
   fileBase64: string
   mimeType: string
@@ -27,7 +31,7 @@ export interface MessagesClient {
 export async function extractParsedCredit(client: MessagesClient, input: ExtractInput): Promise<ParsedCredit> {
   const fileBlock = buildFileBlock(input.mimeType, input.fileBase64)
   const response = await client.messages.create({
-    model: 'claude-opus-4-8',
+    model: PARSE_MODEL,
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: buildMessages(fileBlock),
