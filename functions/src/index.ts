@@ -10,6 +10,9 @@ const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY')
 export const parseCertificate = onCall(
   { secrets: [ANTHROPIC_API_KEY], memory: '512MiB', timeoutSeconds: 120 },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Sign in required to parse a certificate')
+    }
     const { fileBase64, mimeType } = (request.data ?? {}) as { fileBase64?: string; mimeType?: string }
     if (!fileBase64 || !mimeType) {
       throw new HttpsError('invalid-argument', 'fileBase64 and mimeType are required')
