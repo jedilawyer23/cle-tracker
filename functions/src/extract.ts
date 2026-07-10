@@ -7,7 +7,7 @@ import type { ParsedCredit } from './types.js'
 
 // Overridable via env (e.g. for rollout to a different model); defaults to the
 // model this parser's prompt and schema were built against.
-const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-opus-4-8'
+const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-sonnet-5'
 
 export interface ExtractInput {
   fileBase64: string
