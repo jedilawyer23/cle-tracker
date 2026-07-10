@@ -11,10 +11,33 @@ it('shows the empty requirement with the deadline', () => {
   render(<Dashboard group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
   expect(screen.getByText('Legal Ethics')).toBeInTheDocument()
   expect(screen.getByText(/Mar 30, 2027|2027-03-30/)).toBeInTheDocument()
   expect(screen.getByText(/0 \/ 25|0\/25/)).toBeInTheDocument()
+})
+
+it('renders the sign-in affordance as the first child inside the content wrap', () => {
+  const result = calculateCompliance(REQUIREMENT_RULES, [])
+  const { container } = render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  const wrap = container.querySelector('.wrap')!
+  expect(wrap.firstElementChild).toHaveClass('topline')
+  expect(wrap.querySelector('.topline .navbtn')).toHaveTextContent(/sign in to save/i)
+})
+
+it('renders the signInMessage note inside the wrap, under the topline', () => {
+  const result = calculateCompliance(REQUIREMENT_RULES, [])
+  render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}} signInMessage="Saved to your Google account."
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText('Saved to your Google account.')).toBeInTheDocument()
 })
 
 it('shows the binding constraint and grouped lists when credits exist', () => {
@@ -26,6 +49,7 @@ it('shows the binding constraint and grouped lists when credits exist', () => {
   render(<Dashboard group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
   expect(screen.getByText(/requirements left/i)).toBeInTheDocument()
   expect(screen.getByText('Still needed')).toBeInTheDocument()
@@ -47,6 +71,7 @@ it('excludes a parent from Complete when its sub-minimum is unmet, and the headl
   render(<Dashboard group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
 
   // 4 still-needed top-level rows: total, competence, civility, participatory.
@@ -68,6 +93,7 @@ it('renders Total hours and Participatory as flat rows with no expand control', 
   render(<Dashboard group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
 
   const totalRow = screen.getByText('Total hours').closest('.item')!

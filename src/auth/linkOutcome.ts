@@ -4,6 +4,7 @@ export type LinkOutcome =
   | { kind: 'linked' }
   | { kind: 'already-linked' }
   | { kind: 'use-existing-account' }
+  | { kind: 'cancelled' }
   | { kind: 'error'; code: string }
 
 export function resolveLinkOutcome(errorCode: string | null): LinkOutcome {
@@ -14,6 +15,10 @@ export function resolveLinkOutcome(errorCode: string | null): LinkOutcome {
       return { kind: 'use-existing-account' }
     case 'auth/provider-already-linked':
       return { kind: 'already-linked' }
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+    case 'auth/popup-blocked':
+      return { kind: 'cancelled' }
     default:
       return { kind: 'error', code: errorCode }
   }

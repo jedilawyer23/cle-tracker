@@ -5,12 +5,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FirstRun, type FirstRunResult } from './ui/FirstRun'
 import { lastToken } from './ui/lastToken'
-import { SignInToSave } from './ui/SignInToSave'
 import { Dashboard } from './ui/Dashboard'
 import { AddCertificate } from './ui/AddCertificate'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
 import { calculateCompliance } from './domain/complianceCalculator'
+import { creditsInPeriod } from './domain/creditsInPeriod'
 import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import type { Store, UserProfile } from './store/types'
@@ -33,7 +33,7 @@ interface AppProps {
   onLinkGoogle?: () => Promise<LinkOutcome>
 }
 
-function messageForOutcome(outcome: LinkOutcome): string {
+function messageForOutcome(outcome: LinkOutcome): string | null {
   switch (outcome.kind) {
     case 'linked':
     case 'already-linked':
@@ -42,6 +42,9 @@ function messageForOutcome(outcome: LinkOutcome): string {
       return "You already have an account — signed you in. Credits added in this guest session weren't carried over."
     case 'error':
       return "Couldn't sign in — please try again."
+    case 'cancelled':
+      // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
+      return null
   }
 }
 
@@ -72,7 +75,13 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     }
   }, [store])
 
-  const result = useMemo(() => calculateCompliance(REQUIREMENT_RULES, credits), [credits])
+  // Only credits completed within the user's current compliance period count toward the
+  // requirement — older or future-dated credits stay in the store but don't count here.
+  const scopedCredits = useMemo(
+    () => (profile ? creditsInPeriod(credits, profile.currentPeriod) : []),
+    [credits, profile],
+  )
+  const result = useMemo(() => calculateCompliance(REQUIREMENT_RULES, scopedCredits), [scopedCredits])
 
   async function handleContinue(onboardingResult: FirstRunResult) {
     const newProfile: UserProfile = {
@@ -96,7 +105,8 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     if (outcome.kind === 'linked' || outcome.kind === 'already-linked') {
       setProfile(prev => (prev ? { ...prev, accountState: 'linked' } : prev))
     }
-    setSignInMessage(messageForOutcome(outcome))
+    const message = messageForOutcome(outcome)
+    if (message !== null) setSignInMessage(message)
   }
 
   if (!ready) {
@@ -123,17 +133,16 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
 
   if (screen === 'confirm') {
     return (
-      <>
-        <SignInToSave accountState={profile.accountState} onSignIn={handleSignIn} />
-        {signInMessage && <div className="wrap"><div className="note">{signInMessage}</div></div>}
-        <AddCredit
-          initial={confirmSeed?.draft}
-          lowConfidenceFields={confirmSeed?.lowConfidenceFields}
-          message={confirmSeed?.message}
-          onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
-          onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
-        />
-      </>
+      <AddCredit
+        initial={confirmSeed?.draft}
+        lowConfidenceFields={confirmSeed?.lowConfidenceFields}
+        message={confirmSeed?.message}
+        accountState={profile.accountState}
+        onSignIn={handleSignIn}
+        signInMessage={signInMessage}
+        onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
+        onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
+      />
     )
   }
 
@@ -153,19 +162,18 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   }
 
   return (
-    <>
-      <SignInToSave accountState={profile.accountState} onSignIn={handleSignIn} />
-      {signInMessage && <div className="wrap"><div className="note">{signInMessage}</div></div>}
-      <Dashboard
-        group={profile.group}
-        period={profile.currentPeriod}
-        result={result}
-        credits={credits}
-        today={today}
-        onAddCredit={() => setScreen('add')}
-        onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
-      />
-    </>
+    <Dashboard
+      group={profile.group}
+      period={profile.currentPeriod}
+      result={result}
+      credits={scopedCredits}
+      today={today}
+      accountState={profile.accountState}
+      onSignIn={handleSignIn}
+      signInMessage={signInMessage}
+      onAddCredit={() => setScreen('add')}
+      onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+    />
   )
 }
 

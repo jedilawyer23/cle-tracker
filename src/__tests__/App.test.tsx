@@ -108,6 +108,23 @@ it('falls back to a blank Confirm screen with a message when parsing fails', asy
   expect(screen.getByLabelText(/^provider$/i)).toHaveValue('')
 })
 
+it('only counts credits completed within the current compliance period', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'in', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'out', provider: 'CEB', activityTitle: 'Old Ethics Course', completionDate: '2023-05-01', totalHours: 10, participatory: true, categoryHours: { ethics: 10 } },
+  ]
+  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+  expect(screen.getByText(/4 of 25 hours logged/i)).toBeInTheDocument()
+  expect(screen.queryByText(/Old Ethics Course/)).not.toBeInTheDocument()
+})
+
 it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
@@ -128,4 +145,72 @@ it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   expect(onLinkGoogle).toHaveBeenCalled()
   await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
   expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
+})
+
+it('leaves the UI unchanged and shows no message when sign-in is cancelled', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onLinkGoogle = vi.fn(async () => ({ kind: 'cancelled' as const }))
+  render(
+    <App store={createFakeStore({ profile })} today="2026-07-10" onLinkGoogle={onLinkGoogle} />,
+  )
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  fireEvent.click(button)
+  await waitFor(() => expect(onLinkGoogle).toHaveBeenCalled())
+  expect(screen.queryByText(/couldn.?t sign in/i)).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /sign in to save/i })).toBeInTheDocument()
+})
+
+it('does not clear an existing sign-in message when a later attempt is cancelled', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onLinkGoogle = vi.fn()
+    .mockResolvedValueOnce({ kind: 'error' as const, code: 'auth/network-request-failed' })
+    .mockResolvedValueOnce({ kind: 'cancelled' as const })
+  render(
+    <App store={createFakeStore({ profile })} today="2026-07-10" onLinkGoogle={onLinkGoogle} />,
+  )
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  fireEvent.click(button)
+  await screen.findByText(/couldn.?t sign in — please try again/i)
+
+  fireEvent.click(button)
+  await waitFor(() => expect(onLinkGoogle).toHaveBeenCalledTimes(2))
+  expect(screen.getByText(/couldn.?t sign in — please try again/i)).toBeInTheDocument()
+})
+
+it('renders "Sign in to save" inside the content wrap, not as a bare sibling', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  expect(button.closest('.wrap')).not.toBeNull()
+})
+
+it('renders "Sign in to save" inside the Confirm screen wrap, next to the back control', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+  fireEvent.click(screen.getByRole('button', { name: /enter manually instead/i }))
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  expect(button.closest('.wrap')).not.toBeNull()
+  expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
 })

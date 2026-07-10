@@ -3,9 +3,11 @@
 import { List } from './List'
 import { Row } from './Row'
 import { CategoryRow } from './CategoryRow'
+import { SignInToSave } from './SignInToSave'
 import { buildDashboardRows, type DashboardRow } from './dashboardRows'
 import { formatDate } from './formatDate'
 import type { ComplianceResult, Credit, Group, Period, RequirementProgress } from '../domain/types'
+import type { UserProfile } from '../store/types'
 
 export interface DashboardProps {
   group: Group
@@ -13,6 +15,9 @@ export interface DashboardProps {
   result: ComplianceResult
   credits: Credit[]
   today?: string
+  accountState: UserProfile['accountState']
+  onSignIn: () => void
+  signInMessage?: string | null
   onAddCredit: () => void
   onOpenCredit: (id: string) => void
 }
@@ -75,14 +80,15 @@ function daysUntil(iso: string, today: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
 }
 
-export function Dashboard({ group, period, result, credits, today = new Date().toISOString().slice(0, 10), onAddCredit, onOpenCredit }: DashboardProps) {
+export function Dashboard({ group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit }: DashboardProps) {
   const topLevel = result.progress.filter(p => !p.parent)
   const totalRule = result.progress.find(p => p.key === 'total')
 
   if (credits.length === 0) {
     return (
       <div className="wrap">
-        <div className="topline"><div className="sp" /></div>
+        <SignInToSave accountState={accountState} onSignIn={onSignIn} />
+        {signInMessage && <div className="note">{signInMessage}</div>}
         <h1 className="h1">Add your first credit</h1>
         <div className="sub">Group {group} · {totalRule?.required} hours due by {formatDate(period.reportBy)}</div>
 
@@ -108,7 +114,8 @@ export function Dashboard({ group, period, result, credits, today = new Date().t
 
   return (
     <div className="wrap">
-      <div className="topline"><div className="sp" /></div>
+      <SignInToSave accountState={accountState} onSignIn={onSignIn} />
+      {signInMessage && <div className="note">{signInMessage}</div>}
       <h1 className="h1">{stillNeeded.length === 0 ? "You're compliant" : `${stillNeeded.length} requirement${stillNeeded.length === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Group {group} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
 

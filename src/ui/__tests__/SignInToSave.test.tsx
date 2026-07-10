@@ -11,7 +11,8 @@ it('renders for a guest and fires onSignIn on click', () => {
   expect(onSignIn).toHaveBeenCalled()
 })
 
-it('renders nothing once linked', () => {
-  const { container } = render(<SignInToSave accountState="linked" onSignIn={() => {}} />)
-  expect(container).toBeEmptyDOMElement()
+it('renders the topline spacer without a sign-in button once linked', () => {
+  render(<SignInToSave accountState="linked" onSignIn={() => {}} />)
+  expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument()
+  expect(document.querySelector('.topline')).toBeInTheDocument()
 })

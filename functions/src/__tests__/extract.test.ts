@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { extractParsedCredit, type MessagesClient } from '../extract'
 
 // Mirrors the default in extract.ts (PARSE_MODEL = process.env.PARSE_MODEL ?? this value).
-const DEFAULT_PARSE_MODEL = 'claude-opus-4-8'
+const DEFAULT_PARSE_MODEL = 'claude-sonnet-5'
 
 const validJson = JSON.stringify({
   provider: 'Practising Law Institute',
