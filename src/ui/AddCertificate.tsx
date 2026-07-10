@@ -38,7 +38,7 @@ export function AddCertificate({ onParsed, onManual, onBack }: Props) {
         </div>
       )}
       <h1 className="h1">Add a certificate</h1>
-      <div className="sub">Take a photo, or choose a PDF or image. Nothing is uploaded until you pick a file.</div>
+      <div className="sub">Take a photo, or choose a PDF or image. We read the certificate — the file is never stored.</div>
 
       <label className="btn" htmlFor="cert-input">{busy ? 'Reading…' : 'Add certificate'}</label>
       <input
