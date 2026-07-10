@@ -1,21 +1,36 @@
-// ABOUTME: React hook wrapping a CreditStore so mutations re-render the UI.
-// ABOUTME: Components depend on this surface; swapping the store keeps the hook unchanged.
-import { useCallback, useState } from 'react'
+// ABOUTME: React hook wrapping an async Store so mutations and live updates re-render the UI.
+// ABOUTME: The store is always injected — the caller (App) owns which Store implementation is live.
+import { useCallback, useEffect, useState } from 'react'
 import type { Credit } from '../domain/types'
-import { createCreditStore, type CreditStore } from './creditStore'
+import type { Store } from './types'
 
-const defaultStore = createCreditStore()
+export function useCredits(store: Store) {
+  const [credits, setCredits] = useState<Credit[]>(() => store.getCredits())
 
-export function useCredits(store: CreditStore = defaultStore) {
-  const [credits, setCredits] = useState<Credit[]>(() => store.list())
-  const add = useCallback((input: Omit<Credit, 'id'>) => {
-    const c = store.add(input); setCredits(store.list()); return c
+  // Re-sync on store swap, and stay in sync with every subsequent write — including ones
+  // that land from elsewhere (another tab, the live Firestore subscription).
+  useEffect(() => {
+    setCredits(store.getCredits())
+    return store.subscribe(() => setCredits(store.getCredits()))
   }, [store])
-  const update = useCallback((id: string, patch: Partial<Omit<Credit, 'id'>>) => {
-    const c = store.update(id, patch); setCredits(store.list()); return c
+
+  const add = useCallback(async (input: Omit<Credit, 'id'>) => {
+    const credit: Credit = { ...input, id: crypto.randomUUID() }
+    await store.addCredit(credit)
+    return credit
   }, [store])
-  const remove = useCallback((id: string) => {
-    store.remove(id); setCredits(store.list())
+
+  const update = useCallback(async (id: string, patch: Partial<Omit<Credit, 'id'>>) => {
+    const existing = store.getCredits().find((c) => c.id === id)
+    if (!existing) throw new Error(`update: no credit with id ${id}`)
+    const updated: Credit = { ...existing, ...patch, id }
+    await store.updateCredit(updated)
+    return updated
   }, [store])
+
+  const remove = useCallback(async (id: string) => {
+    await store.removeCredit(id)
+  }, [store])
+
   return { credits, add, update, remove }
 }

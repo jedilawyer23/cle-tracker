@@ -1,5 +1,6 @@
 // ABOUTME: Emulator rules test — a user reaches only their own data; requirements are read-only.
 // ABOUTME: Uses @firebase/rules-unit-testing against the Firestore emulator.
+/// <reference types="node" />
 import { beforeAll, afterAll, describe, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
