@@ -18,10 +18,9 @@ export interface ExtractInput {
 // instance (from @anthropic-ai/sdk) satisfies this structurally, and tests can
 // inject a lightweight fake without constructing the full SDK client.
 //
-// NOTE: verify at build time against the installed @anthropic-ai/sdk that
-// `client.messages.create(...)` accepts `output_config: { format: { type: 'json_schema', schema } }`
-// and that the response `content` array's text blocks have this shape — see
-// the extract.e2e.test.ts placeholder for the real-API check (Task 7, deferred).
+// Verified against the real Anthropic API by extract.e2e.test.ts: `client.messages.create(...)`
+// accepts `output_config: { format: { type: 'json_schema', schema } }`, and the response
+// `content` array's text blocks have this shape.
 export interface MessagesClient {
   messages: {
     create(params: unknown): Promise<{ content: Array<{ type: string; text?: string }> }>
