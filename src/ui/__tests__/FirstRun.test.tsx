@@ -10,3 +10,15 @@ it('derives group from the entered name and continues', () => {
   fireEvent.click(screen.getByRole('button', { name: /continue/i }))
   expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ group: 2, name: 'Maya Hoffman' }))
 })
+
+it('disables Continue when the name has no letters', () => {
+  render(<FirstRun onContinue={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: '123' } })
+  expect(screen.getByRole('button', { name: /continue/i })).toBeDisabled()
+})
+
+// Carry-forward (M1 review, item 3): onboarding must show the "not legal advice" disclaimer.
+it('shows the not-legal-advice disclaimer', () => {
+  render(<FirstRun onContinue={vi.fn()} />)
+  expect(screen.getByText(/not legal advice/i)).toBeInTheDocument()
+})

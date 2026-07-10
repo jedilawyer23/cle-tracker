@@ -36,4 +36,11 @@ describe('resolvePeriod', () => {
   it('throws on an empty calendar', () => {
     expect(() => resolvePeriod([], '2026-07-10')).toThrow()
   })
+  it('resolves a date inside two overlapping periods to the earliest containing', () => {
+    const overlap = [
+      { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+      { start: '2027-02-01', end: '2030-03-29', reportBy: '2030-03-30' },
+    ]
+    expect(resolvePeriod(overlap, '2027-03-15').reportBy).toBe('2027-03-30')
+  })
 })
