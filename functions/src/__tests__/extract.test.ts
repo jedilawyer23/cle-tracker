@@ -1,0 +1,80 @@
+// ABOUTME: Tests extractParsedCredit's orchestration using an injected fake Anthropic client.
+// ABOUTME: No network, no API key — the real API call is isolated behind the MessagesClient seam (Task 7, deferred).
+import { describe, it, expect, vi } from 'vitest'
+import { extractParsedCredit, type MessagesClient } from '../extract'
+
+const validJson = JSON.stringify({
+  provider: 'Practising Law Institute',
+  activityTitle: 'AI and the Practice of Law',
+  completionDate: '2026-06-18',
+  totalHours: 1.5,
+  participatory: true,
+  categoryHours: { technology: 1, general: 0.5 },
+  confidence: {
+    provider: 'high', activityTitle: 'high', completionDate: 'high',
+    totalHours: 'high', participatory: 'low', categoryHours: 'medium',
+  },
+})
+
+function fakeClient(content: Array<{ type: string; text?: string }>): MessagesClient {
+  return {
+    messages: {
+      create: vi.fn().mockResolvedValue({ content }),
+    },
+  }
+}
+
+describe('extractParsedCredit', () => {
+  it('builds a request, reads the text block, and returns a validated ParsedCredit', async () => {
+    const client = fakeClient([{ type: 'text', text: validJson }])
+
+    const result = await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
+
+    expect(result.provider).toBe('Practising Law Institute')
+    expect(result.confidence.participatory).toBe('low')
+  })
+
+  it('passes the file as a content block and the schema in output_config', async () => {
+    const client = fakeClient([{ type: 'text', text: validJson }])
+
+    await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
+
+    const createMock = client.messages.create as ReturnType<typeof vi.fn>
+    const callArgs = createMock.mock.calls[0][0] as {
+      model: string
+      messages: Array<{ role: string; content: unknown[] }>
+      output_config: { format: { type: string } }
+    }
+    expect(callArgs.model).toBe('claude-opus-4-8')
+    expect(callArgs.messages[0].content[0]).toEqual({
+      type: 'document',
+      source: { type: 'base64', media_type: 'application/pdf', data: 'QUJD' },
+    })
+    expect(callArgs.output_config.format.type).toBe('json_schema')
+  })
+
+  it('throws when the response has no text block', async () => {
+    const client = fakeClient([{ type: 'thinking' }])
+
+    await expect(
+      extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' }),
+    ).rejects.toThrow()
+  })
+
+  it('throws when the text block is not valid ParsedCredit JSON', async () => {
+    const client = fakeClient([{ type: 'text', text: '{"nonsense": true}' }])
+
+    await expect(
+      extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' }),
+    ).rejects.toThrow()
+  })
+
+  it('throws when the uploaded mime type is unsupported (content-block seam)', async () => {
+    const client = fakeClient([{ type: 'text', text: validJson }])
+
+    await expect(
+      extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'text/plain' }),
+    ).rejects.toThrow()
+    expect(client.messages.create).not.toHaveBeenCalled()
+  })
+})
