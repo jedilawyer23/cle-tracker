@@ -6,6 +6,7 @@ import { getFirestore, type Firestore } from 'firebase/firestore'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { FirestoreStore } from '../firestoreStore'
 import type { UserProfile } from '../types'
+import type { Credit } from '../../domain/types'
 
 let app: FirebaseApp
 let db: Firestore
@@ -34,5 +35,34 @@ describe('FirestoreStore profile', () => {
     await new Promise((r) => setTimeout(r, 100))
     expect(store.getProfile()).toEqual(profile)
     store.dispose()
+  })
+})
+
+const credit = (over: Partial<Credit>): Credit => ({
+  id: 'c1', provider: 'p', activityTitle: 't', completionDate: '2026-01-01',
+  totalHours: 1, participatory: true, categoryHours: {}, ...over,
+})
+
+describe('FirestoreStore credits', () => {
+  it('adds, updates, removes credits and notifies subscribers live', async () => {
+    const store = new FirestoreStore(db, `u-${Date.now()}`)
+    await store.ready()
+    let notifications = 0
+    const unsub = store.subscribe(() => { notifications++ })
+
+    await store.addCredit(credit({ id: 'a', totalHours: 2 }))
+    await new Promise((r) => setTimeout(r, 100))
+    expect(store.getCredits().map((c) => c.id)).toContain('a')
+
+    await store.updateCredit(credit({ id: 'a', totalHours: 5 }))
+    await new Promise((r) => setTimeout(r, 100))
+    expect(store.getCredits().find((c) => c.id === 'a')!.totalHours).toBe(5)
+
+    await store.removeCredit('a')
+    await new Promise((r) => setTimeout(r, 100))
+    expect(store.getCredits()).toHaveLength(0)
+
+    expect(notifications).toBeGreaterThan(0)
+    unsub(); store.dispose()
   })
 })
