@@ -24,6 +24,15 @@ function metaText(row: DashboardRow): string {
   return `${row.earned} of ${row.required}`
 }
 
+// The in-panel hint mirrors mockups.html #s-dash: an unmet row keeps showing "Still need N hr,
+// including <sub-minimum>." even after it has contributing credits (e.g. Competence 1/2 with
+// Prevention & Detection still 0/1 shows both the counted credit and this hint).
+function gapHint(row: DashboardRow): string {
+  const hours = `${row.remaining} hr${row.remaining === 1 ? '' : 's'}`
+  const unmetChild = row.children.find(c => !c.met)
+  return unmetChild ? `Still need ${hours}, including ${unmetChild.label}.` : `Still need ${hours}.`
+}
+
 interface Props { row: DashboardRow; onOpenCredit: (id: string) => void }
 
 export function CategoryRow({ row, onOpenCredit }: Props) {
@@ -33,7 +42,8 @@ export function CategoryRow({ row, onOpenCredit }: Props) {
       <div className="row tap" onClick={() => setOpen(o => !o)}>
         <div className="t">
           <div className="n">{row.label}</div>
-          <div className="m q">{metaText(row)}</div>
+          {/* Completed rows have no meta line in the mockup (e.g. Legal Ethics 4/4). */}
+          {!row.met && <div className="m q">{metaText(row)}</div>}
         </div>
         {row.met
           ? <><div className="val">{row.earned}/{row.required}</div><div className="ck">✓</div></>
@@ -41,18 +51,22 @@ export function CategoryRow({ row, onOpenCredit }: Props) {
         <ChevDown />
       </div>
       <div className="credits">
-        {row.credits.length === 0
-          ? <div className="empty">No {row.label.toLowerCase()} CLE yet — add one to close this.</div>
-          : row.credits.map(c => (
-              <div className="crow" key={c.id} onClick={() => onOpenCredit(c.id)}>
-                <div className="t">
-                  <div className="cn">{c.activityTitle}</div>
-                  <div className="cm">{c.provider} · {formatDate(c.completionDate)}</div>
-                </div>
-                <div className="chn">{hoursToward(row.key, c).toFixed(1)} hr</div>
-                <ChevRight />
-              </div>
-            ))}
+        {row.credits.length === 0 && (
+          <div className="empty">No {row.label.toLowerCase()} CLE yet — add one to close this.</div>
+        )}
+        {row.credits.map(c => (
+          <div className="crow" key={c.id} onClick={() => onOpenCredit(c.id)}>
+            <div className="t">
+              <div className="cn">{c.activityTitle}</div>
+              <div className="cm">{c.provider} · {formatDate(c.completionDate)}</div>
+            </div>
+            <div className="chn">{hoursToward(row.key, c).toFixed(1)} hr</div>
+            <ChevRight />
+          </div>
+        ))}
+        {!row.met && row.credits.length > 0 && (
+          <div className="empty">{gapHint(row)}</div>
+        )}
       </div>
     </div>
   )
