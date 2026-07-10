@@ -1,0 +1,40 @@
+/* ABOUTME: Component styles ported from mockups.html (#s-setup, #s-empty) — layout, list/row primitives, form controls. */
+/* ABOUTME: Colors and base typography come from tokens.css; this file is the presentational layer for FirstRun/Dashboard. */
+
+.wrap { max-width: 600px; margin: 0 auto; padding: 16px 16px 72px; }
+
+.topline { display: flex; align-items: center; min-height: 44px; }
+.topline .sp { flex: 1; }
+.h1 { font-size: 34px; line-height: 1.21; letter-spacing: -.021em; font-weight: 700; margin: 4px 0 0; text-wrap: balance; }
+.sub { font-size: 17px; color: var(--muted); margin-top: 6px; letter-spacing: -.01em; }
+
+.label { font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); margin: 24px 16px 8px; }
+.list { background: var(--card); border-radius: 12px; }
+.list > * { position: relative; }
+.list > *:not(:first-child)::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: 1px; background: var(--sep); transform: scaleY(.5); transform-origin: top; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.row .t { flex: 1; min-width: 0; }
+.row .n { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
+.row .m { font-size: 13px; color: var(--warn); margin-top: 2px; }
+.row .m.q { color: var(--muted); }
+.val { font-size: 17px; font-weight: 400; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+.val.met { color: var(--good); font-weight: 500; }
+.need { font-size: 17px; font-weight: 600; color: var(--warn); }
+.row.tap { cursor: pointer; }
+.row.tap:active { background: #FAFAFB; }
+
+.btn { display: block; width: 100%; text-align: center; margin-top: 24px; background: var(--accent); color: #fff; border: 0; border-radius: 12px; font-size: 17px; font-weight: 600; padding: 16px 18px; }
+.btn:active { filter: brightness(.92); }
+.btn:disabled { opacity: .4; cursor: default; }
+.note { font-size: 13px; color: var(--muted); text-align: center; margin-top: 24px; line-height: 1.5; }
+
+.field { padding: 12px 16px; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.field input { font: inherit; font-size: 17px; font-weight: 400; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none; letter-spacing: -.01em; }
+
+.toggle { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+.toggle .t { flex: 1; }
+.switch { width: 51px; height: 31px; border-radius: 999px; background: var(--track); position: relative; flex: none; border: 0; padding: 0; transition: background .2s; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: left .2s; }
+.switch.on { background: var(--good); }
+.switch.on::after { left: 22px; }
