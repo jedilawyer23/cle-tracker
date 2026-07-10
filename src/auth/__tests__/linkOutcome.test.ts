@@ -17,15 +17,23 @@ describe('resolveLinkOutcome', () => {
       .toEqual({ kind: 'already-linked' })
   })
   it('surfaces any other code as an error', () => {
-    expect(resolveLinkOutcome('auth/popup-closed-by-user'))
-      .toEqual({ kind: 'error', code: 'auth/popup-closed-by-user' })
-  })
-  it('surfaces a cancelled popup request as an error', () => {
-    expect(resolveLinkOutcome('auth/cancelled-popup-request'))
-      .toEqual({ kind: 'error', code: 'auth/cancelled-popup-request' })
+    expect(resolveLinkOutcome('auth/internal-error'))
+      .toEqual({ kind: 'error', code: 'auth/internal-error' })
   })
   it('surfaces a network failure as an error', () => {
     expect(resolveLinkOutcome('auth/network-request-failed'))
       .toEqual({ kind: 'error', code: 'auth/network-request-failed' })
+  })
+  it('treats a user-closed popup as a silent cancellation, not an error', () => {
+    expect(resolveLinkOutcome('auth/popup-closed-by-user'))
+      .toEqual({ kind: 'cancelled' })
+  })
+  it('treats a cancelled popup request as a silent cancellation, not an error', () => {
+    expect(resolveLinkOutcome('auth/cancelled-popup-request'))
+      .toEqual({ kind: 'cancelled' })
+  })
+  it('treats a blocked popup as a silent cancellation, not an error', () => {
+    expect(resolveLinkOutcome('auth/popup-blocked'))
+      .toEqual({ kind: 'cancelled' })
   })
 })

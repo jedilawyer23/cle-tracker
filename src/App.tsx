@@ -33,7 +33,7 @@ interface AppProps {
   onLinkGoogle?: () => Promise<LinkOutcome>
 }
 
-function messageForOutcome(outcome: LinkOutcome): string {
+function messageForOutcome(outcome: LinkOutcome): string | null {
   switch (outcome.kind) {
     case 'linked':
     case 'already-linked':
@@ -42,6 +42,9 @@ function messageForOutcome(outcome: LinkOutcome): string {
       return "You already have an account — signed you in. Credits added in this guest session weren't carried over."
     case 'error':
       return "Couldn't sign in — please try again."
+    case 'cancelled':
+      // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
+      return null
   }
 }
 
@@ -102,7 +105,8 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     if (outcome.kind === 'linked' || outcome.kind === 'already-linked') {
       setProfile(prev => (prev ? { ...prev, accountState: 'linked' } : prev))
     }
-    setSignInMessage(messageForOutcome(outcome))
+    const message = messageForOutcome(outcome)
+    if (message !== null) setSignInMessage(message)
   }
 
   if (!ready) {
