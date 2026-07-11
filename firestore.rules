@@ -4,11 +4,75 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Restricts a users/{uid} write to the real UserProfile shape (src/store/types.ts) plus
+    // sentReminders, a server-written field (functions/src/reminders/firestoreDeps.ts) that a
+    // client can end up round-tripping through a profile edit (App.tsx spreads the loaded
+    // profile before re-saving it). Only the fields that matter for access control are
+    // type-checked; the rest just have to be present in the allow-list.
+    //
+    // accountState/email are intentionally NOT gated behind
+    // request.auth.token.firebase.sign_in_provider here. That gate would stop an anonymous
+    // caller from writing a fake 'linked' + email — a real concern once sendReminders relays
+    // email to whatever address is stored — but reminders are not enabled yet (see
+    // functions/src/index.ts), so an anonymous write here is inert today, and the emulator
+    // can't safely exercise the anonymous->Google link flow that legitimately sets these
+    // fields client-side. Add the sign_in_provider gate before turning reminders on.
+    function isValidProfile(data) {
+      let allowedKeys = ['name', 'lastName', 'group', 'admissionDate', 'accountState',
+                          'currentPeriod', 'requirementsVersion', 'email', 'sentReminders'];
+      return data.keys().hasOnly(allowedKeys)
+        && (!('name' in data) || (data.name is string && data.name.size() <= 200))
+        && (!('group' in data) || (data.group is int && data.group >= 1 && data.group <= 3))
+        && (!('accountState' in data) || data.accountState in ['guest', 'linked'])
+        && (!('email' in data) || (data.email is string && data.email.size() <= 320))
+        && (!('currentPeriod' in data) || data.currentPeriod is map);
+    }
+
+    // categoryHours keys are exactly domain/types.ts's CategoryKey union plus 'general' — a
+    // fixed, small enum, so every key can be checked explicitly rather than needing a generic
+    // map-value loop the rules language doesn't have.
+    function isValidCategoryHours(m) {
+      let allowedCategoryKeys = ['ethics', 'competence', 'competencePrevention', 'bias',
+                                  'biasImplicit', 'technology', 'civility', 'general'];
+      return m.keys().hasOnly(allowedCategoryKeys)
+        && (!('ethics' in m) || (m.ethics is number && m.ethics >= 0))
+        && (!('competence' in m) || (m.competence is number && m.competence >= 0))
+        && (!('competencePrevention' in m) || (m.competencePrevention is number && m.competencePrevention >= 0))
+        && (!('bias' in m) || (m.bias is number && m.bias >= 0))
+        && (!('biasImplicit' in m) || (m.biasImplicit is number && m.biasImplicit >= 0))
+        && (!('technology' in m) || (m.technology is number && m.technology >= 0))
+        && (!('civility' in m) || (m.civility is number && m.civility >= 0))
+        && (!('general' in m) || (m.general is number && m.general >= 0));
+    }
+
+    // Restricts a credits/{creditId} write to the real Credit shape (src/domain/types.ts,
+    // src/firebase/mappers.ts creditToDoc — the id field is stripped before writing).
+    function isValidCredit(data) {
+      let allowedKeys = ['provider', 'activityTitle', 'completionDate', 'totalHours',
+                          'participatory', 'categoryHours'];
+      return data.keys().hasOnly(allowedKeys)
+        && (!('provider' in data) || (data.provider is string && data.provider.size() <= 200))
+        && (!('activityTitle' in data) || (data.activityTitle is string && data.activityTitle.size() <= 300))
+        && (!('completionDate' in data) ||
+            (data.completionDate is string && data.completionDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!('totalHours' in data) || (data.totalHours is number && data.totalHours >= 0 && data.totalHours <= 1000))
+        && (!('participatory' in data) || data.participatory is bool)
+        && (!('categoryHours' in data) || (data.categoryHours is map && isValidCategoryHours(data.categoryHours)));
+    }
+
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isValidProfile(request.resource.data);
+      allow delete: if isOwner(uid);
 
       match /credits/{creditId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidCredit(request.resource.data);
+        allow delete: if isOwner(uid);
       }
     }
 
