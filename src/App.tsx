@@ -34,6 +34,8 @@ interface AppProps {
   store: Store
   today?: string
   onLinkGoogle?: () => Promise<LinkOutcome>
+  /** Injectable so tests can spy on it; defaults to a real full-page reload. */
+  reload?: () => void
 }
 
 function messageForOutcome(outcome: LinkOutcome): string | null {
@@ -42,7 +44,7 @@ function messageForOutcome(outcome: LinkOutcome): string | null {
     case 'already-linked':
       return 'Saved to your Google account.'
     case 'use-existing-account':
-      return "You already have an account — signed you in. Credits added in this guest session weren't carried over."
+      return 'Signed in — your credits were saved to your account.'
     case 'error':
       return "Couldn't sign in — please try again."
     case 'cancelled':
@@ -51,7 +53,12 @@ function messageForOutcome(outcome: LinkOutcome): string | null {
   }
 }
 
-function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogle }: AppProps) {
+function App({
+  store,
+  today = new Date().toISOString().slice(0, 10),
+  onLinkGoogle,
+  reload = () => window.location.reload(),
+}: AppProps) {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [ready, setReady] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -120,13 +127,20 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   async function handleSignIn() {
     if (!onLinkGoogle) return
     const outcome = await onLinkGoogle()
-    // Optimistic UI flip — the real FirestoreStore also confirms this via its live
-    // subscription, but reflecting it immediately keeps the affordance from lagging.
-    if (outcome.kind === 'linked' || outcome.kind === 'already-linked') {
+    // Optimistic UI flip — for the same-uid linked/already-linked cases the real FirestoreStore
+    // also confirms this via its live subscription, but reflecting it immediately keeps the
+    // affordance from lagging.
+    if (outcome.kind === 'linked' || outcome.kind === 'already-linked' || outcome.kind === 'use-existing-account') {
       setProfile(prev => (prev ? { ...prev, accountState: 'linked' } : prev))
     }
     const message = messageForOutcome(outcome)
     if (message !== null) setSignInMessage(message)
+    if (outcome.kind === 'use-existing-account') {
+      // use-existing-account switched the signed-in uid (and merged the guest's credits into
+      // it) out from under the boot-time store, which is still bound to the old uid — reload so
+      // main.tsx re-boots a fresh store on the now-current, Google-linked uid.
+      reload()
+    }
   }
 
   if (!ready) {
