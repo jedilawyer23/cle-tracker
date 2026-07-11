@@ -72,7 +72,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
         {notice && <div className="note">{notice}</div>}
         <h1 className="h1">Add your first credit</h1>
         <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
-        <div className="sub">{totalRule.required} hours required · report by {formatDate(period.reportBy)}</div>
+        <div className="submeta">{totalRule.required} hours required · report by {formatDate(period.reportBy)}</div>
 
         <div className="label">Requirements</div>
         <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
@@ -94,7 +94,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
-      <div className="sub">Report by {formatDate(period.reportBy)} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
+      <div className="submeta">Report by {formatDate(period.reportBy)} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
 
       <div className="label">Requirements</div>
       <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
