@@ -26,12 +26,15 @@ function showBootError() {
 async function boot() {
   try {
     const user = await ensureAnonymousUser(auth)
+    // Finalize a pending mobile redirect sign-in BEFORE binding the store, so a use-existing-account
+    // uid switch is applied first — otherwise the store binds to the guest uid and credits added in
+    // that window get orphaned. The success-path accountState write is backgrounded inside
+    // completeRedirectLink, so this resolves promptly and no longer stalls the redirect return.
+    await completeRedirectLink(auth, db)
     const uid = auth.currentUser?.uid ?? user.uid
     const store = new FirestoreStore(db, uid)
-    // Paint immediately — App shows its own loading state until the store settles. We deliberately
-    // do NOT await the store or the redirect resolution here: on a mobile redirect return, blocking
-    // boot on getRedirectResult and its follow-up Firestore write can stall the page on a blank
-    // screen until the user manually refreshes.
+    // Paint without awaiting store.ready() — App shows its own loading state until the store
+    // settles, so a slow first snapshot can't leave the page stuck on a blank screen.
     createRoot(document.getElementById('root')!).render(
       <StrictMode>
         <App
@@ -41,12 +44,6 @@ async function boot() {
         />
       </StrictMode>,
     )
-    // Finalize a pending redirect sign-in after first paint. A successful link flips accountState
-    // via the store's live subscription; a use-existing-account switches uid out from under the
-    // store bound above, so a fresh boot on the new uid is needed.
-    completeRedirectLink(auth, db)
-      .then((outcome) => { if (outcome?.kind === 'use-existing-account') window.location.reload() })
-      .catch((err) => { console.error('Redirect sign-in failed:', err) })
   } catch (err) {
     console.error('Boot failed:', err)
     showBootError()
