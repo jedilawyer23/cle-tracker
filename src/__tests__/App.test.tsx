@@ -365,3 +365,70 @@ it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async
   expect(await screen.findByRole('heading', { name: 'Old Ethics Course' })).toBeInTheDocument()
   expect(screen.getByText(/PLI/)).toBeInTheDocument()
 })
+
+it('opens the edit-name screen from the dashboard gear, prefilled, and saves an updated group/period while preserving account state', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: '2010-01-01',
+    accountState: 'linked',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const store = createFakeStore({ profile })
+  render(<App store={store} today="2026-07-10" />)
+  await screen.findByText('Maya Hoffman')
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  expect(await screen.findByText('Edit name')).toBeInTheDocument()
+  expect(screen.getByLabelText(/full name/i)).toHaveValue('Maya Hoffman')
+
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Alice Adams' } })
+  fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+
+  await waitFor(() => expect(screen.getByText('Alice Adams')).toBeInTheDocument())
+  expect(screen.queryByText('Edit name')).not.toBeInTheDocument()
+  expect(store.getProfile()).toMatchObject({
+    name: 'Alice Adams',
+    lastName: 'Adams',
+    group: 1,
+    currentPeriod: { start: '2025-02-01', end: '2028-03-29', reportBy: '2028-03-30' },
+    accountState: 'linked',
+    admissionDate: '2010-01-01',
+    requirementsVersion: '2026-07-10',
+  })
+})
+
+it('returns to the dashboard from the edit-name screen via Back, without saving changes', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const store = createFakeStore({ profile })
+  render(<App store={store} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  expect(await screen.findByText('Edit name')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /back/i }))
+
+  await waitFor(() => expect(screen.queryByText('Edit name')).not.toBeInTheDocument())
+  expect(store.getProfile()).toMatchObject({ name: 'Maya Hoffman', group: 2 })
+})
+
+it('seeds the sign-in message from initialSignInMessage — used after a mobile redirect sign-in completes on boot', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'linked',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(
+    <App
+      store={createFakeStore({ profile })}
+      today="2026-07-10"
+      initialSignInMessage="Saved to your Google account."
+    />,
+  )
+  expect(await screen.findByText('Saved to your Google account.')).toBeInTheDocument()
+})

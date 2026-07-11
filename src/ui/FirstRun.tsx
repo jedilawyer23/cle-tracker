@@ -21,12 +21,24 @@ export interface FirstRunResult {
 export interface FirstRunProps {
   onContinue: (result: FirstRunResult) => void
   today?: string
+  /** Prefills the name field — used when reopening this screen to edit an existing profile. */
+  initialName?: string
+  /** Renders a leading "‹ Back" control instead of the wordmark — used by the edit screen. */
+  onBack?: () => void
+  /** 'edit' swaps the setup copy/CTA for editing an existing name; defaults to onboarding. */
+  mode?: 'setup' | 'edit'
 }
 
 const LETTER_RANGE: Record<Group, string> = { 1: 'A–G', 2: 'H–M', 3: 'N–Z' }
 
-export function FirstRun({ onContinue, today = new Date().toISOString().slice(0, 10) }: FirstRunProps) {
-  const [name, setName] = useState('')
+export function FirstRun({
+  onContinue,
+  today = new Date().toISOString().slice(0, 10),
+  initialName = '',
+  onBack,
+  mode = 'setup',
+}: FirstRunProps) {
+  const [name, setName] = useState(initialName)
 
   const derivedGroup = (() => {
     const token = lastToken(name)
@@ -44,9 +56,16 @@ export function FirstRun({ onContinue, today = new Date().toISOString().slice(0,
 
   return (
     <div className="wrap">
-      <div className="topline"><Wordmark /><div className="sp" /></div>
-      <h1 className="h1">Get started</h1>
-      <div className="sub">Enter your name and we'll set your California MCLE requirement.</div>
+      <div className="topline">
+        {onBack ? <button className="back" onClick={onBack}>‹ Back</button> : <Wordmark />}
+        <div className="sp" />
+      </div>
+      <h1 className="h1">{mode === 'edit' ? 'Edit name' : 'Get started'}</h1>
+      <div className="sub">
+        {mode === 'edit'
+          ? 'Update your name to correct your MCLE group.'
+          : "Enter your name and we'll set your California MCLE requirement."}
+      </div>
 
       <div className="label">Your name</div>
       <List>
@@ -81,9 +100,9 @@ export function FirstRun({ onContinue, today = new Date().toISOString().slice(0,
         disabled={!derived}
         onClick={() => derived && onContinue({ name, group: derived.group, period: derived.period })}
       >
-        Continue
+        {mode === 'edit' ? 'Save' : 'Continue'}
       </button>
-      <div className="note">No sign-in needed — save with Google later.</div>
+      {mode === 'setup' && <div className="note">No sign-in needed — save with Google later.</div>}
       <Disclaimer />
     </div>
   )

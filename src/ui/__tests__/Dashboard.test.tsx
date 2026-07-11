@@ -230,3 +230,21 @@ it('threads name and photoURL to the signed-in header', () => {
   expect(screen.getByText('Maya Hoffman')).toBeInTheDocument()
   expect(document.querySelector('img.avatar')).toHaveAttribute('src', 'https://example.com/p.jpg')
 })
+
+it('forwards onSettings to the signed-in header on both the empty and populated dashboards', () => {
+  const onSettings = vi.fn()
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  for (const list of [[], credits]) {
+    const result = calculateCompliance(REQUIREMENT_RULES, list)
+    const { unmount } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+      result={result} credits={list} today="2026-07-10"
+      accountState="guest" onSignIn={() => {}} onSettings={onSettings}
+      onAddCredit={() => {}} onOpenCredit={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+    unmount()
+  }
+  expect(onSettings).toHaveBeenCalledTimes(2)
+})

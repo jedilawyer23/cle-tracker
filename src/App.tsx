@@ -17,10 +17,10 @@ import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import { useParseFile } from './parsing/useParseFile'
 import type { Store, UserProfile } from './store/types'
-import type { LinkOutcome } from './auth/linkOutcome'
+import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit' | 'past'
+type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -38,21 +38,8 @@ interface AppProps {
   reload?: () => void
   /** The signed-in Google account's photo, if any — threaded into the signed-in header's avatar. */
   photoURL?: string | null
-}
-
-function messageForOutcome(outcome: LinkOutcome): string | null {
-  switch (outcome.kind) {
-    case 'linked':
-    case 'already-linked':
-      return 'Saved to your Google account.'
-    case 'use-existing-account':
-      return 'Signed in — your credits were saved to your account.'
-    case 'error':
-      return "Couldn't sign in — please try again."
-    case 'cancelled':
-      // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
-      return null
-  }
+  /** Seeds signInMessage — used after a mobile redirect sign-in resolves during boot (main.tsx). */
+  initialSignInMessage?: string | null
 }
 
 function App({
@@ -61,13 +48,14 @@ function App({
   onLinkGoogle,
   reload = () => window.location.reload(),
   photoURL,
+  initialSignInMessage,
 }: AppProps) {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [ready, setReady] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confirmSeed, setConfirmSeed] = useState<ConfirmSeed | null>(null)
-  const [signInMessage, setSignInMessage] = useState<string | null>(null)
+  const [signInMessage, setSignInMessage] = useState<string | null>(initialSignInMessage ?? null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const { credits, add, update, remove } = useCredits(store)
@@ -125,6 +113,20 @@ function App({
     }
     await store.saveProfile(newProfile)
     setProfile(newProfile)
+  }
+
+  async function handleEditName(result: FirstRunResult) {
+    if (!profile) return
+    const next: UserProfile = {
+      ...profile,
+      name: result.name,
+      lastName: lastToken(result.name),
+      group: result.group,
+      currentPeriod: result.period,
+    }
+    await store.saveProfile(next)
+    setProfile(next)
+    setScreen('dashboard')
   }
 
   async function handleSignIn() {
@@ -214,6 +216,18 @@ function App({
     )
   }
 
+  if (screen === 'settings') {
+    return (
+      <FirstRun
+        mode="edit"
+        initialName={profile.name}
+        today={today}
+        onContinue={handleEditName}
+        onBack={() => setScreen('dashboard')}
+      />
+    )
+  }
+
   return (
     <>
       <Dashboard
@@ -232,6 +246,7 @@ function App({
         onOpenCredit={id => { setNotice(null); setSelectedId(id); setScreen('credit') }}
         hasPastCycles={hasPastCycles}
         onOpenPastCycles={() => { setNotice(null); setScreen('past') }}
+        onSettings={() => { setNotice(null); setScreen('settings') }}
       />
       {addSheetOpen && (
         <AddSheet
