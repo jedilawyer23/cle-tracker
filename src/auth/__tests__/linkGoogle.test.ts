@@ -18,6 +18,8 @@ vi.mock('firebase/auth', () => ({
 }))
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((_db: unknown, ...segments: string[]) => segments.join('/')),
+  collection: vi.fn((_db: unknown, ...segments: string[]) => segments.join('/')),
+  getDocs: vi.fn(),
   setDoc: vi.fn(),
 }))
 vi.mock('../../store/mergeCreditsIntoAccount', () => ({
@@ -25,7 +27,7 @@ vi.mock('../../store/mergeCreditsIntoAccount', () => ({
 }))
 
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, getDocs, setDoc } from 'firebase/firestore'
 import { mergeCreditsIntoAccount } from '../../store/mergeCreditsIntoAccount'
 
 const db = {} as Firestore
@@ -42,6 +44,8 @@ describe('linkGoogle — use-existing-account branch', () => {
   it('merges the guest uid\'s credits into the existing account and flips it to linked', async () => {
     const auth = { currentUser: { uid: 'guest-uid' } as User } as Auth
     const fakeCredential = { providerId: 'google.com' }
+    const guestDocData = { provider: 'CEB', activityTitle: 'Conflicts', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } }
+    ;(getDocs as Mock).mockResolvedValue({ docs: [{ id: 'g1', data: () => guestDocData }] })
     ;(GoogleAuthProvider.credentialFromError as Mock).mockReturnValue(fakeCredential)
     ;(signInWithCredential as Mock).mockImplementation(async (authArg: Auth, _cred: unknown) => {
       const existingUser = { uid: 'existing-uid', email: 'owner@example.com' } as User
@@ -55,7 +59,8 @@ describe('linkGoogle — use-existing-account branch', () => {
 
     expect(outcome).toEqual({ kind: 'use-existing-account' })
     expect(signInWithCredential).toHaveBeenCalledWith(auth, fakeCredential)
-    expect(mergeCreditsIntoAccount).toHaveBeenCalledWith(db, 'guest-uid', 'existing-uid')
+    // Guest credits are read BEFORE the switch and merged into the existing account.
+    expect(mergeCreditsIntoAccount).toHaveBeenCalledWith(db, 'existing-uid', [{ id: 'g1', ...guestDocData }])
     expect(setDoc).toHaveBeenCalledWith(
       doc(db, 'users', 'existing-uid'),
       { accountState: 'linked', email: 'owner@example.com' },

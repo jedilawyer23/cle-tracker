@@ -4,9 +4,10 @@ import {
   GoogleAuthProvider, linkWithPopup, signInWithCredential,
   type Auth, type User, type UserCredential,
 } from 'firebase/auth'
-import { doc, setDoc, type Firestore } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, type Firestore } from 'firebase/firestore'
 import { resolveLinkOutcome, type LinkOutcome } from './linkOutcome'
 import { mergeCreditsIntoAccount } from '../store/mergeCreditsIntoAccount'
+import { docToCredit } from '../firebase/mappers'
 
 // Default production linker: opens the Google popup and links to the current uid.
 const popupLink = (user: User): Promise<UserCredential> =>
@@ -46,8 +47,12 @@ export async function linkGoogle(
       // src/store/__tests__/mergeCreditsIntoAccount.emulator.test.ts (the merge logic itself,
       // against real Firestore). The full real-Google path must be confirmed manually.
       if (!cred) return outcome
+      // Read the guest's credits WHILE still authenticated as the guest — after the switch
+      // below, security rules deny reading users/{guestUid}. Hold them in memory to merge after.
+      const guestSnap = await getDocs(collection(db, 'users', guestUid, 'credits'))
+      const guestCredits = guestSnap.docs.map((d) => docToCredit(d.id, d.data() as Record<string, unknown>))
       const { user: existingUser } = await signInWithCredential(auth, cred)
-      await mergeCreditsIntoAccount(db, guestUid, existingUser.uid)
+      await mergeCreditsIntoAccount(db, existingUser.uid, guestCredits)
       const linkedEmail = auth.currentUser?.email
       await setDoc(
         doc(db, 'users', existingUser.uid),

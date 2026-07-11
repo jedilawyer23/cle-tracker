@@ -58,7 +58,8 @@ describe('mergeCreditsIntoAccount', () => {
       await seedCredits(db, uidA, aCredits)
       await seedCredits(db, uidB, bCredits)
 
-      const copied = await mergeCreditsIntoAccount(db, uidA, uidB)
+      // The caller (linkGoogle) reads the guest credits before switching auth and passes them in.
+      const copied = await mergeCreditsIntoAccount(db, uidB, aCredits)
       expect(copied).toBe(2) // a2 and a3 are new; a1 is a dup of b1
 
       const bSnap = await getDocs(collection(db, 'users', uidB, 'credits'))
@@ -68,7 +69,7 @@ describe('mergeCreditsIntoAccount', () => {
       expect(titles).toEqual(['AI and the Practice of Law', 'CONFLICTS OF INTEREST', 'Implicit Bias'])
 
       // Re-running the merge must not duplicate anything further.
-      const secondRun = await mergeCreditsIntoAccount(db, uidA, uidB)
+      const secondRun = await mergeCreditsIntoAccount(db, uidB, aCredits)
       expect(secondRun).toBe(0)
       const bSnapAgain = await getDocs(collection(db, 'users', uidB, 'credits'))
       expect(bSnapAgain.docs).toHaveLength(3)

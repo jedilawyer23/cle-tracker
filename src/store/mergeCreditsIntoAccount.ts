@@ -1,30 +1,27 @@
-// ABOUTME: Copies a source uid's credits into a target uid's collection, skipping anything the
-// ABOUTME: target already has (by creditSignature). Pure Firestore I/O — no Google auth needed.
+// ABOUTME: Copies given source credits into a target uid's credits, skipping duplicates (by
+// ABOUTME: creditSignature). Caller reads the source BEFORE any auth switch so rules permit it.
 import { addDoc, collection, getDocs, type Firestore } from 'firebase/firestore'
 import { creditToDoc } from '../firebase/mappers'
 import { creditSignature } from '../domain/creditSignature'
 import type { Credit } from '../domain/types'
 
+// `sourceCredits` must be read by the caller while still authenticated as the source uid —
+// after signInWithCredential switches auth to `toUid`, security rules deny reading the source.
 export async function mergeCreditsIntoAccount(
   db: Firestore,
-  fromUid: string,
   toUid: string,
+  sourceCredits: Credit[],
 ): Promise<number> {
-  const [fromSnap, toSnap] = await Promise.all([
-    getDocs(collection(db, 'users', fromUid, 'credits')),
-    getDocs(collection(db, 'users', toUid, 'credits')),
-  ])
-
+  const toSnap = await getDocs(collection(db, 'users', toUid, 'credits'))
   const existingSignatures = new Set(
     toSnap.docs.map((d) => creditSignature(d.data() as Omit<Credit, 'id'>)),
   )
 
   let copied = 0
-  for (const sourceDoc of fromSnap.docs) {
-    const data = sourceDoc.data() as Omit<Credit, 'id'>
-    const signature = creditSignature(data)
+  for (const credit of sourceCredits) {
+    const signature = creditSignature(credit)
     if (existingSignatures.has(signature)) continue
-    await addDoc(collection(db, 'users', toUid, 'credits'), creditToDoc({ id: sourceDoc.id, ...data }))
+    await addDoc(collection(db, 'users', toUid, 'credits'), creditToDoc(credit))
     existingSignatures.add(signature)
     copied++
   }
