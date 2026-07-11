@@ -33,9 +33,9 @@ describe('resolveLinkOutcome', () => {
     expect(resolveLinkOutcome('auth/cancelled-popup-request'))
       .toEqual({ kind: 'cancelled' })
   })
-  it('treats a blocked popup as a silent cancellation, not an error', () => {
+  it('surfaces a blocked popup as an error so the user gets feedback', () => {
     expect(resolveLinkOutcome('auth/popup-blocked'))
-      .toEqual({ kind: 'cancelled' })
+      .toEqual({ kind: 'error', code: 'auth/popup-blocked' })
   })
 })
 
@@ -48,9 +48,9 @@ describe('messageForOutcome', () => {
     expect(messageForOutcome({ kind: 'use-existing-account' }))
       .toBe('Signed in — your credits were saved to your account.')
   })
-  it('surfaces an error as a retry prompt', () => {
+  it('surfaces an error as a retry prompt, including the code for diagnosis', () => {
     expect(messageForOutcome({ kind: 'error', code: 'auth/network-request-failed' }))
-      .toBe("Couldn't sign in — please try again.")
+      .toBe("Couldn't sign in — please try again. (auth/network-request-failed)")
   })
   it('stays silent when the user cancelled', () => {
     expect(messageForOutcome({ kind: 'cancelled' })).toBeNull()

@@ -131,7 +131,14 @@ function App({
 
   async function handleSignIn() {
     if (!onLinkGoogle) return
-    const outcome = await onLinkGoogle()
+    let outcome: LinkOutcome
+    try {
+      outcome = await onLinkGoogle()
+    } catch {
+      // A rejected link attempt must never be a silent no-op — surface a retry prompt.
+      setSignInMessage("Couldn't sign in — please try again.")
+      return
+    }
     // Optimistic UI flip — for the same-uid linked/already-linked cases the real FirestoreStore
     // also confirms this via its live subscription, but reflecting it immediately keeps the
     // affordance from lagging.

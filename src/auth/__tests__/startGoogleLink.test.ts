@@ -49,6 +49,16 @@ describe('startGoogleLink', () => {
     expect(outcome).toEqual({ kind: 'cancelled' })
   })
 
+  it('surfaces an error outcome when the redirect rejects before navigating (e.g. unauthorized domain)', async () => {
+    const user = { uid: 'guest-uid' } as User
+    const auth = { currentUser: user } as Auth
+    ;(linkWithRedirect as Mock).mockRejectedValue({ code: 'auth/unauthorized-domain' })
+
+    const outcome = await startGoogleLink(auth, db, () => true)
+
+    expect(outcome).toEqual({ kind: 'error', code: 'auth/unauthorized-domain' })
+  })
+
   it('delegates to the existing popup flow on a non-touch device', async () => {
     const user = { uid: 'guest-uid' } as User
     const auth = { currentUser: user } as Auth

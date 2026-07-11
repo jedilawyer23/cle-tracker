@@ -18,7 +18,6 @@ export function resolveLinkOutcome(errorCode: string | null): LinkOutcome {
       return { kind: 'already-linked' }
     case 'auth/popup-closed-by-user':
     case 'auth/cancelled-popup-request':
-    case 'auth/popup-blocked':
       return { kind: 'cancelled' }
     default:
       return { kind: 'error', code: errorCode }
@@ -34,7 +33,9 @@ export function messageForOutcome(outcome: LinkOutcome): string | null {
     case 'use-existing-account':
       return 'Signed in — your credits were saved to your account.'
     case 'error':
-      return "Couldn't sign in — please try again."
+      // The code is surfaced so a failure (e.g. auth/unauthorized-domain from an un-allowlisted
+      // custom domain) is diagnosable on-device instead of a silent no-op.
+      return `Couldn't sign in — please try again. (${outcome.code})`
     case 'cancelled':
       // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
       return null

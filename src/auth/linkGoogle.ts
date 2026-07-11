@@ -78,7 +78,13 @@ export async function startGoogleLink(
   const user = auth.currentUser
   if (!user) return { kind: 'error', code: 'auth/no-current-user' }
   if (prefersRedirect()) {
-    await linkWithRedirect(user, new GoogleAuthProvider())
+    try {
+      await linkWithRedirect(user, new GoogleAuthProvider())
+    } catch (err) {
+      // linkWithRedirect can reject synchronously (e.g. auth/unauthorized-domain) before it ever
+      // navigates — surface that instead of letting it become a silent unhandled rejection.
+      return resolveLinkOutcome((err as { code?: string }).code ?? 'auth/unknown')
+    }
     // The page navigates away before this matters — the real outcome is handled on return by
     // completeRedirectLink.
     return { kind: 'cancelled' }
