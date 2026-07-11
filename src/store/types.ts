@@ -10,6 +10,9 @@ export interface UserProfile {
   accountState: 'guest' | 'linked'
   currentPeriod: Period
   requirementsVersion: string
+  // Set only once a user links Google (see linkGoogle.ts); guests never have one. The M5
+  // reminder sweep reads this via the Admin SDK to decide who has an email to send to.
+  email?: string
 }
 
 export interface Store {
