@@ -4,11 +4,14 @@ import { describe, it, expect, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { useParseFile } from '../useParseFile'
 
-vi.mock('../parseCertificate', () => ({ parseCertificate: vi.fn() }))
+vi.mock('../parseCertificate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../parseCertificate')>()),
+  parseCertificate: vi.fn(), // keep the real NotACleCertificateError class, mock only the call
+}))
 vi.mock('../fileToBase64', () => ({
   fileToBase64: vi.fn(async () => ({ fileBase64: 'QUJD', mimeType: 'application/pdf' })),
 }))
-import { parseCertificate } from '../parseCertificate'
+import { parseCertificate, NotACleCertificateError } from '../parseCertificate'
 
 const parsed = {
   provider: 'PLI', activityTitle: 'AI Law', completionDate: '2026-06-18',
@@ -41,6 +44,15 @@ describe('useParseFile', () => {
     const { result } = renderHook(() => useParseFile(vi.fn(), onError))
     await act(async () => { await result.current.parseFile(file()) })
     expect(onError).toHaveBeenCalledWith(expect.stringMatching(/couldn.?t read|enter.*manually/i))
+    expect(result.current.busy).toBe(false)
+  })
+
+  it('reports a "not a CLE certificate" message when the upload is rejected as such', async () => {
+    ;(parseCertificate as ReturnType<typeof vi.fn>).mockRejectedValue(new NotACleCertificateError())
+    const onError = vi.fn()
+    const { result } = renderHook(() => useParseFile(vi.fn(), onError))
+    await act(async () => { await result.current.parseFile(file()) })
+    expect(onError).toHaveBeenCalledWith(expect.stringMatching(/doesn.?t look like a CLE certificate/i))
     expect(result.current.busy).toBe(false)
   })
 

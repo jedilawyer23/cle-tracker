@@ -8,7 +8,10 @@ import { createFakeStore } from '../store/fakeStore'
 import type { UserProfile } from '../store/types'
 import type { Credit } from '../domain/types'
 
-vi.mock('../parsing/parseCertificate', () => ({ parseCertificate: vi.fn() }))
+vi.mock('../parsing/parseCertificate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../parsing/parseCertificate')>()),
+  parseCertificate: vi.fn(), // keep the real NotACleCertificateError class, mock only the call
+}))
 vi.mock('../parsing/fileToBase64', () => ({
   fileToBase64: vi.fn(async () => ({ fileBase64: 'QUJD', mimeType: 'application/pdf' })),
 }))

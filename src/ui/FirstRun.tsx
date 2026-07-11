@@ -64,7 +64,7 @@ export function FirstRun({
       <div className="sub">
         {mode === 'edit'
           ? 'Update your name to correct your MCLE group.'
-          : "Enter your name and we'll set your California MCLE requirement."}
+          : "Enter your name and we'll look up your California MCLE requirement."}
       </div>
 
       <div className="label">Your name</div>
@@ -102,7 +102,7 @@ export function FirstRun({
       >
         {mode === 'edit' ? 'Save' : 'Continue'}
       </button>
-      {mode === 'setup' && <div className="note">No sign-in needed — save with Google later.</div>}
+      {mode === 'setup' && <div className="note">No sign-in needed — save to your Google account anytime.</div>}
       <Disclaimer />
     </div>
   )

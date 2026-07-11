@@ -7,6 +7,7 @@ import { extractParsedCredit, type MessagesClient } from '../extract'
 const DEFAULT_PARSE_MODEL = 'claude-sonnet-5'
 
 const validJson = JSON.stringify({
+  isCleCertificate: true,
   provider: 'Practising Law Institute',
   activityTitle: 'AI and the Practice of Law',
   completionDate: '2026-06-18',

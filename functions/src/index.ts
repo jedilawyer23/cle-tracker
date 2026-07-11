@@ -29,12 +29,19 @@ export const parseCertificate = onCall(
     }
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
+    let parsed
     try {
-      return await extractParsedCredit(client, { fileBase64, mimeType })
+      parsed = await extractParsedCredit(client, { fileBase64, mimeType })
     } catch (err) {
       // Surface an unreadable/parse failure so the client can fall back to manual entry.
       throw new HttpsError('failed-precondition', 'Could not read this certificate', String(err))
     }
+    // The document parsed, but the model judged it not to be a CLE certificate at all — reject it
+    // with a distinct message (the client maps this to "this doesn't look like a CLE certificate").
+    if (!parsed.isCleCertificate) {
+      throw new HttpsError('failed-precondition', 'NOT_A_CLE_CERTIFICATE')
+    }
+    return parsed
   },
 )
 

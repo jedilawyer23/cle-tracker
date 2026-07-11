@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { validateParsedCredit } from '../parsedCreditSchema'
 
 const valid = {
+  isCleCertificate: true,
   provider: 'Practising Law Institute',
   activityTitle: 'AI and the Practice of Law',
   completionDate: '2026-06-18',
@@ -21,10 +22,16 @@ describe('validateParsedCredit', () => {
     expect(result.provider).toBe('Practising Law Institute')
     expect(result.categoryHours.technology).toBe(1)
     expect(result.confidence.participatory).toBe('low')
+    expect(result.isCleCertificate).toBe(true)
   })
   it('throws when a required field is missing', () => {
     const { totalHours, ...missing } = valid
     expect(() => validateParsedCredit(missing)).toThrow()
+  })
+  it('throws when isCleCertificate is missing or non-boolean', () => {
+    const { isCleCertificate, ...missing } = valid
+    expect(() => validateParsedCredit(missing)).toThrow(/isCleCertificate/)
+    expect(() => validateParsedCredit({ ...valid, isCleCertificate: 'yes' })).toThrow(/isCleCertificate/)
   })
   it('throws on a bad confidence value', () => {
     expect(() => validateParsedCredit({ ...valid, confidence: { ...valid.confidence, provider: 'certain' } })).toThrow()

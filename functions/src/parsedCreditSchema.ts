@@ -17,8 +17,9 @@ function isConf(v: unknown): v is Confidence {
 
 export function validateParsedCredit(input: unknown): ParsedCredit {
   if (!isObj(input)) throw new Error('ParsedCredit: not an object')
-  const { provider, activityTitle, completionDate, totalHours, participatory, categoryHours, confidence } = input
+  const { isCleCertificate, provider, activityTitle, completionDate, totalHours, participatory, categoryHours, confidence } = input
 
+  if (typeof isCleCertificate !== 'boolean') throw new Error('ParsedCredit.isCleCertificate must be a boolean')
   if (typeof provider !== 'string') throw new Error('ParsedCredit.provider must be a string')
   if (typeof activityTitle !== 'string') throw new Error('ParsedCredit.activityTitle must be a string')
   if (typeof completionDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(completionDate))
