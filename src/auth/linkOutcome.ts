@@ -1,5 +1,6 @@
 // ABOUTME: Pure decision for resolving a Google account-link attempt from its error code.
-// ABOUTME: credential-already-in-use => sign into the existing account (no guest-data merge in v1).
+// ABOUTME: credential-already-in-use => sign into the existing account; linkGoogle then merges
+// ABOUTME: the guest session's credits into it (see mergeCreditsIntoAccount).
 export type LinkOutcome =
   | { kind: 'linked' }
   | { kind: 'already-linked' }

@@ -205,6 +205,54 @@ it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
 })
 
+it('on use-existing-account: flips to linked, shows the merged-credits message, and reloads', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onLinkGoogle = vi.fn(async () => ({ kind: 'use-existing-account' as const }))
+  const reload = vi.fn()
+  render(
+    <App
+      store={createFakeStore({ profile })}
+      today="2026-07-10"
+      onLinkGoogle={onLinkGoogle}
+      reload={reload}
+    />,
+  )
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  fireEvent.click(button)
+  await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
+  expect(screen.getByText(/signed in.*credits were saved to your account/i)).toBeInTheDocument()
+  expect(reload).toHaveBeenCalledTimes(1)
+})
+
+it('on linked: flips to linked but does not reload (the live store subscription already reflects it)', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onLinkGoogle = vi.fn(async () => ({ kind: 'linked' as const }))
+  const reload = vi.fn()
+  render(
+    <App
+      store={createFakeStore({ profile })}
+      today="2026-07-10"
+      onLinkGoogle={onLinkGoogle}
+      reload={reload}
+    />,
+  )
+  const button = await screen.findByRole('button', { name: /sign in to save/i })
+  fireEvent.click(button)
+  await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
+  expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
+  expect(reload).not.toHaveBeenCalled()
+})
+
 it('leaves the UI unchanged and shows no message when sign-in is cancelled', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
