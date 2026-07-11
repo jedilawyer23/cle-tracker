@@ -30,7 +30,7 @@ async function boot() {
     await store.ready()
     createRoot(document.getElementById('root')!).render(
       <StrictMode>
-        <App store={store} onLinkGoogle={() => linkGoogle(auth, db)} />
+        <App store={store} onLinkGoogle={() => linkGoogle(auth, db)} photoURL={user.photoURL} />
       </StrictMode>,
     )
   } catch (err) {

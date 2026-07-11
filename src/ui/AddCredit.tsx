@@ -4,6 +4,7 @@ import type { Credit, Period } from '../domain/types'
 import type { UserProfile } from '../store/types'
 import { CreditForm, type FlaggableField } from './CreditForm'
 import { creditToForm, type CreditFormValues } from './creditFormValues'
+import { SignInToSave } from './SignInToSave'
 
 // A parsed certificate draft has every Credit field except id (see
 // ../parsing/parsedCreditToConfirmState). creditToForm ignores id, so a placeholder is safe here.
@@ -18,12 +19,14 @@ interface Props {
   accountState?: UserProfile['accountState']
   onSignIn?: () => void
   signInMessage?: string | null
+  name?: string
+  photoURL?: string | null
   // The user's current compliance period — passed through to CreditForm so it can flag a
   // completion date that falls outside it as belonging to a different reporting cycle.
   currentPeriod?: Period
 }
 
-export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage, currentPeriod }: Props) {
+export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage, name, photoURL, currentPeriod }: Props) {
   const initialValues: CreditFormValues | undefined = initial ? creditToForm({ ...initial, id: '' }) : undefined
   const sub = initial
     ? 'We read the certificate. Review anything flagged below.'
@@ -31,13 +34,9 @@ export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, messag
 
   return (
     <div className="wrap">
-      <div className="topline">
-        <button className="back" onClick={onBack}>‹ Back</button>
-        <div className="sp" />
-        {accountState && accountState !== 'linked' && (
-          <button type="button" className="navbtn" onClick={onSignIn}>Sign in to save</button>
-        )}
-      </div>
+      {accountState
+        ? <SignInToSave accountState={accountState} onSignIn={onSignIn ?? (() => {})} name={name} photoURL={photoURL} onBack={onBack} />
+        : <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>}
       {signInMessage && <div className="note">{signInMessage}</div>}
       <h1 className="h1">Confirm &amp; save</h1>
       <div className="sub">{sub}</div>
