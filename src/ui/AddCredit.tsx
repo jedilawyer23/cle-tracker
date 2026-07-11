@@ -25,13 +25,15 @@ interface Props {
   // The user's current compliance period — passed through to CreditForm so it can flag a
   // completion date that falls outside it as belonging to a different reporting cycle.
   currentPeriod?: Period
+  // Passed through to CreditForm so it can flag a completion date after today.
+  today?: string
   // Lets the user pick a certificate file to parse without leaving this screen — the same parse
   // pipeline re-seeds the page (auto-fills the form on success, or updates the message on failure).
   onUploadFile?: (file: File) => void
   parsing?: boolean
 }
 
-export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage, name, photoURL, currentPeriod, onUploadFile, parsing }: Props) {
+export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage, name, photoURL, currentPeriod, today, onUploadFile, parsing }: Props) {
   const initialValues: CreditFormValues | undefined = initial ? creditToForm({ ...initial, id: '' }) : undefined
   const sub = initial
     ? 'We read the certificate. Review anything flagged below.'
@@ -79,6 +81,7 @@ export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, messag
         initial={initialValues}
         lowConfidenceFields={lowConfidenceFields}
         currentPeriod={currentPeriod}
+        today={today}
         onSave={onSave}
         onCancel={onBack}
       />

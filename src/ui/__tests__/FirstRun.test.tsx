@@ -49,3 +49,25 @@ it('edit mode: prefills the name, shows "Edit name"/Save/Back, and hides the sig
   fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
   expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({ group: 3, name: 'Jane Roe' }))
 })
+
+// Surname derivation can be wrong (unusual name formats, uncommon particles) — a manual
+// override lets the user correct it, and the correction flows through exactly like a derived group.
+it('lets the user override a wrongly-derived group, updating the requirement preview and onContinue', () => {
+  const onContinue = vi.fn()
+  const { container } = render(<FirstRun onContinue={onContinue} today="2026-07-10" />)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  const requirementList = () => { const lists = container.querySelectorAll('.list'); return lists[lists.length - 1] }
+  expect(requirementList()).toHaveTextContent(/Group 2/)
+
+  fireEvent.click(screen.getByRole('button', { name: /not group 2\? change/i }))
+  fireEvent.click(screen.getByRole('button', { name: /^group 1/i }))
+
+  expect(requirementList()).toHaveTextContent(/Group 1/)
+  expect(requirementList()).not.toHaveTextContent(/Group 2/)
+
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  expect(onContinue).toHaveBeenCalledWith(expect.objectContaining({
+    group: 1, name: 'Maya Hoffman',
+    period: { start: '2025-02-01', end: '2028-03-29', reportBy: '2028-03-30' },
+  }))
+})

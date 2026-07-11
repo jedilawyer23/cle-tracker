@@ -22,4 +22,12 @@ describe('deriveGroup', () => {
   it('throws on a name with no letters', () => {
     expect(() => deriveGroup('123')).toThrow()
   })
+
+  // Accented first letters must resolve by their base Latin letter, not fall through the
+  // A-Z filter and pick up the wrong subsequent letter (e.g. "Álvarez" dropping to "Lvarez").
+  it('normalizes accented first letters to their base letter', () => {
+    expect(deriveGroup('Álvarez')).toBe(1)
+    expect(deriveGroup('Éowyn')).toBe(1)
+    expect(deriveGroup('Östergaard')).toBe(3)
+  })
 })

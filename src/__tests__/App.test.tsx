@@ -354,7 +354,9 @@ it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async
     { id: 'cur', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2027-06-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
     { id: 'past', provider: 'PLI', activityTitle: 'Old Ethics Course', completionDate: '2026-01-22', totalHours: 10, participatory: true, categoryHours: { ethics: 10 } },
   ]
-  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" />)
+  // `today` must actually fall inside the stored (second) cycle — App now re-derives and
+  // migrates the current period to whichever cycle contains `today` (see the migration test above).
+  render(<App store={createFakeStore({ profile, credits })} today="2027-06-01" />)
   await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
 
   const pastLink = screen.getByText(/past cycles/i)
@@ -398,6 +400,37 @@ it('opens the edit-name screen from the dashboard gear, prefilled, and saves an 
     admissionDate: '2010-01-01',
     requirementsVersion: '2026-07-10',
   })
+})
+
+it('migrates a stale stored currentPeriod forward to the cycle containing today, on load', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    // Stored during the 2024-2027 cycle, which has since ended — group 2's calendar has a
+    // newer cycle (2027-2030) that actually contains `today` below.
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const store = createFakeStore({ profile })
+  render(<App store={store} today="2027-06-01" />)
+  await waitFor(() => expect(store.getProfile()?.currentPeriod).toEqual(
+    { start: '2027-02-01', end: '2030-03-29', reportBy: '2030-03-30' },
+  ))
+  expect(screen.getByText(/report by.*Mar 30, 2030/i)).toBeInTheDocument()
+})
+
+it('does not rewrite the profile when the stored currentPeriod already contains today', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const store = createFakeStore({ profile })
+  const saveProfile = vi.spyOn(store, 'saveProfile')
+  render(<App store={store} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/Legal Ethics/)).toBeInTheDocument())
+  expect(saveProfile).not.toHaveBeenCalled()
 })
 
 it('returns to the dashboard from the edit-name screen via Back, without saving changes', async () => {

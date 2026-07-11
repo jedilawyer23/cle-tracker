@@ -32,6 +32,22 @@ it('shows the reporting cycle window on the empty dashboard', () => {
   expect(screen.getByText(/hours required.*report by.*Mar 30, 2027/)).toBeInTheDocument()
 })
 
+// A floating-point sum of logged hours (e.g. 1.2 + 2.2) must round for display, not render as
+// "3.4000000000000004 of 25 hours logged".
+it('rounds a floating-point earned total for display', () => {
+  const credits: Credit[] = [
+    { id: 'a', provider: 'CEB', activityTitle: 'A', completionDate: '2026-01-22', totalHours: 1.2, participatory: true, categoryHours: { ethics: 1.2 } },
+    { id: 'b', provider: 'CEB', activityTitle: 'B', completionDate: '2026-01-23', totalHours: 2.2, participatory: true, categoryHours: { ethics: 2.2 } },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText(/3\.4 of 25 hours logged/)).toBeInTheDocument()
+  expect(screen.queryByText(/3\.4000000000000004/)).not.toBeInTheDocument()
+})
+
 it('shows the reporting cycle window on the populated dashboard', () => {
   const credits: Credit[] = [{
     id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
@@ -44,6 +60,22 @@ it('shows the reporting cycle window on the populated dashboard', () => {
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
   expect(screen.getByText(/Reporting cycle:.*Feb 1, 2024.*Mar 29, 2027/)).toBeInTheDocument()
   expect(screen.getByText(/Report by.*Mar 30, 2027.*days left.*4 of 25 hours logged/)).toBeInTheDocument()
+})
+
+// The reporting deadline can pass while a stale period is still displayed (or while the user
+// simply hasn't reported yet) — must clamp at 0, never show "-N days left".
+it('shows an overdue state instead of negative days when the reporting deadline has passed', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2027-04-15"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText(/overdue/i)).toBeInTheDocument()
+  expect(screen.queryByText(/-\d+ days left/)).not.toBeInTheDocument()
 })
 
 it('shows the clekeeper wordmark on both the empty and populated dashboards', () => {

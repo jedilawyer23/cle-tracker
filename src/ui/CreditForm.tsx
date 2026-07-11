@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { Credit, Period } from '../domain/types'
 import {
   type CreditFormValues, emptyCreditForm, formToCredit, validateCreditForm,
-  FORM_CATEGORIES, CATEGORY_LABELS,
+  FORM_CATEGORIES, CATEGORY_LABELS, SUB_MINIMUM_PARENT,
 } from './creditFormValues'
 
 // Field names a certificate parse can flag as low-confidence (mirrors ParsedCredit['confidence']
@@ -19,9 +19,17 @@ interface Props {
   // When supplied, a completion date outside [start, end] shows a non-blocking note — the
   // credit can still be saved, but it won't count toward the current cycle's requirement.
   currentPeriod?: Period
+  // Used to flag (not block) a completion date after today — most likely a typo.
+  today?: string
   onSave: (credit: Omit<Credit, 'id'>) => void
   onCancel?: () => void
 }
+
+// Top-level categories, each optionally followed by its nested sub-minimum ("of which ...").
+const TOP_LEVEL_CATEGORIES = FORM_CATEGORIES.filter(k => !SUB_MINIMUM_PARENT[k as keyof typeof SUB_MINIMUM_PARENT])
+const SUB_MINIMUM_OF_CATEGORY = Object.fromEntries(
+  Object.entries(SUB_MINIMUM_PARENT).map(([child, parent]) => [parent, child]),
+) as Partial<Record<typeof FORM_CATEGORIES[number], typeof FORM_CATEGORIES[number]>>
 
 function LowConfidenceHint({ flagged }: { flagged: boolean }) {
   if (!flagged) return null
@@ -32,12 +40,13 @@ function LowConfidenceHint({ flagged }: { flagged: boolean }) {
   )
 }
 
-export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, onSave, onCancel }: Props) {
+export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, today = new Date().toISOString().slice(0, 10), onSave, onCancel }: Props) {
   const [values, setValues] = useState<CreditFormValues>(initial ?? emptyCreditForm())
   const [errors, setErrors] = useState<Record<string, string>>({})
   const flagged = (field: FlaggableField) => lowConfidenceFields.includes(field)
   const isOutOfCycle = !!currentPeriod && !!values.completionDate
     && (values.completionDate < currentPeriod.start || values.completionDate > currentPeriod.end)
+  const isFutureDate = !!values.completionDate && values.completionDate > today
 
   const set = (patch: Partial<CreditFormValues>) => setValues(v => ({ ...v, ...patch }))
   const setCat = (k: string, val: string) =>
@@ -72,6 +81,11 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
               This certificate is from a different reporting cycle — it won't count toward your current requirement.
             </div>
           )}
+          {isFutureDate && (
+            <div className="note" style={{ color: 'var(--warn)', textAlign: 'left', margin: '2px 0 0', fontSize: 13 }}>
+              This date is in the future — check it's correct.
+            </div>
+          )}
         </div>
         <div className="field">
           <label htmlFor="totalHours">Total hours</label>
@@ -94,13 +108,25 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
       <div className="label">Category hours</div>
       <LowConfidenceHint flagged={flagged('categoryHours')} />
       <div className="list">
-        {FORM_CATEGORIES.map(k => (
-          <div className="field" key={k}>
-            <label htmlFor={`cat-${k}`}>{CATEGORY_LABELS[k]}</label>
-            <input id={`cat-${k}`} inputMode="decimal" value={values.categoryHours[k]}
-              onChange={e => setCat(k, e.target.value)} />
-          </div>
-        ))}
+        {TOP_LEVEL_CATEGORIES.map(k => {
+          const subKey = SUB_MINIMUM_OF_CATEGORY[k]
+          return (
+            <div key={k}>
+              <div className="field">
+                <label htmlFor={`cat-${k}`}>{CATEGORY_LABELS[k]}</label>
+                <input id={`cat-${k}`} inputMode="decimal" value={values.categoryHours[k]}
+                  onChange={e => setCat(k, e.target.value)} />
+              </div>
+              {subKey && (
+                <div className="field sub-field" style={{ marginLeft: 16 }}>
+                  <label htmlFor={`cat-${subKey}`}>of which {CATEGORY_LABELS[subKey]}</label>
+                  <input id={`cat-${subKey}`} inputMode="decimal" value={values.categoryHours[subKey]}
+                    onChange={e => setCat(subKey, e.target.value)} />
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {Object.values(errors).length > 0 && (

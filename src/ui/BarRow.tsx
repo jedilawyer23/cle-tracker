@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { DashboardRow } from './dashboardRows'
 import { hoursToward } from '../domain/creditContribution'
 import { formatDate } from './formatDate'
+import { formatHours } from './formatHours'
 
 const ChevDown = () => (
   <svg className="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -32,7 +33,7 @@ function metaFor(row: DashboardRow): string | undefined {
 // including <sub-minimum>." even after it has contributing credits (e.g. Competence 1/2 with
 // Prevention & Detection still 0/1 shows both the counted credit and this hint).
 function gapHint(row: DashboardRow): string {
-  const hours = hoursLabel(row.remaining)
+  const hours = hoursLabel(formatHours(row.remaining))
   const unmetChild = row.children.find(c => !c.met)
   return unmetChild ? `Still need ${hours}, including ${unmetChild.label}.` : `Still need ${hours}.`
 }
@@ -67,7 +68,7 @@ export function BarRow({ row, expandable, onOpenCredit }: Props) {
           {meta && <div className="rm">{meta}</div>}
         </div>
         <div className="pbar"><i className={fillClass} style={{ width: `${fillPercent(row.earned, row.required)}%` }} /></div>
-        <div className={`ev ${row.met ? 'met' : 'short'}`}>{row.earned}</div>
+        <div className={`ev ${row.met ? 'met' : 'short'}`}>{formatHours(row.earned)}</div>
         <div className="rv">/ {row.required}</div>
         <div className="chkcol">{row.met && <span className="ck">✓</span>}</div>
         <div className="chevcol">{expandable && <ChevDown />}</div>

@@ -7,8 +7,9 @@ FIRST, classify the document strictly. Set isCleCertificate=true ONLY when the d
 - issuance by a legal-education provider, bar association, or law school, naming a legal course/activity.
 Require this positive evidence. If the document lacks CLE credit-hour language and clear continuing-legal-education context — for example a utility bill, invoice, receipt, bank/tax statement, ID, ticket, resume, screenshot, or any non-CLE document — set isCleCertificate=false, EVEN IF it contains dates, names, dollar amounts, logos, or otherwise looks official. Do not assume a document is a CLE certificate just because you are unsure; when the CLE hallmarks are absent, set false. When isCleCertificate=false, return empty strings / zero for the remaining fields.
 Return ONLY the structured fields requested. Use these category keys for categoryHours (hours only, omit a key if zero):
-- ethics, competence, competencePrevention (>=1hr substance-use/mental-health subset of competence),
-- bias, biasImplicit (implicit-bias subset of bias), technology, civility, general (uncategorized hours).
+- ethics, technology, civility, general (uncategorized hours);
+- competence = the total competence hours on the certificate (including any Prevention & Detection hours — do not add them on top); competencePrevention = how many of those competence hours were specifically substance-use/mental-health Prevention & Detection, a subset that must be <= competence;
+- bias = the total Elimination of Bias hours on the certificate (including any Implicit Bias hours — do not add them on top); biasImplicit = how many of those bias hours were specifically Implicit Bias, a subset that must be <= bias.
 completionDate must be an ISO date (YYYY-MM-DD). participatory is true unless the certificate says self-study/on-demand.
 For every field, also report a confidence of "high", "medium", or "low" — use "low" when the certificate is ambiguous or unreadable for that field (participatory is often low). Do not guess silently; low confidence is expected and useful.`
 

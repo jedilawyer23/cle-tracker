@@ -39,6 +39,17 @@ export function FirstRun({
   mode = 'setup',
 }: FirstRunProps) {
   const [name, setName] = useState(initialName)
+  // Surname derivation can be wrong for unusual name formats — lets the user pick their real
+  // group instead. Cleared whenever the name changes, since a stale override could otherwise
+  // silently override a freshly (and correctly) derived group.
+  const [overrideGroup, setOverrideGroup] = useState<Group | null>(null)
+  const [showOverride, setShowOverride] = useState(false)
+
+  const handleNameChange = (value: string) => {
+    setName(value)
+    setOverrideGroup(null)
+    setShowOverride(false)
+  }
 
   const derivedGroup = (() => {
     const token = lastToken(name)
@@ -49,8 +60,9 @@ export function FirstRun({
       return null
     }
   })()
-  const derived = derivedGroup !== null
-    ? { group: derivedGroup, period: resolvePeriod(GROUP_CALENDAR[derivedGroup], today) }
+  const effectiveGroup = overrideGroup ?? derivedGroup
+  const derived = effectiveGroup !== null
+    ? { group: effectiveGroup, period: resolvePeriod(GROUP_CALENDAR[effectiveGroup], today) }
     : null
   const totalRule = REQUIREMENT_RULES.find(r => r.key === 'total')!
 
@@ -74,7 +86,7 @@ export function FirstRun({
           <input
             id="firstrun-name"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={e => handleNameChange(e.target.value)}
           />
         </div>
       </List>
@@ -92,6 +104,27 @@ export function FirstRun({
               trailing={<div className="val">{totalRule.minimumHours} hours</div>}
             />
           </List>
+          {!showOverride ? (
+            <button type="button" className="link" onClick={() => setShowOverride(true)}>
+              Not group {derived.group}? Change
+            </button>
+          ) : (
+            <div className="field" style={{ textAlign: 'left' }}>
+              <div className="m q">Choose your group</div>
+              <div className="chip-row">
+                {([1, 2, 3] as Group[]).map(g => (
+                  <button
+                    key={g}
+                    type="button"
+                    className={`chip${derived.group === g ? ' on' : ''}`}
+                    onClick={() => setOverrideGroup(g)}
+                  >
+                    Group {g} · {LETTER_RANGE[g]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 

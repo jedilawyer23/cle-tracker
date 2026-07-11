@@ -47,6 +47,23 @@ describe('calculateCompliance', () => {
     expect(byKey(r, 'competencePrevention').remaining).toBe(1)
   })
 
+  // "Of which" model: a sub-minimum's hours are a subset of its parent's, so a course that is
+  // entirely Prevention & Detection satisfies both Competence and Prevention & Detection.
+  it('a fully-prevention 1-hr credit counts toward both Competence and Prevention & Detection', () => {
+    const credits = [credit({ totalHours: 1, categoryHours: { competence: 1, competencePrevention: 1 } })]
+    const r = calculateCompliance(REQUIREMENT_RULES, credits)
+    expect(byKey(r, 'competence').earned).toBe(1)
+    expect(byKey(r, 'competencePrevention').earned).toBe(1)
+    expect(byKey(r, 'competencePrevention').met).toBe(true)
+  })
+
+  it('a 2-hr competence course with 1 prevention hour satisfies both requirements', () => {
+    const credits = [credit({ totalHours: 2, categoryHours: { competence: 2, competencePrevention: 1 } })]
+    const r = calculateCompliance(REQUIREMENT_RULES, credits)
+    expect(byKey(r, 'competence').met).toBe(true)
+    expect(byKey(r, 'competencePrevention').met).toBe(true)
+  })
+
   it('is compliant only when every rule is met', () => {
     const credits = [credit({
       totalHours: 25, participatory: true,
