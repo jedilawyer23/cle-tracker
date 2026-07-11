@@ -20,15 +20,20 @@ export interface SignInToSaveProps {
   onBack?: () => void
   /** Shows the leading brand wordmark (dashboard header); ignored on the back-header variant. */
   brand?: boolean
+  /** Shows a settings gear before the account pill; ignored on the back-header variant. */
+  onSettings?: () => void
 }
 
-export function SignInToSave({ accountState, onSignIn, name, photoURL, onBack, brand }: SignInToSaveProps) {
+export function SignInToSave({ accountState, onSignIn, name, photoURL, onBack, brand, onSettings }: SignInToSaveProps) {
   return (
     <div className="topline">
       {onBack
         ? <button className="back" onClick={onBack}>‹ Back</button>
         : brand && <Wordmark />}
       <div className="sp" />
+      {!onBack && onSettings && (
+        <button className="gearbtn" aria-label="Settings" onClick={onSettings}>⚙︎</button>
+      )}
       {accountState === 'linked' ? (
         <span className="whoami">
           {photoURL

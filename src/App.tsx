@@ -20,7 +20,7 @@ import type { Store, UserProfile } from './store/types'
 import type { LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit' | 'past'
+type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -130,6 +130,20 @@ function App({
     setProfile(newProfile)
   }
 
+  async function handleEditName(result: FirstRunResult) {
+    if (!profile) return
+    const next: UserProfile = {
+      ...profile,
+      name: result.name,
+      lastName: lastToken(result.name),
+      group: result.group,
+      currentPeriod: result.period,
+    }
+    await store.saveProfile(next)
+    setProfile(next)
+    setScreen('dashboard')
+  }
+
   async function handleSignIn() {
     if (!onLinkGoogle) return
     const outcome = await onLinkGoogle()
@@ -217,6 +231,18 @@ function App({
     )
   }
 
+  if (screen === 'settings') {
+    return (
+      <FirstRun
+        mode="edit"
+        initialName={profile.name}
+        today={today}
+        onContinue={handleEditName}
+        onBack={() => setScreen('dashboard')}
+      />
+    )
+  }
+
   return (
     <>
       <Dashboard
@@ -235,6 +261,7 @@ function App({
         onOpenCredit={id => { setNotice(null); setSelectedId(id); setScreen('credit') }}
         hasPastCycles={hasPastCycles}
         onOpenPastCycles={() => { setNotice(null); setScreen('past') }}
+        onSettings={() => { setNotice(null); setScreen('settings') }}
       />
       {addSheetOpen && (
         <AddSheet

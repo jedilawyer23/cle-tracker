@@ -25,6 +25,7 @@ export interface DashboardProps {
   onOpenCredit: (id: string) => void
   hasPastCycles?: boolean
   onOpenPastCycles?: () => void
+  onSettings?: () => void
 }
 
 function PastCyclesLink({ hasPastCycles, onOpenPastCycles }: { hasPastCycles?: boolean; onOpenPastCycles?: () => void }) {
@@ -56,7 +57,7 @@ function RequirementsList({ rows, onOpenCredit }: { rows: DashboardRow[]; onOpen
   )
 }
 
-export function Dashboard({ name, photoURL, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
+export function Dashboard({ name, photoURL, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles, onSettings }: DashboardProps) {
   const totalRule = result.progress.find(p => p.key === 'total')!
   // Carry-forward (M1 review, item 1): the headline count and the parent-complete gating both
   // come from buildDashboardRows — the same unified rows that are rendered, so "N requirements
@@ -67,7 +68,7 @@ export function Dashboard({ name, photoURL, group, period, result, credits, toda
   if (credits.length === 0) {
     return (
       <div className="wrap">
-        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
+        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
         {signInMessage && <div className="note">{signInMessage}</div>}
         {notice && <div className="note">{notice}</div>}
         <h1 className="h1">Add your first credit</h1>
@@ -89,7 +90,7 @@ export function Dashboard({ name, photoURL, group, period, result, credits, toda
 
   return (
     <div className="wrap">
-      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
+      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
       {signInMessage && <div className="note">{signInMessage}</div>}
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
