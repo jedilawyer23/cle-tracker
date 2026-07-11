@@ -41,6 +41,22 @@ it('skips first run for a returning session that already has a saved profile', a
   expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument()
 })
 
+it('opens the add-certificate action sheet from the dashboard and closes it on Cancel', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+
+  expect(screen.getByText('Take Photo')).toBeInTheDocument()
+  expect(screen.getByText('Upload PDF or Image')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Enter Manually' })).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.queryByText('Take Photo')).not.toBeInTheDocument()
+})
+
 it('adds a credit from the dashboard via manual entry and reflects it', async () => {
   const store = createFakeStore()
   render(<App store={store} today="2026-07-10" />)
@@ -49,8 +65,8 @@ it('adds a credit from the dashboard via manual entry and reflects it', async ()
   fireEvent.click(screen.getByRole('button', { name: /continue/i }))
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
-  // The Add screen offers upload/capture first; "Enter manually instead" reaches the blank form.
-  fireEvent.click(screen.getByRole('button', { name: /enter manually instead/i }))
+  // The sheet offers Take Photo/Upload first; Enter Manually reaches the blank form.
+  fireEvent.click(screen.getByRole('button', { name: 'Enter Manually' }))
   fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'CEB' } })
   fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 'Conflicts of Interest' } })
   fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
@@ -79,7 +95,7 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
-  const fileInput = screen.getByLabelText(/certificate/i) as HTMLInputElement
+  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
   const file = new File([new Uint8Array([65, 66, 67])], 'cert.pdf', { type: 'application/pdf' })
   fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -100,7 +116,7 @@ it('falls back to a blank Confirm screen with a message when parsing fails', asy
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
-  const fileInput = screen.getByLabelText(/certificate/i) as HTMLInputElement
+  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
   const file = new File([new Uint8Array([65, 66, 67])], 'cert.pdf', { type: 'application/pdf' })
   fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -209,7 +225,7 @@ it('renders "Sign in to save" inside the Confirm screen wrap, next to the back c
   render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
-  fireEvent.click(screen.getByRole('button', { name: /enter manually instead/i }))
+  fireEvent.click(screen.getByRole('button', { name: 'Enter Manually' }))
   const button = await screen.findByRole('button', { name: /sign in to save/i })
   expect(button.closest('.wrap')).not.toBeNull()
   expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
