@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { List } from './List'
 import { Row } from './Row'
 import { Disclaimer } from './Disclaimer'
+import { Wordmark } from './Wordmark'
 import { deriveGroup } from '../domain/deriveGroup'
 import { resolvePeriod } from '../domain/resolvePeriod'
 import { GROUP_CALENDAR, REQUIREMENT_RULES } from '../domain/requirements'
@@ -43,7 +44,7 @@ export function FirstRun({ onContinue, today = new Date().toISOString().slice(0,
 
   return (
     <div className="wrap">
-      <div className="topline"><div className="sp" /></div>
+      <div className="topline"><Wordmark /><div className="sp" /></div>
       <h1 className="h1">Get started</h1>
       <div className="sub">Enter your name and we'll set your California MCLE requirement.</div>
 

@@ -46,6 +46,22 @@ it('shows the reporting cycle window on the populated dashboard', () => {
   expect(screen.getByText(/Report by.*Mar 30, 2027.*days left.*4 of 25 hours logged/)).toBeInTheDocument()
 })
 
+it('shows the clekeeper wordmark on both the empty and populated dashboards', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  for (const list of [[], credits]) {
+    const result = calculateCompliance(REQUIREMENT_RULES, list)
+    const { unmount } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+      result={result} credits={list} today="2026-07-10"
+      accountState="guest" onSignIn={() => {}}
+      onAddCredit={() => {}} onOpenCredit={() => {}} />)
+    expect(document.querySelector('.topline .brand')).toHaveTextContent('clekeeper')
+    unmount()
+  }
+})
+
 it('renders the sign-in affordance as the first child inside the content wrap', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
   const { container } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}

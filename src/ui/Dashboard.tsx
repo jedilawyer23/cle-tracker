@@ -67,7 +67,7 @@ export function Dashboard({ name, photoURL, group, period, result, credits, toda
   if (credits.length === 0) {
     return (
       <div className="wrap">
-        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} />
+        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
         {signInMessage && <div className="note">{signInMessage}</div>}
         {notice && <div className="note">{notice}</div>}
         <h1 className="h1">Add your first credit</h1>
@@ -89,7 +89,7 @@ export function Dashboard({ name, photoURL, group, period, result, credits, toda
 
   return (
     <div className="wrap">
-      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} />
+      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
       {signInMessage && <div className="note">{signInMessage}</div>}
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>

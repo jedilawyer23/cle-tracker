@@ -3,7 +3,7 @@
 :root {
   --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #8E8E93; --faint: #C7C7CC;
   --sep: rgba(60,60,67,.29); --accent: #007AFF; --good: #34C759; --warn: #FF9500;
-  --track: #E9E9EB;
+  --track: #E9E9EB; --tint: rgba(0,122,255,.10);
 }
 body {
   margin: 0; background: var(--bg); color: var(--ink);

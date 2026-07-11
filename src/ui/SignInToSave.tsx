@@ -1,6 +1,7 @@
 // ABOUTME: Top-right account affordance — a "Sign in to save" pill for guests, or a signed-in
 // ABOUTME: "whoami" pill (avatar/photo, name, Google mark) once the account is linked to Google.
 import type { UserProfile } from '../store/types'
+import { Wordmark } from './Wordmark'
 
 function initials(name?: string): string {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
@@ -17,12 +18,16 @@ export interface SignInToSaveProps {
   photoURL?: string | null
   /** Renders a leading "‹ Back" control before the spacer — used by the Confirm screen header. */
   onBack?: () => void
+  /** Shows the leading brand wordmark (dashboard header); ignored on the back-header variant. */
+  brand?: boolean
 }
 
-export function SignInToSave({ accountState, onSignIn, name, photoURL, onBack }: SignInToSaveProps) {
+export function SignInToSave({ accountState, onSignIn, name, photoURL, onBack, brand }: SignInToSaveProps) {
   return (
     <div className="topline">
-      {onBack && <button className="back" onClick={onBack}>‹ Back</button>}
+      {onBack
+        ? <button className="back" onClick={onBack}>‹ Back</button>
+        : brand && <Wordmark />}
       <div className="sp" />
       {accountState === 'linked' ? (
         <span className="whoami">
