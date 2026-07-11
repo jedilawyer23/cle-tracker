@@ -6,7 +6,9 @@ import type { Credit, ComplianceResult, Period, CategoryKey, Group } from '../do
 
 export interface ReportCredit { provider: string; title: string; date: string; hours: number }
 export interface ReportCategory { key: string; label: string; credits: ReportCredit[] }
-export interface ReportRequirement { label: string; earned: number; required: number; met: boolean }
+export interface ReportRequirement { label: string; earned: number; required: number; met: boolean; sub?: boolean }
+// One row of the flat "credits logged this cycle" table.
+export interface ReportCreditRow { title: string; provider: string; date: string; hours: number; participatory: boolean }
 
 export interface ReportContent {
   name: string
@@ -14,10 +16,19 @@ export interface ReportContent {
   period: Period
   generatedOn: string
   verdict: string
+  compliant: boolean
+  metCount: number
+  totalCount: number
   requirements: ReportRequirement[]
   categories: ReportCategory[]
+  credits: ReportCreditRow[]
   disclaimer: string
 }
+
+// Requirement labels whose rule has a parent (sub-minimums) — rendered indented in the report.
+const SUB_LABELS = new Set(
+  REQUIREMENT_RULES.filter(r => r.parent).map(r => r.label),
+)
 
 export interface ReportInput {
   name: string
@@ -46,14 +57,27 @@ export function buildReportContent(input: ReportInput): ReportContent {
     return { key, label: rule.label, credits }
   })
 
+  const creditRows: ReportCreditRow[] = [...input.credits]
+    .sort((a, b) => b.completionDate.localeCompare(a.completionDate))
+    .map(c => ({
+      title: c.activityTitle, provider: c.provider, date: c.completionDate,
+      hours: c.totalHours, participatory: c.participatory,
+    }))
+
   return {
     name: input.name,
     group: input.group,
     period: input.period,
     generatedOn: input.today,
     verdict,
-    requirements: result.progress.map(p => ({ label: p.label, earned: p.earned, required: p.required, met: p.met })),
+    compliant: result.compliant,
+    metCount: result.metCount,
+    totalCount: result.totalCount,
+    requirements: result.progress.map(p => ({
+      label: p.label, earned: p.earned, required: p.required, met: p.met, sub: SUB_LABELS.has(p.label),
+    })),
     categories,
+    credits: creditRows,
     disclaimer: DISCLAIMER_TEXT,
   }
 }
