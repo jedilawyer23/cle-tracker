@@ -67,11 +67,13 @@ describe('linkGoogle', () => {
 
     // NOTE (emulator limitation): GoogleAuthProvider.credentialFromError(err) returns null
     // under the Auth emulator for this synthetic OIDC credential, so linkGoogle cannot
-    // complete the "sign into the pre-existing account" step here — it correctly resolves
-    // the outcome but has no credential to hand signInWithCredential. The resolver decision
-    // itself (verified below) is what the emulator can prove; the actual account-switch via
-    // signInWithCredential is covered by resolveLinkOutcome's unit tests and must be
-    // confirmed against real Google Sign-In in a live manual check.
+    // complete the "sign into the pre-existing account + merge credits" step here — it
+    // correctly resolves the outcome but has no credential to hand signInWithCredential. The
+    // resolver decision itself (verified below) is what the emulator can prove; the
+    // account-switch + merge wiring is covered by linkGoogle.test.ts (mocked firebase/auth +
+    // firebase/firestore + mergeCreditsIntoAccount), the merge logic itself by
+    // mergeCreditsIntoAccount.emulator.test.ts against real Firestore, and the full real-Google
+    // path must be confirmed against real Google Sign-In in a live manual check.
     expect(outcome).toEqual({ kind: 'use-existing-account' })
     // The second visitor's guest profile is left untouched — no accountState flip happened.
     const secondSnap = await getDoc(doc(db, 'users', secondUid))
