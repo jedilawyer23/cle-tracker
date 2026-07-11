@@ -6,11 +6,13 @@ import './index.css'
 import './ui/tokens.css'
 import './ui/components.css'
 import './ui/report.css'
+import { signOut } from 'firebase/auth'
 import App from './App.tsx'
 import { auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
 import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
+import { deleteAccount } from './auth/deleteAccount'
 
 function showBootError() {
   const root = document.getElementById('root')
@@ -42,6 +44,8 @@ async function boot() {
           store={store}
           onLinkGoogle={() => startGoogleLink(auth, db)}
           photoURL={(auth.currentUser ?? user).photoURL}
+          onSignOut={async () => { await signOut(auth); window.location.reload() }}
+          onDeleteAccount={() => deleteAccount(auth, db)}
         />
       </StrictMode>,
     )
