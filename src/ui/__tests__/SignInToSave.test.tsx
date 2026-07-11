@@ -1,5 +1,5 @@
-// ABOUTME: Verifies the Sign-in-to-save affordance shows only for guests and fires onSignIn.
-// ABOUTME: Presentational component test — no store, no Firebase.
+// ABOUTME: Verifies the guest "Sign in to save" pill and the linked "whoami" pill (avatar/photo,
+// ABOUTME: name, Google mark) — and the optional leading back control for the Confirm header.
 import { it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SignInToSave } from '../SignInToSave'
@@ -12,7 +12,39 @@ it('renders for a guest and fires onSignIn on click', () => {
 })
 
 it('renders the topline spacer without a sign-in button once linked', () => {
-  render(<SignInToSave accountState="linked" onSignIn={() => {}} />)
+  render(<SignInToSave accountState="linked" onSignIn={() => {}} name="Maya Hoffman" />)
   expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument()
   expect(document.querySelector('.topline')).toBeInTheDocument()
+})
+
+it('shows the whoami pill with the name and initials avatar once linked, with no photoURL', () => {
+  render(<SignInToSave accountState="linked" onSignIn={() => {}} name="Maya Hoffman" />)
+  expect(screen.getByText('Maya Hoffman')).toBeInTheDocument()
+  const avatar = document.querySelector('.avatar')!
+  expect(avatar.tagName).toBe('SPAN')
+  expect(avatar).toHaveTextContent('MH')
+  expect(document.querySelector('.whoami .g')).toBeInTheDocument()
+})
+
+it('shows a photo avatar once linked when photoURL is given', () => {
+  render(<SignInToSave accountState="linked" onSignIn={() => {}} name="Maya Hoffman" photoURL="https://example.com/p.jpg" />)
+  const avatar = document.querySelector('.avatar')!
+  expect(avatar.tagName).toBe('IMG')
+  expect(avatar).toHaveAttribute('src', 'https://example.com/p.jpg')
+})
+
+it('renders an optional leading back control before the spacer, guest state', () => {
+  const onBack = vi.fn()
+  render(<SignInToSave accountState="guest" onSignIn={() => {}} onBack={onBack} />)
+  const topline = document.querySelector('.topline')!
+  const backBtn = topline.querySelector('.back')!
+  const navBtn = topline.querySelector('.navbtn')!
+  expect(backBtn.compareDocumentPosition(navBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  fireEvent.click(backBtn)
+  expect(onBack).toHaveBeenCalled()
+})
+
+it('omits the back control when onBack is not passed', () => {
+  render(<SignInToSave accountState="guest" onSignIn={() => {}} />)
+  expect(document.querySelector('.back')).not.toBeInTheDocument()
 })

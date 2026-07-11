@@ -1,14 +1,38 @@
-// ABOUTME: Top-right "Sign in to save" affordance shown to guest users only.
-// ABOUTME: Presentational — parent passes accountState and the link handler.
+// ABOUTME: Top-right account affordance — a "Sign in to save" pill for guests, or a signed-in
+// ABOUTME: "whoami" pill (avatar/photo, name, Google mark) once the account is linked to Google.
 import type { UserProfile } from '../store/types'
 
-export function SignInToSave(
-  { accountState, onSignIn }: { accountState: UserProfile['accountState']; onSignIn: () => void },
-) {
+function initials(name?: string): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return ''
+  const first = parts[0]!.charAt(0)
+  const last = parts.length > 1 ? parts[parts.length - 1]!.charAt(0) : ''
+  return (first + last).toUpperCase()
+}
+
+export interface SignInToSaveProps {
+  accountState: UserProfile['accountState']
+  onSignIn: () => void
+  name?: string
+  photoURL?: string | null
+  /** Renders a leading "‹ Back" control before the spacer — used by the Confirm screen header. */
+  onBack?: () => void
+}
+
+export function SignInToSave({ accountState, onSignIn, name, photoURL, onBack }: SignInToSaveProps) {
   return (
     <div className="topline">
+      {onBack && <button className="back" onClick={onBack}>‹ Back</button>}
       <div className="sp" />
-      {accountState !== 'linked' && (
+      {accountState === 'linked' ? (
+        <span className="whoami">
+          {photoURL
+            ? <img className="avatar" src={photoURL} alt="" />
+            : <span className="avatar">{initials(name)}</span>}
+          <span className="nm">{name}</span>
+          <span className="g" aria-hidden="true" />
+        </span>
+      ) : (
         <button type="button" className="navbtn" onClick={onSignIn}>Sign in to save</button>
       )}
     </div>

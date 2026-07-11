@@ -69,6 +69,25 @@ it('renders the signInMessage note inside the wrap', () => {
   expect(screen.getByText('Saved to your Google account.')).toBeInTheDocument()
 })
 
+it('shows the whoami pill (name + avatar) instead of the sign-in button once linked, via the shared SignInToSave header', () => {
+  render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} accountState="linked" onSignIn={vi.fn()}
+      name="Maya Hoffman" photoURL="https://example.com/p.jpg" />,
+  )
+  expect(screen.getByText('Maya Hoffman')).toBeInTheDocument()
+  const avatar = document.querySelector('.avatar')!
+  expect(avatar.tagName).toBe('IMG')
+  expect(avatar).toHaveAttribute('src', 'https://example.com/p.jpg')
+  expect(document.querySelector('.back')).toBeInTheDocument()
+})
+
+it('omits any sign-in affordance when accountState is not passed, keeping just the back control', () => {
+  const { container } = render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} />)
+  expect(container.querySelector('.navbtn')).not.toBeInTheDocument()
+  expect(container.querySelector('.whoami')).not.toBeInTheDocument()
+  expect(container.querySelector('.back')).toBeInTheDocument()
+})
+
 it('warns when the entered date falls outside the passed-through currentPeriod', () => {
   render(
     <AddCredit onSave={vi.fn()} onBack={vi.fn()}
