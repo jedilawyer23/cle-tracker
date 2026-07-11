@@ -26,7 +26,10 @@ export function renderReportPdf(content: ReportContent): jsPDF {
 
   line('Requirements', 13, 18)
   for (const r of content.requirements) {
-    line(`${r.met ? '✓' : '•'} ${r.label}: ${r.earned} / ${r.required}`, 11, 15)
+    // jsPDF's default Helvetica font only covers WinAnsiEncoding — '✓' (U+2713) falls outside
+    // it and renders as a mangled glyph, unlike '•' (U+2022) which WinAnsi does include.
+    // Use an ASCII-safe marker instead of chasing font coverage for one symbol.
+    line(`${r.met ? '[x]' : '[ ]'} ${r.label}: ${r.earned} / ${r.required}`, 11, 15)
   }
   y += 8
 
