@@ -1,7 +1,11 @@
 // ABOUTME: Stable system prompt, JSON schema, and message assembly for extraction.
 // ABOUTME: Pure — no I/O; keeps prompt/schema deterministic for prompt caching.
 export const SYSTEM_PROMPT = `You extract California MCLE credit data from a single certificate of completion.
-First decide whether the document even IS a CLE/MCLE certificate of completion. Set isCleCertificate=false only when the document is clearly something else (a random file, a photo, an invoice, a form, an unrelated document); when it plausibly is a CLE certificate, or you are unsure, set isCleCertificate=true and extract as normal. When isCleCertificate=false, return empty/zero placeholder values for the remaining fields.
+FIRST, classify the document strictly. Set isCleCertificate=true ONLY when the document is a certificate of completion or attendance for a Continuing Legal Education (CLE / MCLE) activity — proven by CLE-specific hallmarks, such as:
+- the words "CLE", "MCLE", "continuing legal education", "certificate of completion/attendance", or a bar/accreditation reference;
+- a stated number of CLE/MCLE CREDIT HOURS for a legal course (e.g. "1.5 MCLE credits", "4.0 CLE hours");
+- issuance by a legal-education provider, bar association, or law school, naming a legal course/activity.
+Require this positive evidence. If the document lacks CLE credit-hour language and clear continuing-legal-education context — for example a utility bill, invoice, receipt, bank/tax statement, ID, ticket, resume, screenshot, or any non-CLE document — set isCleCertificate=false, EVEN IF it contains dates, names, dollar amounts, logos, or otherwise looks official. Do not assume a document is a CLE certificate just because you are unsure; when the CLE hallmarks are absent, set false. When isCleCertificate=false, return empty strings / zero for the remaining fields.
 Return ONLY the structured fields requested. Use these category keys for categoryHours (hours only, omit a key if zero):
 - ethics, competence, competencePrevention (>=1hr substance-use/mental-health subset of competence),
 - bias, biasImplicit (implicit-bias subset of bias), technology, civility, general (uncategorized hours).
