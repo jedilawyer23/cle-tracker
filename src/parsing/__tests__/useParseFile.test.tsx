@@ -6,12 +6,14 @@ import { useParseFile } from '../useParseFile'
 
 vi.mock('../parseCertificate', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../parseCertificate')>()),
-  parseCertificate: vi.fn(), // keep the real NotACleCertificateError class, mock only the call
+  parseCertificate: vi.fn(), // keep the real error classes, mock only the call
 }))
-vi.mock('../fileToBase64', () => ({
+vi.mock('../fileToBase64', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../fileToBase64')>()), // keep the real size cap/check
   fileToBase64: vi.fn(async () => ({ fileBase64: 'QUJD', mimeType: 'application/pdf' })),
 }))
-import { parseCertificate, NotACleCertificateError } from '../parseCertificate'
+import { parseCertificate, NotACleCertificateError, DailyLimitReachedError } from '../parseCertificate'
+import { fileToBase64, MAX_FILE_BYTES } from '../fileToBase64'
 
 const parsed = {
   provider: 'PLI', activityTitle: 'AI Law', completionDate: '2026-06-18',
@@ -53,6 +55,28 @@ describe('useParseFile', () => {
     const { result } = renderHook(() => useParseFile(vi.fn(), onError))
     await act(async () => { await result.current.parseFile(file()) })
     expect(onError).toHaveBeenCalledWith(expect.stringMatching(/doesn.?t look like a CLE certificate/i))
+    expect(result.current.busy).toBe(false)
+  })
+
+  it('reports a "too large" message and skips the network call for an oversized file', async () => {
+    ;(fileToBase64 as ReturnType<typeof vi.fn>).mockClear()
+    ;(parseCertificate as ReturnType<typeof vi.fn>).mockClear()
+    const onError = vi.fn()
+    const { result } = renderHook(() => useParseFile(vi.fn(), onError))
+    const huge = new File([new Uint8Array(MAX_FILE_BYTES + 1)], 'cert.pdf', { type: 'application/pdf' })
+    await act(async () => { await result.current.parseFile(huge) })
+    expect(onError).toHaveBeenCalledWith(expect.stringMatching(/too large/i))
+    expect(fileToBase64).not.toHaveBeenCalled()
+    expect(parseCertificate).not.toHaveBeenCalled()
+    expect(result.current.busy).toBe(false)
+  })
+
+  it('reports a daily-limit message when the quota is exhausted', async () => {
+    ;(parseCertificate as ReturnType<typeof vi.fn>).mockRejectedValue(new DailyLimitReachedError())
+    const onError = vi.fn()
+    const { result } = renderHook(() => useParseFile(vi.fn(), onError))
+    await act(async () => { await result.current.parseFile(file()) })
+    expect(onError).toHaveBeenCalledWith(expect.stringMatching(/limit/i))
     expect(result.current.busy).toBe(false)
   })
 

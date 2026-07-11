@@ -10,6 +10,10 @@ import type { UploadPayload } from './fileToBase64'
 // situation from an unreadable file, and worth a different message to the user.
 export class NotACleCertificateError extends Error {}
 
+// Thrown when the caller has hit their per-day parseCertificate quota (an interim spend guard
+// ahead of App Check — see functions/src/index.ts).
+export class DailyLimitReachedError extends Error {}
+
 const callable = httpsCallable<UploadPayload, ParsedCredit>(functions, 'parseCertificate')
 
 export async function parseCertificate(payload: UploadPayload): Promise<ParsedCredit> {
@@ -19,6 +23,9 @@ export async function parseCertificate(payload: UploadPayload): Promise<ParsedCr
   } catch (err) {
     if ((err as { message?: string }).message === 'NOT_A_CLE_CERTIFICATE') {
       throw new NotACleCertificateError()
+    }
+    if ((err as { message?: string }).message === 'DAILY_LIMIT') {
+      throw new DailyLimitReachedError()
     }
     throw err
   }

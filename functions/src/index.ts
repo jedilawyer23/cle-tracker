@@ -12,13 +12,22 @@ import { firestoreDeps } from './reminders/firestoreDeps.js'
 import { DEFAULT_REMINDER_CONFIG } from './reminders/config.js'
 import { runRuleMonitor } from './ruleMonitor/runRuleMonitor.js'
 import { ruleMonitorDeps } from './ruleMonitor/firestoreDeps.js'
+import { enforceParseQuota } from './parseQuota/enforceParseQuota.js'
+import { parseQuotaDeps } from './parseQuota/firestoreDeps.js'
+import { resolveParseDailyLimit } from './parseQuota/config.js'
 
 initializeApp()
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY')
 
+// Anonymous auth is free and each call hits the paid Claude API, so an auth-only gate leaves
+// this open to a denial-of-wallet attack (unlimited free callers, unbounded spend). These are
+// interim mitigations — a size cap and a per-uid daily quota — cheap to check before ever
+// constructing the Anthropic client. App Check is the real fix and is a tracked follow-up.
+const MAX_FILE_BASE64_CHARS = 9_000_000 // ~6.7 MB raw file, base64-inflated
+
 export const parseCertificate = onCall(
-  { secrets: [ANTHROPIC_API_KEY], memory: '512MiB', timeoutSeconds: 120 },
+  { secrets: [ANTHROPIC_API_KEY], memory: '512MiB', timeoutSeconds: 120, maxInstances: 5 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Sign in required to parse a certificate')
@@ -27,6 +36,12 @@ export const parseCertificate = onCall(
     if (!fileBase64 || !mimeType) {
       throw new HttpsError('invalid-argument', 'fileBase64 and mimeType are required')
     }
+    if (fileBase64.length > MAX_FILE_BASE64_CHARS) {
+      throw new HttpsError('invalid-argument', 'FILE_TOO_LARGE')
+    }
+
+    const today = new Date().toISOString().slice(0, 10)
+    await enforceParseQuota(parseQuotaDeps(), request.auth.uid, today, resolveParseDailyLimit())
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
     try {
