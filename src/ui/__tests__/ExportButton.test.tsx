@@ -1,5 +1,5 @@
 // ABOUTME: Verifies the export button assembles content and hands it to the renderer on click.
-// ABOUTME: Injects onExport as a test seam so no real jsPDF render/download runs in this test.
+// ABOUTME: Injects onExport as a test seam so no real pdfmake render/download runs in this test.
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ExportButton } from '../ExportButton'
 import { calculateCompliance } from '../../domain/complianceCalculator'
