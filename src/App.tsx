@@ -9,6 +9,7 @@ import { Dashboard } from './ui/Dashboard'
 import { AddSheet } from './ui/AddSheet'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
+import { PastCycles } from './ui/PastCycles'
 import { calculateCompliance } from './domain/complianceCalculator'
 import { creditsInPeriod } from './domain/creditsInPeriod'
 import { REQUIREMENT_RULES } from './domain/requirements'
@@ -18,7 +19,7 @@ import type { Store, UserProfile } from './store/types'
 import type { LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit'
+type Screen = 'dashboard' | 'confirm' | 'credit' | 'past'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -96,6 +97,9 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     [credits, profile],
   )
   const result = useMemo(() => calculateCompliance(REQUIREMENT_RULES, scopedCredits), [scopedCredits])
+  // Any credit not counted toward the current period (older/future cycle) is still retained —
+  // the Past Cycles screen is where it becomes visible again.
+  const hasPastCycles = credits.length > scopedCredits.length
 
   async function handleContinue(onboardingResult: FirstRunResult) {
     const newProfile: UserProfile = {
@@ -165,6 +169,18 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     // Credit no longer exists (e.g. removed elsewhere) — fall through to the dashboard.
   }
 
+  if (screen === 'past') {
+    return (
+      <PastCycles
+        group={profile.group}
+        currentPeriod={profile.currentPeriod}
+        credits={credits}
+        onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+        onBack={() => setScreen('dashboard')}
+      />
+    )
+  }
+
   return (
     <>
       <Dashboard
@@ -178,6 +194,8 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
         signInMessage={signInMessage}
         onAddCredit={() => setAddSheetOpen(true)}
         onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+        hasPastCycles={hasPastCycles}
+        onOpenPastCycles={() => setScreen('past')}
       />
       {addSheetOpen && (
         <AddSheet

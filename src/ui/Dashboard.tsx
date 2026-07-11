@@ -20,6 +20,13 @@ export interface DashboardProps {
   signInMessage?: string | null
   onAddCredit: () => void
   onOpenCredit: (id: string) => void
+  hasPastCycles?: boolean
+  onOpenPastCycles?: () => void
+}
+
+function PastCyclesLink({ hasPastCycles, onOpenPastCycles }: { hasPastCycles?: boolean; onOpenPastCycles?: () => void }) {
+  if (!hasPastCycles) return null
+  return <button className="link" onClick={onOpenPastCycles}>Past cycles ›</button>
 }
 
 function hoursLabel(hours: number): string {
@@ -80,7 +87,7 @@ function daysUntil(iso: string, today: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
 }
 
-export function Dashboard({ period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit }: DashboardProps) {
+export function Dashboard({ period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
   const topLevel = result.progress.filter(p => !p.parent)
   const totalRule = result.progress.find(p => p.key === 'total')
 
@@ -101,6 +108,7 @@ export function Dashboard({ period, result, credits, today = new Date().toISOStr
         </List>
 
         <button className="btn" onClick={onAddCredit}>Add a certificate</button>
+        <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
         <div className="note">Upload a certificate and we'll sort it into the right categories. Not legal advice — verify with the State Bar of California.</div>
       </div>
     )
@@ -148,6 +156,7 @@ export function Dashboard({ period, result, credits, today = new Date().toISOStr
       )}
 
       <button className="btn" onClick={onAddCredit}>Add a certificate</button>
+      <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
       <div className="note">Not legal advice — confirm your compliance with the State Bar of California.</div>
     </div>
   )

@@ -230,3 +230,30 @@ it('renders "Sign in to save" inside the Confirm screen wrap, next to the back c
   expect(button.closest('.wrap')).not.toBeNull()
   expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
 })
+
+it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    // Group 2's second calendar cycle is current; the first cycle is now "past".
+    currentPeriod: { start: '2027-02-01', end: '2030-03-29', reportBy: '2030-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'cur', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2027-06-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'past', provider: 'PLI', activityTitle: 'Old Ethics Course', completionDate: '2026-01-22', totalHours: 10, participatory: true, categoryHours: { ethics: 10 } },
+  ]
+  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+
+  const pastLink = screen.getByText(/past cycles/i)
+  fireEvent.click(pastLink)
+
+  expect(await screen.findByText('Past cycles')).toBeInTheDocument()
+  expect(screen.getByText('Old Ethics Course')).toBeInTheDocument()
+  expect(screen.queryByText('Conflicts of Interest')).not.toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('Old Ethics Course'))
+  expect(await screen.findByRole('heading', { name: 'Old Ethics Course' })).toBeInTheDocument()
+  expect(screen.getByText(/PLI/)).toBeInTheDocument()
+})

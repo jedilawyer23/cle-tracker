@@ -1,6 +1,6 @@
 // ABOUTME: Verifies the Dashboard renders derived requirement rows and the deadline, and the
 // ABOUTME: populated Still-needed/Complete lists once credits exist.
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { Dashboard } from '../Dashboard'
 import { calculateCompliance } from '../../domain/complianceCalculator'
 import { REQUIREMENT_RULES } from '../../domain/requirements'
@@ -129,4 +129,58 @@ it('renders Total hours and Participatory as flat rows with no expand control', 
     expect(item.querySelector('.credits')).not.toBeInTheDocument()
     expect(item.querySelector('.row.tap')).not.toBeInTheDocument()
   }
+})
+
+it('hides the Past cycles link by default on both the empty and populated dashboard', () => {
+  const emptyResult = calculateCompliance(REQUIREMENT_RULES, [])
+  const { rerender } = render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={emptyResult} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.queryByText(/past cycles/i)).not.toBeInTheDocument()
+
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const populatedResult = calculateCompliance(REQUIREMENT_RULES, credits)
+  rerender(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={populatedResult} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.queryByText(/past cycles/i)).not.toBeInTheDocument()
+})
+
+it('shows the Past cycles link on the empty dashboard when hasPastCycles is true, and calls onOpenPastCycles', () => {
+  const result = calculateCompliance(REQUIREMENT_RULES, [])
+  const onOpenPastCycles = vi.fn()
+  render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}}
+    hasPastCycles onOpenPastCycles={onOpenPastCycles} />)
+  const link = screen.getByText(/past cycles/i)
+  fireEvent.click(link)
+  expect(onOpenPastCycles).toHaveBeenCalled()
+})
+
+it('shows the Past cycles link on the populated dashboard when hasPastCycles is true', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const onOpenPastCycles = vi.fn()
+  render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}}
+    hasPastCycles onOpenPastCycles={onOpenPastCycles} />)
+  const link = screen.getByText(/past cycles/i)
+  fireEvent.click(link)
+  expect(onOpenPastCycles).toHaveBeenCalled()
 })
