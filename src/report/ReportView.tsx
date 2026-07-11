@@ -52,6 +52,7 @@ export function ReportView({ content, onBack, print = () => window.print() }: Pr
         </div>
 
         <div className="rep-label">Requirements</div>
+        <div className="rep-tablewrap">
         <table className="rep-table">
           <thead>
             <tr>
@@ -77,11 +78,13 @@ export function ReportView({ content, onBack, print = () => window.print() }: Pr
             })}
           </tbody>
         </table>
+        </div>
 
         <div className="rep-label">Credits logged · current cycle</div>
         {content.credits.length === 0 ? (
           <div className="rep-empty">No credits logged in this cycle.</div>
         ) : (
+          <div className="rep-tablewrap">
           <table className="rep-table">
             <thead>
               <tr>
@@ -104,6 +107,7 @@ export function ReportView({ content, onBack, print = () => window.print() }: Pr
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         <div className="rep-foot">{content.disclaimer}&ensp;·&ensp;Generated {formatDate(content.generatedOn)}</div>

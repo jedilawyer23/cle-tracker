@@ -25,7 +25,8 @@
 
 .rep-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6B7075; margin: 0 0 8px; }
 
-.rep-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+.rep-tablewrap { overflow-x: auto; margin-bottom: 22px; }
+.rep-table { width: 100%; border-collapse: collapse; min-width: 460px; }
 .rep-table th { text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #16181C; padding: 7px 9px; }
 .rep-table th.r { text-align: right; }
 .rep-table td { padding: 7px 9px; border-bottom: .5px solid #E4E7EB; font-size: 13px; }
@@ -48,4 +49,5 @@
   body { background: #fff; }
   .report-actions { display: none !important; }
   .report { max-width: none; margin: 0; padding: 0; border-radius: 0; box-shadow: none; }
+  .rep-tablewrap { overflow: visible; }
 }
