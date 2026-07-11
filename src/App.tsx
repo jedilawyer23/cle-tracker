@@ -10,6 +10,8 @@ import { AddSheet } from './ui/AddSheet'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
+import { ReportView } from './report/ReportView'
+import { buildReportContent } from './report/buildReportContent'
 import { calculateCompliance } from './domain/complianceCalculator'
 import { creditsInPeriod } from './domain/creditsInPeriod'
 import { isDuplicateCredit } from './domain/creditSignature'
@@ -20,7 +22,7 @@ import type { Store, UserProfile } from './store/types'
 import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings'
+type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings' | 'report'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -232,12 +234,19 @@ function App({
     )
   }
 
+  if (screen === 'report') {
+    const content = buildReportContent({
+      name: profile.name, group: profile.group, period: profile.currentPeriod,
+      result, credits: scopedCredits, today,
+    })
+    return <ReportView content={content} onBack={() => setScreen('dashboard')} />
+  }
+
   return (
     <>
       <Dashboard
         name={profile.name}
         photoURL={photoURL}
-        group={profile.group}
         period={profile.currentPeriod}
         result={result}
         credits={scopedCredits}
@@ -251,6 +260,7 @@ function App({
         hasPastCycles={hasPastCycles}
         onOpenPastCycles={() => { setNotice(null); setScreen('past') }}
         onSettings={() => { setNotice(null); setScreen('settings') }}
+        onOpenReport={() => { setNotice(null); setScreen('report') }}
       />
       {addSheetOpen && (
         <AddSheet

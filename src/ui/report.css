@@ -1,0 +1,51 @@
+/* ABOUTME: Styles for the printable compliance report — an on-screen document preview plus the */
+/* ABOUTME: @media print rules that produce a clean PDF via the browser's built-in print-to-PDF. */
+
+.report-actions { display: flex; align-items: center; min-height: 44px; max-width: 640px; margin: 0 auto; padding: 12px 16px 0; }
+.report-actions .sp { flex: 1; }
+
+.report {
+  max-width: 640px; margin: 8px auto 48px; padding: 28px 28px 22px;
+  background: #fff; color: #14171C; border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 30px rgba(0,0,0,.06);
+  font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums;
+}
+.rep-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.rep-kicker { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14171C; }
+.rep-kicker-r { color: #6B7075; font-size: 9.5px; }
+.rep-rule { height: 2px; background: #E31937; margin: 7px 0 18px; }
+.rep-name { font-size: 26px; font-weight: 700; margin: 0 0 3px; letter-spacing: -.01em; }
+.rep-sub { color: #6B7075; font-size: 13px; margin-bottom: 18px; }
+
+.rep-banner { background: #16181C; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; break-inside: avoid; }
+.rep-verdict { font-weight: 700; font-size: 17px; letter-spacing: .02em; text-transform: uppercase; }
+.rep-banner.ok .rep-verdict { color: #3CD188; }
+.rep-banner.warn .rep-verdict { color: #FFB020; }
+.rep-stats { color: #C7CBD1; font-size: 12.5px; margin-top: 5px; }
+
+.rep-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6B7075; margin: 0 0 8px; }
+
+.rep-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+.rep-table th { text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #16181C; padding: 7px 9px; }
+.rep-table th.r { text-align: right; }
+.rep-table td { padding: 7px 9px; border-bottom: .5px solid #E4E7EB; font-size: 13px; }
+.rep-table td.r { text-align: right; }
+.rep-table td.muted { color: #6B7075; }
+.rep-table td.warn-t { color: #B25E00; }
+.rep-table tr.sub td { color: #6B7075; font-style: italic; padding-left: 24px; font-size: 12px; }
+.rep-table tr.zebra td { background: #F7F8FA; }
+.rep-table td.status { font-weight: 700; font-size: 12px; }
+.rep-table td.status.met { color: #2FA968; }
+.rep-table td.status.short { color: #B25E00; }
+.rep-table tr { break-inside: avoid; }
+.rep-empty { color: #6B7075; font-style: italic; margin-bottom: 22px; }
+.rep-foot { color: #6B7075; font-size: 11px; border-top: .5px solid #E4E7EB; padding-top: 10px; }
+
+@media print {
+  /* Force the dark banner, zebra rows and header fills to actually print. */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  @page { margin: 14mm; }
+  body { background: #fff; }
+  .report-actions { display: none !important; }
+  .report { max-width: none; margin: 0; padding: 0; border-radius: 0; box-shadow: none; }
+}
