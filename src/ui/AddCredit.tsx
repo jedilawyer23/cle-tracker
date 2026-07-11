@@ -72,6 +72,9 @@ export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, messag
             </>
       )}
       <CreditForm
+        // Remount when the parsed values change (e.g. a re-upload on this screen) so the form
+        // re-initializes from the new draft — CreditForm seeds its state only on mount.
+        key={initialValues ? JSON.stringify(initialValues) : 'manual'}
         submitLabel="Save credit"
         initial={initialValues}
         lowConfidenceFields={lowConfidenceFields}

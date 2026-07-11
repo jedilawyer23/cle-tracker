@@ -64,6 +64,19 @@ it('disables the re-upload control while a file is being read', () => {
   expect(screen.getByRole('button', { name: /reading/i })).toBeDisabled()
 })
 
+it('fills the form when a re-upload parses in place (draft arrives after an error)', () => {
+  const { rerender } = render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} onUploadFile={vi.fn()}
+      message="This doesn't look like a CLE certificate." />,
+  )
+  expect(screen.getByLabelText(/^provider$/i)).toHaveValue('')
+  rerender(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()} onUploadFile={vi.fn()}
+      initial={{ provider: 'PLI', activityTitle: 'AI Law', completionDate: '2026-06-18', totalHours: 1.5, participatory: true, categoryHours: { technology: 1 } }} />,
+  )
+  expect(screen.getByLabelText(/^provider$/i)).toHaveValue('PLI')
+})
+
 it('shows the sign-in button to the right of the back control in the existing topline', () => {
   const onSignIn = vi.fn()
   const { container } = render(
