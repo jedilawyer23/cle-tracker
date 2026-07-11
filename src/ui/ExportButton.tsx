@@ -11,7 +11,7 @@ export function ExportButton({ onExport, ...input }: Props) {
   const handleClick = () => {
     const content = buildReportContent(input)
     if (onExport) { onExport(content); return }
-    renderReportPdf(content).save(`MCLE-report-${content.generatedOn}.pdf`)
+    void renderReportPdf(content, `MCLE-report-${content.generatedOn}.pdf`)
   }
   return (
     <button className="btn" onClick={handleClick}>Export report (PDF)</button>
