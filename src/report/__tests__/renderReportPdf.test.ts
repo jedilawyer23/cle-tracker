@@ -1,10 +1,11 @@
-// ABOUTME: Verifies the renderer hands buildReportDocDefinition's output to pdfmake and downloads it.
-// ABOUTME: Mocks pdfmake's lazy-loaded modules — no real PDF is generated in this test.
+// ABOUTME: Verifies the blob-URL generator hands buildReportDocDefinition's output to pdfmake's
+// ABOUTME: promise-based getBlob() and wraps the result via URL.createObjectURL — no download() call.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReportContent } from '../buildReportContent'
 
-const download = vi.fn()
-const createPdf = vi.fn((_def: Record<string, unknown>) => ({ download }))
+const blob = new Blob(['stub-pdf-bytes'], { type: 'application/pdf' })
+const getBlob = vi.fn(async () => blob)
+const createPdf = vi.fn((_def: Record<string, unknown>) => ({ getBlob }))
 
 vi.mock('pdfmake/build/pdfmake', () => ({
   default: { createPdf, vfs: undefined },
@@ -29,21 +30,23 @@ const content: ReportContent = {
   disclaimer: 'Not legal advice — verify your compliance with the State Bar of California.',
 }
 
-describe('renderReportPdf', () => {
+describe('generateReportBlobUrl', () => {
   beforeEach(() => {
     createPdf.mockClear()
-    download.mockClear()
+    getBlob.mockClear()
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:stub-url')
   })
 
-  it('builds the doc definition, hands it to pdfmake, and downloads the given file name', async () => {
-    const { renderReportPdf } = await import('../renderReportPdf')
-    await renderReportPdf(content, 'x.pdf')
+  it('builds the doc definition, requests a blob from pdfmake, and returns an object URL for it', async () => {
+    const { generateReportBlobUrl } = await import('../renderReportPdf')
+    const url = await generateReportBlobUrl(content)
 
     expect(createPdf).toHaveBeenCalledTimes(1)
     const def = createPdf.mock.calls[0][0]
     expect(Array.isArray(def.content)).toBe(true)
 
-    expect(download).toHaveBeenCalledTimes(1)
-    expect(download).toHaveBeenCalledWith('x.pdf')
+    expect(getBlob).toHaveBeenCalledTimes(1)
+    expect(URL.createObjectURL).toHaveBeenCalledWith(blob)
+    expect(url).toBe('blob:stub-url')
   })
 })
