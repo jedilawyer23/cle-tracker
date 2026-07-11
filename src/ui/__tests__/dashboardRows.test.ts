@@ -29,6 +29,19 @@ describe('buildDashboardRows', () => {
     expect(comp.remaining).toBe(1) // still needs the 1 hr Prevention & Detection sub-minimum
   })
 
+  // "Of which" model: a course entirely made of Prevention & Detection hours shows in the
+  // Competence row's accordion, and the folded child reports the same hours as met.
+  it('shows a fully-prevention credit under the Competence row', () => {
+    const credits = [credit({ id: 'a', totalHours: 1, categoryHours: { competence: 1, competencePrevention: 1 } })]
+    const result = calculateCompliance(REQUIREMENT_RULES, credits)
+    const comp = buildDashboardRows(result, credits).find(r => r.key === 'competence')!
+    expect(comp.credits.map(c => c.id)).toEqual(['a'])
+    expect(comp.earned).toBe(1)
+    const prevention = comp.children.find(c => c.key === 'competencePrevention')!
+    expect(prevention.earned).toBe(1)
+    expect(prevention.met).toBe(true)
+  })
+
   it('lists contributing credits on a met row', () => {
     const credits = [credit({ id: 'a', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } })]
     const result = calculateCompliance(REQUIREMENT_RULES, credits)

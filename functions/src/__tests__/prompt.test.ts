@@ -10,6 +10,15 @@ describe('prompt shaping', () => {
     expect(SYSTEM_PROMPT).toMatch(/high|medium|low/)
   })
 
+  // "Of which" model: competence/bias are the TOTAL hours (including the sub-minimum),
+  // not extra on top of it — the prompt must say so explicitly or the model may double-count.
+  it('system prompt states the sub-minimum "of which" convention for competence and bias', () => {
+    expect(SYSTEM_PROMPT).toMatch(/competence\s*=\s*(the\s+)?total competence hours/i)
+    expect(SYSTEM_PROMPT).toMatch(/subset.*(<=|≤|less than or equal to).*competence/i)
+    expect(SYSTEM_PROMPT).toMatch(/bias\s*=\s*(the\s+)?total.*bias hours/i)
+    expect(SYSTEM_PROMPT).toMatch(/subset.*(<=|≤|less than or equal to).*bias/i)
+  })
+
   it('schema requires the ParsedCredit top-level fields and forbids extras', () => {
     expect(PARSED_CREDIT_SCHEMA.type).toBe('object')
     expect(PARSED_CREDIT_SCHEMA.additionalProperties).toBe(false)

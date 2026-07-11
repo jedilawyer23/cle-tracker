@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { Credit, Period } from '../domain/types'
 import {
   type CreditFormValues, emptyCreditForm, formToCredit, validateCreditForm,
-  FORM_CATEGORIES, CATEGORY_LABELS,
+  FORM_CATEGORIES, CATEGORY_LABELS, SUB_MINIMUM_PARENT,
 } from './creditFormValues'
 
 // Field names a certificate parse can flag as low-confidence (mirrors ParsedCredit['confidence']
@@ -22,6 +22,12 @@ interface Props {
   onSave: (credit: Omit<Credit, 'id'>) => void
   onCancel?: () => void
 }
+
+// Top-level categories, each optionally followed by its nested sub-minimum ("of which ...").
+const TOP_LEVEL_CATEGORIES = FORM_CATEGORIES.filter(k => !SUB_MINIMUM_PARENT[k as keyof typeof SUB_MINIMUM_PARENT])
+const SUB_MINIMUM_OF_CATEGORY = Object.fromEntries(
+  Object.entries(SUB_MINIMUM_PARENT).map(([child, parent]) => [parent, child]),
+) as Partial<Record<typeof FORM_CATEGORIES[number], typeof FORM_CATEGORIES[number]>>
 
 function LowConfidenceHint({ flagged }: { flagged: boolean }) {
   if (!flagged) return null
@@ -94,13 +100,25 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
       <div className="label">Category hours</div>
       <LowConfidenceHint flagged={flagged('categoryHours')} />
       <div className="list">
-        {FORM_CATEGORIES.map(k => (
-          <div className="field" key={k}>
-            <label htmlFor={`cat-${k}`}>{CATEGORY_LABELS[k]}</label>
-            <input id={`cat-${k}`} inputMode="decimal" value={values.categoryHours[k]}
-              onChange={e => setCat(k, e.target.value)} />
-          </div>
-        ))}
+        {TOP_LEVEL_CATEGORIES.map(k => {
+          const subKey = SUB_MINIMUM_OF_CATEGORY[k]
+          return (
+            <div key={k}>
+              <div className="field">
+                <label htmlFor={`cat-${k}`}>{CATEGORY_LABELS[k]}</label>
+                <input id={`cat-${k}`} inputMode="decimal" value={values.categoryHours[k]}
+                  onChange={e => setCat(k, e.target.value)} />
+              </div>
+              {subKey && (
+                <div className="field sub-field" style={{ marginLeft: 16 }}>
+                  <label htmlFor={`cat-${subKey}`}>of which {CATEGORY_LABELS[subKey]}</label>
+                  <input id={`cat-${subKey}`} inputMode="decimal" value={values.categoryHours[subKey]}
+                    onChange={e => setCat(subKey, e.target.value)} />
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {Object.values(errors).length > 0 && (

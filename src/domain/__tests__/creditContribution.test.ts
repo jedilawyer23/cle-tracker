@@ -32,6 +32,15 @@ describe('creditsForRequirement', () => {
     expect(creditsForRequirement('ethics', credits).map(c => c.id)).toEqual(['a'])
     expect(creditsForRequirement('technology', credits).map(c => c.id)).toEqual(['b'])
   })
+
+  // "Of which" model: a credit whose Prevention & Detection hours are a subset of its
+  // Competence hours shows up under Competence's accordion, and reports its sub-minimum hours too.
+  it('a fully-prevention credit shows up under Competence, and reports its own prevention hours', () => {
+    const prevention = credit({ id: 'c', totalHours: 1, categoryHours: { competence: 1, competencePrevention: 1 } })
+    expect(creditsForRequirement('competence', [prevention]).map(c => c.id)).toEqual(['c'])
+    expect(hoursToward('competence', prevention)).toBe(1)
+    expect(hoursToward('competencePrevention', prevention)).toBe(1)
+  })
 })
 
 describe('requirementsForCredit', () => {

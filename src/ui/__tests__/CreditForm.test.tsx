@@ -62,4 +62,43 @@ describe('CreditForm', () => {
     fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2023-01-01' } })
     expect(screen.queryByText(/different reporting cycle/i)).not.toBeInTheDocument()
   })
+
+  // "Of which" model: Prevention & Detection and Implicit Bias are a subset of their parent's
+  // hours, not extra fields — the form nests them under their parent instead of listing them flat.
+  it('nests "of which Prevention & Detection" under Competence, and "of which Implicit Bias" under Elimination of Bias', () => {
+    render(<CreditForm submitLabel="Save credit" onSave={vi.fn()} />)
+    expect(screen.getByLabelText(/^competence$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/of which prevention & detection/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^elimination of bias$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/of which implicit bias/i)).toBeInTheDocument()
+  })
+
+  it('saves a course that is entirely Prevention & Detection hours as a subset of Competence, not extra', () => {
+    const onSave = vi.fn()
+    render(<CreditForm submitLabel="Save credit" onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'State Bar of CA' } })
+    fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 'Attorney Wellness' } })
+    fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
+    fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText(/^competence$/i), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText(/of which prevention & detection/i), { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      totalHours: 1, categoryHours: { competence: 1, competencePrevention: 1 },
+    }))
+  })
+
+  it('rejects a Prevention & Detection sub-hours value that exceeds Competence', () => {
+    const onSave = vi.fn()
+    render(<CreditForm submitLabel="Save credit" onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'p' } })
+    fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 't' } })
+    fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
+    fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText(/^competence$/i), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText(/of which prevention & detection/i), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByText(/prevention & detection hours can't exceed competence hours/i)).toBeInTheDocument()
+  })
 })
