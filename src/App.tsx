@@ -17,7 +17,7 @@ import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import { useParseFile } from './parsing/useParseFile'
 import type { Store, UserProfile } from './store/types'
-import type { LinkOutcome } from './auth/linkOutcome'
+import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
 type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings'
@@ -40,21 +40,6 @@ interface AppProps {
   photoURL?: string | null
   /** Seeds signInMessage — used after a mobile redirect sign-in resolves during boot (main.tsx). */
   initialSignInMessage?: string | null
-}
-
-export function messageForOutcome(outcome: LinkOutcome): string | null {
-  switch (outcome.kind) {
-    case 'linked':
-    case 'already-linked':
-      return 'Saved to your Google account.'
-    case 'use-existing-account':
-      return 'Signed in — your credits were saved to your account.'
-    case 'error':
-      return "Couldn't sign in — please try again."
-    case 'cancelled':
-      // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
-      return null
-  }
 }
 
 function App({

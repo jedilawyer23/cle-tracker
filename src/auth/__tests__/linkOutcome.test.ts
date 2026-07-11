@@ -1,6 +1,7 @@
-// ABOUTME: Tests the pure decision for how to resolve a Google account-link attempt.
+// ABOUTME: Tests the pure decision for how to resolve a Google account-link attempt, and the
+// ABOUTME: user-facing message each outcome maps to.
 import { describe, it, expect } from 'vitest'
-import { resolveLinkOutcome } from '../linkOutcome'
+import { resolveLinkOutcome, messageForOutcome } from '../linkOutcome'
 
 describe('resolveLinkOutcome', () => {
   it('treats a null error code as a successful link', () => {
@@ -35,5 +36,23 @@ describe('resolveLinkOutcome', () => {
   it('treats a blocked popup as a silent cancellation, not an error', () => {
     expect(resolveLinkOutcome('auth/popup-blocked'))
       .toEqual({ kind: 'cancelled' })
+  })
+})
+
+describe('messageForOutcome', () => {
+  it('confirms a successful link', () => {
+    expect(messageForOutcome({ kind: 'linked' })).toBe('Saved to your Google account.')
+    expect(messageForOutcome({ kind: 'already-linked' })).toBe('Saved to your Google account.')
+  })
+  it('confirms the merge into an existing account', () => {
+    expect(messageForOutcome({ kind: 'use-existing-account' }))
+      .toBe('Signed in — your credits were saved to your account.')
+  })
+  it('surfaces an error as a retry prompt', () => {
+    expect(messageForOutcome({ kind: 'error', code: 'auth/network-request-failed' }))
+      .toBe("Couldn't sign in — please try again.")
+  })
+  it('stays silent when the user cancelled', () => {
+    expect(messageForOutcome({ kind: 'cancelled' })).toBeNull()
   })
 })

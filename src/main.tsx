@@ -5,11 +5,12 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './ui/tokens.css'
 import './ui/components.css'
-import App, { messageForOutcome } from './App.tsx'
+import App from './App.tsx'
 import { auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
 import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
+import { messageForOutcome } from './auth/linkOutcome'
 
 function showBootError() {
   const root = document.getElementById('root')

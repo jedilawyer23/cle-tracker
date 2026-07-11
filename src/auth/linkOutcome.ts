@@ -24,3 +24,19 @@ export function resolveLinkOutcome(errorCode: string | null): LinkOutcome {
       return { kind: 'error', code: errorCode }
   }
 }
+
+// The user-facing message each outcome maps to (null = show nothing, e.g. a silent cancel).
+export function messageForOutcome(outcome: LinkOutcome): string | null {
+  switch (outcome.kind) {
+    case 'linked':
+    case 'already-linked':
+      return 'Saved to your Google account.'
+    case 'use-existing-account':
+      return 'Signed in — your credits were saved to your account.'
+    case 'error':
+      return "Couldn't sign in — please try again."
+    case 'cancelled':
+      // Silent — the user closed/blocked the popup themselves; leave the UI unchanged.
+      return null
+  }
+}
