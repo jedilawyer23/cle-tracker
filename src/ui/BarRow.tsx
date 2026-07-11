@@ -33,7 +33,7 @@ function metaFor(row: DashboardRow): string | undefined {
 // including <sub-minimum>." even after it has contributing credits (e.g. Competence 1/2 with
 // Prevention & Detection still 0/1 shows both the counted credit and this hint).
 function gapHint(row: DashboardRow): string {
-  const hours = hoursLabel(row.remaining)
+  const hours = hoursLabel(formatHours(row.remaining))
   const unmetChild = row.children.find(c => !c.met)
   return unmetChild ? `Still need ${hours}, including ${unmetChild.label}.` : `Still need ${hours}.`
 }

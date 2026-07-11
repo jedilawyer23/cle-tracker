@@ -26,6 +26,16 @@ describe('BarRow', () => {
     expect(screen.queryByText('3.4000000000000004')).not.toBeInTheDocument()
   })
 
+  it('rounds a floating-point remaining value in the gap hint to at most 1 decimal', () => {
+    const credits = [{ id: 'a', provider: 'p', activityTitle: 't', completionDate: '2026-01-01', totalHours: 1.2, participatory: true, categoryHours: { civility: 1.2 } }]
+    render(<BarRow row={row({
+      key: 'civility', label: 'Civility', met: false,
+      earned: 1.2, required: 3.6000000000000005, remaining: 2.4000000000000004, credits,
+    })} expandable onOpenCredit={() => {}} />)
+    fireEvent.click(screen.getByText('Civility'))
+    expect(screen.getByText('Still need 2.4 hrs.')).toBeInTheDocument()
+  })
+
   it('shows no check when unmet, and gives a zero-progress row an orange tick fill', () => {
     render(<BarRow row={row({ key: 'civility', label: 'Civility', met: false, remaining: 1, earned: 0, required: 1 })} expandable onOpenCredit={() => {}} />)
     expect(document.querySelector('.chkcol .ck')).not.toBeInTheDocument()
