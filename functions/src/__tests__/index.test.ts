@@ -24,4 +24,11 @@ describe('parseCertificate auth gate', () => {
       parseCertificate.run(authenticatedRequest({})),
     ).rejects.toMatchObject({ code: 'invalid-argument' } satisfies Partial<HttpsError>)
   })
+
+  it('rejects an oversized fileBase64 before the quota check or the API', async () => {
+    const oversized = 'a'.repeat(9_000_001)
+    await expect(
+      parseCertificate.run(authenticatedRequest({ fileBase64: oversized, mimeType: 'application/pdf' })),
+    ).rejects.toMatchObject({ code: 'invalid-argument', message: 'FILE_TOO_LARGE' } satisfies Partial<HttpsError>)
+  })
 })

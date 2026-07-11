@@ -12,7 +12,8 @@ vi.mock('../parsing/parseCertificate', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../parsing/parseCertificate')>()),
   parseCertificate: vi.fn(), // keep the real NotACleCertificateError class, mock only the call
 }))
-vi.mock('../parsing/fileToBase64', () => ({
+vi.mock('../parsing/fileToBase64', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../parsing/fileToBase64')>()), // keep the real size cap/check
   fileToBase64: vi.fn(async () => ({ fileBase64: 'QUJD', mimeType: 'application/pdf' })),
 }))
 import { parseCertificate } from '../parsing/parseCertificate'
