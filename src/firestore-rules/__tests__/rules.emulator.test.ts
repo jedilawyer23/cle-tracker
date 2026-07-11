@@ -77,6 +77,11 @@ describe('firestore.rules', () => {
     )
   })
 
+  it('allows a credit at the totalHours upper boundary', async () => {
+    const db = env.authenticatedContext('carol').firestore()
+    await assertSucceeds(setDoc(doc(db, 'users/carol/credits/c2'), { ...wellFormedCredit, totalHours: 1000 }))
+  })
+
   it('allows removing a credit', async () => {
     const db = env.authenticatedContext('carol').firestore()
     await assertSucceeds(setDoc(doc(db, 'users/carol/credits/c1'), wellFormedCredit))
