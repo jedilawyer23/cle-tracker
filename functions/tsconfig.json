@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
     "target": "ES2022",
     "outDir": "lib",
-    "rootDir": "src",
+    "rootDir": "..",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": { "@domain/*": ["../src/domain/*"] }
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.e2e.test.ts"]
+  "include": ["src", "../src/domain"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.e2e.test.ts", "../src/domain/__tests__"]
 }
