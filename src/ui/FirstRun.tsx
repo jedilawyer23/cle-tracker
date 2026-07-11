@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { List } from './List'
 import { Row } from './Row'
+import { Disclaimer } from './Disclaimer'
 import { deriveGroup } from '../domain/deriveGroup'
 import { resolvePeriod } from '../domain/resolvePeriod'
 import { GROUP_CALENDAR, REQUIREMENT_RULES } from '../domain/requirements'
@@ -82,7 +83,7 @@ export function FirstRun({ onContinue, today = new Date().toISOString().slice(0,
         Continue
       </button>
       <div className="note">No sign-in needed — save with Google later.</div>
-      <div className="note">Not legal advice — verify your compliance with the State Bar of California.</div>
+      <Disclaimer />
     </div>
   )
 }
