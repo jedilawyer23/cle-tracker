@@ -5,6 +5,7 @@ import { SignInToSave } from './SignInToSave'
 import { Disclaimer } from './Disclaimer'
 import { buildDashboardRows, type DashboardRow } from './dashboardRows'
 import { formatDate } from './formatDate'
+import { formatHours } from './formatHours'
 import type { ComplianceResult, Credit, Period } from '../domain/types'
 import type { UserProfile } from '../store/types'
 
@@ -95,7 +96,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
-      <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {earned} of {total} hours logged</div>
+      <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {formatHours(earned)} of {total} hours logged</div>
 
       <div className="label">Requirements</div>
       <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />

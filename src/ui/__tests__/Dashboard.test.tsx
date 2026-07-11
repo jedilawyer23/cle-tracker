@@ -32,6 +32,22 @@ it('shows the reporting cycle window on the empty dashboard', () => {
   expect(screen.getByText(/hours required.*report by.*Mar 30, 2027/)).toBeInTheDocument()
 })
 
+// A floating-point sum of logged hours (e.g. 1.2 + 2.2) must round for display, not render as
+// "3.4000000000000004 of 25 hours logged".
+it('rounds a floating-point earned total for display', () => {
+  const credits: Credit[] = [
+    { id: 'a', provider: 'CEB', activityTitle: 'A', completionDate: '2026-01-22', totalHours: 1.2, participatory: true, categoryHours: { ethics: 1.2 } },
+    { id: 'b', provider: 'CEB', activityTitle: 'B', completionDate: '2026-01-23', totalHours: 2.2, participatory: true, categoryHours: { ethics: 2.2 } },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText(/3\.4 of 25 hours logged/)).toBeInTheDocument()
+  expect(screen.queryByText(/3\.4000000000000004/)).not.toBeInTheDocument()
+})
+
 it('shows the reporting cycle window on the populated dashboard', () => {
   const credits: Credit[] = [{
     id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
