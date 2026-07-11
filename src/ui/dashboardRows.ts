@@ -1,5 +1,5 @@
-// ABOUTME: Pure grouping of a ComplianceResult into Still-needed / Complete dashboard rows.
-// ABOUTME: Folds sub-minimum rules into their parent; attaches each row's contributing credits.
+// ABOUTME: Pure grouping of a ComplianceResult into the dashboard's unified top-level rows, in
+// ABOUTME: REQUIREMENT_RULES order. Folds sub-minimum rules into their parent as `children`.
 import type { Credit, ComplianceResult, RequirementProgress, RequirementRule } from '../domain/types'
 import { creditsForRequirement } from '../domain/creditContribution'
 
@@ -16,13 +16,11 @@ export interface DashboardRow {
 
 // A top-level requirement is complete only if it AND all its child sub-minimums are met
 // (M1 review carry-forward item 1a) — e.g. Competence 2/2 with Prevention & Detection 0/1
-// stays Still needed, surfacing the sub-gap. The headline "N requirements left" count is
-// `stillNeeded.length`, the same visible top-level rows this returns (carry-forward item 1b).
-export function buildDashboardRows(result: ComplianceResult, credits: Credit[]): {
-  stillNeeded: DashboardRow[]
-  complete: DashboardRow[]
-} {
-  const rows: DashboardRow[] = result.progress
+// stays unmet, surfacing the sub-gap. The headline "N requirements left" count is derived by
+// the caller as `rows.filter(r => !r.met).length` — the same visible rows this returns
+// (carry-forward item 1b), now rendered as a single unified list rather than a two-list split.
+export function buildDashboardRows(result: ComplianceResult, credits: Credit[]): DashboardRow[] {
+  return result.progress
     .filter(p => !p.parent)
     .map(p => {
       const children = result.progress.filter(c => c.parent === p.key)
@@ -31,5 +29,4 @@ export function buildDashboardRows(result: ComplianceResult, credits: Credit[]):
       return { key: p.key, label: p.label, met, remaining, earned: p.earned,
         required: p.required, children, credits: creditsForRequirement(p.key, credits) }
     })
-  return { stillNeeded: rows.filter(r => !r.met), complete: rows.filter(r => r.met) }
 }
