@@ -68,6 +68,8 @@ it('renders a native download anchor with a ready object URL once generation res
   const link = await screen.findByRole('link', { name: /export report/i })
   expect(link).toHaveAttribute('href', 'blob:ready-url')
   expect(link).toHaveAttribute('download', 'MCLE-report-2026-07-10.pdf')
+  // Secondary action: tinted, not the filled primary pill.
+  expect(link).toHaveClass('btn', 'tinted')
 })
 
 it('revokes the previous object URL once a newer one is ready after the report input changes', async () => {

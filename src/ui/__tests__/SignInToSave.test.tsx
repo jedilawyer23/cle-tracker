@@ -48,3 +48,18 @@ it('omits the back control when onBack is not passed', () => {
   render(<SignInToSave accountState="guest" onSignIn={() => {}} />)
   expect(document.querySelector('.back')).not.toBeInTheDocument()
 })
+
+it('shows the leading wordmark when brand is set, before the account pill', () => {
+  render(<SignInToSave accountState="guest" onSignIn={() => {}} brand />)
+  const topline = document.querySelector('.topline')!
+  const brand = topline.querySelector('.brand')!
+  const navBtn = topline.querySelector('.navbtn')!
+  expect(brand).toHaveTextContent('clekeeper')
+  expect(brand.compareDocumentPosition(navBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
+
+it('omits the wordmark on the back-header variant even if brand is set', () => {
+  render(<SignInToSave accountState="guest" onSignIn={() => {}} onBack={() => {}} brand />)
+  expect(document.querySelector('.brand')).not.toBeInTheDocument()
+  expect(document.querySelector('.back')).toBeInTheDocument()
+})

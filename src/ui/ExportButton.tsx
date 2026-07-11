@@ -44,17 +44,17 @@ export function ExportButton({ onExport, ...input }: Props) {
 
   if (onExport) {
     return (
-      <button className="btn" onClick={() => onExport(content)}>Export report (PDF)</button>
+      <button className="btn tinted" onClick={() => onExport(content)}>Export report (PDF)</button>
     )
   }
 
   if (!url) {
     return (
-      <button className="btn" disabled>Preparing report…</button>
+      <button className="btn tinted" disabled>Preparing report…</button>
     )
   }
 
   return (
-    <a className="btn" href={url} download={`MCLE-report-${content.generatedOn}.pdf`}>Export report (PDF)</a>
+    <a className="btn tinted" href={url} download={`MCLE-report-${content.generatedOn}.pdf`}>Export report (PDF)</a>
   )
 }
