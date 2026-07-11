@@ -1,10 +1,13 @@
 {
   "name": "cle-tracker-functions",
   "type": "module",
-  "engines": { "node": "20" },
+  "engines": {
+    "node": "20"
+  },
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "deploy": "firebase deploy --only functions"
@@ -15,6 +18,7 @@
     "firebase-functions": "^7.2.5"
   },
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   }
