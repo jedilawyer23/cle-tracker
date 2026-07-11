@@ -15,7 +15,8 @@ import { buildReportContent } from './report/buildReportContent'
 import { calculateCompliance } from './domain/complianceCalculator'
 import { creditsInPeriod } from './domain/creditsInPeriod'
 import { isDuplicateCredit } from './domain/creditSignature'
-import { REQUIREMENT_RULES } from './domain/requirements'
+import { resolvePeriod } from './domain/resolvePeriod'
+import { GROUP_CALENDAR, REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import { useParseFile } from './parsing/useParseFile'
 import type { Store, UserProfile } from './store/types'
@@ -88,6 +89,21 @@ function App({
       unsubscribe()
     }
   }, [store])
+
+  // `currentPeriod` is set once at onboarding and otherwise read verbatim — once its reportBy
+  // passes it goes stale (new credits stop counting, "days left" goes negative). Re-derive the
+  // period containing `today` on every load and migrate the stored profile when it's drifted.
+  useEffect(() => {
+    if (!profile) return
+    const fresh = resolvePeriod(GROUP_CALENDAR[profile.group], today)
+    const { currentPeriod } = profile
+    const stale = fresh.start !== currentPeriod.start || fresh.end !== currentPeriod.end
+      || fresh.reportBy !== currentPeriod.reportBy
+    if (!stale) return
+    const migrated: UserProfile = { ...profile, currentPeriod: fresh }
+    store.saveProfile(migrated)
+    setProfile(migrated)
+  }, [profile, today, store])
 
   // Only credits completed within the user's current compliance period count toward the
   // requirement — older or future-dated credits stay in the store but don't count here.

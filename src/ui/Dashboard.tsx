@@ -39,11 +39,12 @@ function isExpandable(key: DashboardRow['key']): boolean {
 }
 
 // Never pass a date-only ISO string to `new Date()` for a diff — build both dates from
-// their parts so the day count never shifts a day in US timezones.
+// their parts so the day count never shifts a day in US timezones. Clamped at 0 (like
+// ReportView's daysBetween) — once the deadline passes, the overdue state below takes over.
 function daysUntil(iso: string, today: string): number {
   const [ty, tm, td] = today.split('-').map(Number)
   const [y, m, d] = iso.split('-').map(Number)
-  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
+  return Math.max(0, Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000))
 }
 
 function RequirementsList({ rows, onOpenCredit }: { rows: DashboardRow[]; onOpenCredit: (id: string) => void }) {
@@ -94,7 +95,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
-      <div className="submeta">Report by {formatDate(period.reportBy)} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
+      <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {earned} of {total} hours logged</div>
 
       <div className="label">Requirements</div>
       <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
