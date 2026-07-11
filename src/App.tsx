@@ -10,6 +10,8 @@ import { AddSheet } from './ui/AddSheet'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
+import { Settings } from './ui/Settings'
+import { DeleteAccountConfirm } from './ui/DeleteAccountConfirm'
 import { ReportView } from './report/ReportView'
 import { buildReportContent } from './report/buildReportContent'
 import { calculateCompliance } from './domain/complianceCalculator'
@@ -23,7 +25,7 @@ import type { Store, UserProfile } from './store/types'
 import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings' | 'report'
+type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings' | 'editName' | 'deleteAccount' | 'report'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -41,6 +43,10 @@ interface AppProps {
   reload?: () => void
   /** The signed-in Google account's photo, if any — threaded into the signed-in header's avatar. */
   photoURL?: string | null
+  /** Signs out and re-boots a fresh session; defaults to a no-op so tests don't need Firebase. */
+  onSignOut?: () => Promise<void>
+  /** Deletes all account data and the account itself; defaults to a no-op so tests don't need Firebase. */
+  onDeleteAccount?: () => Promise<void>
 }
 
 function App({
@@ -49,6 +55,8 @@ function App({
   onLinkGoogle,
   reload = () => window.location.reload(),
   photoURL,
+  onSignOut = async () => {},
+  onDeleteAccount = async () => {},
 }: AppProps) {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [ready, setReady] = useState(false)
@@ -58,6 +66,8 @@ function App({
   const [signInMessage, setSignInMessage] = useState<string | null>(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const { credits, add, update, remove } = useCredits(store)
   const { busy: parseBusy, parseFile } = useParseFile(
     state => {
@@ -170,6 +180,19 @@ function App({
     }
   }
 
+  async function handleDeleteAccount() {
+    setDeleteBusy(true)
+    setDeleteError(null)
+    try {
+      await onDeleteAccount()
+      // On success the injected onDeleteAccount reloads the page itself (see main.tsx) — there's
+      // nothing left to update here.
+    } catch (err) {
+      setDeleteBusy(false)
+      setDeleteError(err instanceof Error ? err.message : 'Something went wrong — please try again.')
+    }
+  }
+
   if (!ready) {
     return (
       <div className="wrap" aria-busy="true">
@@ -245,12 +268,37 @@ function App({
 
   if (screen === 'settings') {
     return (
+      <Settings
+        accountState={profile.accountState}
+        credits={credits}
+        onBack={() => setScreen('dashboard')}
+        onEditName={() => setScreen('editName')}
+        onSignOut={onSignOut}
+        onDeleteAccount={() => { setDeleteError(null); setScreen('deleteAccount') }}
+      />
+    )
+  }
+
+  if (screen === 'editName') {
+    return (
       <FirstRun
         mode="edit"
         initialName={profile.name}
         today={today}
         onContinue={handleEditName}
-        onBack={() => setScreen('dashboard')}
+        onBack={() => setScreen('settings')}
+      />
+    )
+  }
+
+  if (screen === 'deleteAccount') {
+    return (
+      <DeleteAccountConfirm
+        creditsCount={credits.length}
+        busy={deleteBusy}
+        error={deleteError}
+        onCancel={() => { setDeleteError(null); setScreen('settings') }}
+        onConfirm={handleDeleteAccount}
       />
     )
   }

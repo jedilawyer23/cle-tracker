@@ -372,7 +372,7 @@ it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async
   expect(screen.getByText(/PLI/)).toBeInTheDocument()
 })
 
-it('opens the edit-name screen from the dashboard gear, prefilled, and saves an updated group/period while preserving account state', async () => {
+it('opens the Settings menu from the dashboard gear (not straight to name-edit), and Edit name still works', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: '2010-01-01',
     accountState: 'linked',
@@ -384,6 +384,10 @@ it('opens the edit-name screen from the dashboard gear, prefilled, and saves an 
   await screen.findByText('Maya Hoffman')
 
   fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  expect(await screen.findByText('Settings')).toBeInTheDocument()
+  expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('Edit name'))
   expect(await screen.findByText('Edit name')).toBeInTheDocument()
   expect(screen.getByLabelText(/full name/i)).toHaveValue('Maya Hoffman')
 
@@ -434,7 +438,7 @@ it('does not rewrite the profile when the stored currentPeriod already contains 
   expect(saveProfile).not.toHaveBeenCalled()
 })
 
-it('returns to the dashboard from the edit-name screen via Back, without saving changes', async () => {
+it('returns to the Settings menu from the edit-name screen via Back, without saving changes, and to the dashboard from there', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
     accountState: 'guest',
@@ -446,9 +450,144 @@ it('returns to the dashboard from the edit-name screen via Back, without saving 
   await screen.findByRole('button', { name: /settings/i })
 
   fireEvent.click(screen.getByRole('button', { name: /settings/i }))
-  expect(await screen.findByText('Edit name')).toBeInTheDocument()
+  fireEvent.click(await screen.findByText('Edit name'))
+  expect(await screen.findByLabelText(/full name/i)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: /back/i }))
 
-  await waitFor(() => expect(screen.queryByText('Edit name')).not.toBeInTheDocument())
+  expect(await screen.findByText('Settings')).toBeInTheDocument()
+  expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /back/i }))
+  await waitFor(() => expect(screen.queryByText('Settings')).not.toBeInTheDocument())
   expect(store.getProfile()).toMatchObject({ name: 'Maya Hoffman', group: 2 })
+})
+
+it('Settings: Export builds and downloads a CSV of all logged credits', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+  ]
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:export')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+  const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  fireEvent.click(await screen.findByText('Export my credits'))
+
+  expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
+  expect(clickSpy).toHaveBeenCalledTimes(1)
+})
+
+it('Settings: hides Export when there are no credits yet', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  await screen.findByText('Settings')
+  expect(screen.queryByText('Export my credits')).not.toBeInTheDocument()
+})
+
+it('Settings: Sign out is shown only once linked, and calls onSignOut', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'linked',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onSignOut = vi.fn(async () => {})
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" onSignOut={onSignOut} />)
+  await screen.findByText('Maya Hoffman')
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  fireEvent.click(await screen.findByText('Sign out'))
+  expect(onSignOut).toHaveBeenCalledTimes(1)
+})
+
+it('Settings: Sign out is hidden for a guest — there is no account to sign out of', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  await screen.findByText('Settings')
+  expect(screen.queryByText('Sign out')).not.toBeInTheDocument()
+})
+
+it('Settings: Delete account & data goes to a confirmation screen, and confirming calls onDeleteAccount with a busy state', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+  ]
+  const onDeleteAccount = vi.fn(() => new Promise<void>(() => {})) // never resolves — asserts the busy state
+  render(<App store={createFakeStore({ profile, credits })} today="2026-07-10" onDeleteAccount={onDeleteAccount} />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  fireEvent.click(await screen.findByText('Delete account & data'))
+  expect(await screen.findByText(/permanently deletes your profile and all 1 logged credit/i)).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /delete account/i }))
+  expect(onDeleteAccount).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('button', { name: /deleting/i })).toBeDisabled()
+})
+
+it('Settings: a failed delete surfaces an error instead of failing silently, and re-enables the Delete control', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onDeleteAccount = vi.fn(async () => { throw new Error("Couldn't delete your account — please try again.") })
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" onDeleteAccount={onDeleteAccount} />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  fireEvent.click(await screen.findByText('Delete account & data'))
+  fireEvent.click(screen.getByRole('button', { name: /delete account/i }))
+
+  await screen.findByText(/couldn.?t delete your account/i)
+  expect(screen.getByRole('button', { name: /delete account/i })).not.toBeDisabled()
+})
+
+it('Settings: Cancel from the delete confirmation returns to the Settings menu without deleting', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const onDeleteAccount = vi.fn(async () => {})
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" onDeleteAccount={onDeleteAccount} />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  fireEvent.click(await screen.findByText('Delete account & data'))
+  fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+
+  expect(await screen.findByText('Settings')).toBeInTheDocument()
+  expect(onDeleteAccount).not.toHaveBeenCalled()
 })
