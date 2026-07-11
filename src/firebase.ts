@@ -4,9 +4,15 @@ import { initializeApp } from 'firebase/app'
 import { getFunctions } from 'firebase/functions'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
-import { readFirebaseConfig } from './firebase/config'
+import { readFirebaseConfig, resolveAuthDomain } from './firebase/config'
 
-const firebaseConfig = readFirebaseConfig(import.meta.env)
+const baseConfig = readFirebaseConfig(import.meta.env)
+const firebaseConfig = {
+  ...baseConfig,
+  authDomain: typeof window !== 'undefined'
+    ? resolveAuthDomain(window.location.hostname, baseConfig.authDomain)
+    : baseConfig.authDomain,
+}
 
 export const app = initializeApp(firebaseConfig)
 export const functions = getFunctions(app)
