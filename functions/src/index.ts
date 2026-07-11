@@ -3,12 +3,15 @@
 import { initializeApp } from 'firebase-admin/app'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { logger } from 'firebase-functions/v2'
 import { defineSecret } from 'firebase-functions/params'
 import Anthropic from '@anthropic-ai/sdk'
 import { extractParsedCredit } from './extract.js'
 import { processReminders } from './reminders/processReminders.js'
 import { firestoreDeps } from './reminders/firestoreDeps.js'
 import { DEFAULT_REMINDER_CONFIG } from './reminders/config.js'
+import { runRuleMonitor } from './ruleMonitor/runRuleMonitor.js'
+import { ruleMonitorDeps } from './ruleMonitor/firestoreDeps.js'
 
 initializeApp()
 
@@ -44,5 +47,16 @@ export const sendReminders = onSchedule(
   async () => {
     const today = new Date().toISOString().slice(0, 10)
     await processReminders(firestoreDeps(), today, DEFAULT_REMINDER_CONFIG)
+  },
+)
+
+// Weekly: fingerprint the State Bar's MCLE rule pages and alert a human if any changed, so the
+// app's requirement config is never silently out of date. Detection only — it never edits the
+// rules itself (a scrape must never drive compliance math for a legal tool).
+export const checkMcleRules = onSchedule(
+  { schedule: 'every monday 09:00', timeZone: 'America/Los_Angeles' },
+  async () => {
+    const summary = await runRuleMonitor(ruleMonitorDeps())
+    logger.info('rule-monitor run complete', summary)
   },
 )
