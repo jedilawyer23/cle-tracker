@@ -46,6 +46,11 @@
 .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 .field input { font: inherit; font-size: 17px; font-weight: 400; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none; letter-spacing: -.01em; }
 
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chip { border: .5px solid var(--sep); background: var(--card); color: var(--ink); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 500; }
+.chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chip:active { opacity: .7; }
+
 .toggle { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
 .toggle .t { flex: 1; }
 .switch { width: 51px; height: 31px; border-radius: 999px; background: var(--track); position: relative; flex: none; border: 0; padding: 0; transition: background .2s; }

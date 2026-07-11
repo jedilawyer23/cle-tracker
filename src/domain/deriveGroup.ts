@@ -3,7 +3,10 @@
 import type { Group } from './types'
 
 export function deriveGroup(lastName: string): Group {
-  const letter = lastName.toUpperCase().replace(/[^A-Z]/g, '')[0]
+  // Strip accents to their base Latin letter first — otherwise the A-Z filter below drops the
+  // accented letter entirely and picks up the wrong one (e.g. "Álvarez" falling to "Lvarez").
+  const unaccented = lastName.normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const letter = unaccented.toUpperCase().replace(/[^A-Z]/g, '')[0]
   if (!letter) throw new Error(`Cannot derive group: no letters in "${lastName}"`)
   if (letter <= 'G') return 1
   if (letter <= 'M') return 2
