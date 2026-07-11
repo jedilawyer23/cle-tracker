@@ -1,7 +1,7 @@
 // ABOUTME: Tests extractParsedCredit's orchestration using an injected fake Anthropic client.
 // ABOUTME: No network, no API key — the real API call is isolated behind the MessagesClient seam.
 import { describe, it, expect, vi } from 'vitest'
-import { extractParsedCredit, type MessagesClient } from '../extract'
+import { extractParsedCredit, NotACleCertificateError, type MessagesClient } from '../extract'
 
 // Mirrors the default in extract.ts (PARSE_MODEL = process.env.PARSE_MODEL ?? this value).
 const DEFAULT_PARSE_MODEL = 'claude-sonnet-5'
@@ -29,6 +29,20 @@ function fakeClient(content: Array<{ type: string; text?: string }>): MessagesCl
 }
 
 describe('extractParsedCredit', () => {
+  it('throws NotACleCertificateError for a non-certificate, before validating its empty fields', async () => {
+    // A non-CLE upload comes back flagged false with empty placeholder fields that would otherwise
+    // fail validation — the classification must win so the caller can explain it specifically.
+    const notCert = JSON.stringify({
+      isCleCertificate: false,
+      provider: '', activityTitle: '', completionDate: '', totalHours: 0,
+      participatory: false, categoryHours: {},
+      confidence: { provider: 'low', activityTitle: 'low', completionDate: 'low', totalHours: 'low', participatory: 'low', categoryHours: 'low' },
+    })
+    const client = fakeClient([{ type: 'text', text: notCert }])
+    await expect(extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'image/png' }))
+      .rejects.toBeInstanceOf(NotACleCertificateError)
+  })
+
   it('builds a request, reads the text block, and returns a validated ParsedCredit', async () => {
     const client = fakeClient([{ type: 'text', text: validJson }])
 

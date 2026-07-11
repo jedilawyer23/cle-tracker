@@ -6,7 +6,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
 import { defineSecret } from 'firebase-functions/params'
 import Anthropic from '@anthropic-ai/sdk'
-import { extractParsedCredit } from './extract.js'
+import { extractParsedCredit, NotACleCertificateError } from './extract.js'
 import { processReminders } from './reminders/processReminders.js'
 import { firestoreDeps } from './reminders/firestoreDeps.js'
 import { DEFAULT_REMINDER_CONFIG } from './reminders/config.js'
@@ -29,19 +29,17 @@ export const parseCertificate = onCall(
     }
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
-    let parsed
     try {
-      parsed = await extractParsedCredit(client, { fileBase64, mimeType })
+      return await extractParsedCredit(client, { fileBase64, mimeType })
     } catch (err) {
-      // Surface an unreadable/parse failure so the client can fall back to manual entry.
+      // The model judged the upload not to be a CLE certificate at all — a distinct case the
+      // client maps to "this doesn't look like a CLE certificate" (vs. a generic parse failure).
+      if (err instanceof NotACleCertificateError) {
+        throw new HttpsError('failed-precondition', 'NOT_A_CLE_CERTIFICATE')
+      }
+      // Any other failure is an unreadable/parse error — the client falls back to manual entry.
       throw new HttpsError('failed-precondition', 'Could not read this certificate', String(err))
     }
-    // The document parsed, but the model judged it not to be a CLE certificate at all — reject it
-    // with a distinct message (the client maps this to "this doesn't look like a CLE certificate").
-    if (!parsed.isCleCertificate) {
-      throw new HttpsError('failed-precondition', 'NOT_A_CLE_CERTIFICATE')
-    }
-    return parsed
   },
 )
 

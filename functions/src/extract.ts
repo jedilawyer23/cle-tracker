@@ -5,6 +5,11 @@ import { SYSTEM_PROMPT, PARSED_CREDIT_SCHEMA, buildMessages } from './prompt.js'
 import { validateParsedCredit } from './parsedCreditSchema.js'
 import type { ParsedCredit } from './types.js'
 
+// Thrown when the model judged the upload not to be a CLE certificate. Checked BEFORE field
+// validation, because a non-certificate yields empty placeholder fields that would otherwise fail
+// validation and be reported as a generic "couldn't read" error instead of this specific case.
+export class NotACleCertificateError extends Error {}
+
 // Overridable via env (e.g. for rollout to a different model); defaults to the
 // model this parser's prompt and schema were built against.
 const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-sonnet-5'
@@ -40,5 +45,11 @@ export async function extractParsedCredit(client: MessagesClient, input: Extract
   if (!text || typeof text.text !== 'string') {
     throw new Error('parseCertificate: model returned no text block')
   }
-  return validateParsedCredit(JSON.parse(text.text))
+  const raw = JSON.parse(text.text)
+  // Reject a non-certificate before validating the rest — its placeholder fields are expected to
+  // be empty/invalid, and that must surface as "not a CLE certificate", not "couldn't read".
+  if (raw && typeof raw === 'object' && raw.isCleCertificate === false) {
+    throw new NotACleCertificateError()
+  }
+  return validateParsedCredit(raw)
 }
