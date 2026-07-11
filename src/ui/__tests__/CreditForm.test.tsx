@@ -33,4 +33,33 @@ describe('CreditForm', () => {
     expect(screen.queryByLabelText(/^provider$/i)?.closest('.field')?.textContent)
       .not.toMatch(/couldn.?t read/i)
   })
+
+  const currentPeriod = { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }
+
+  it('warns, without blocking save, when the completion date falls outside the current cycle', () => {
+    const onSave = vi.fn()
+    render(<CreditForm submitLabel="Save credit" onSave={onSave} currentPeriod={currentPeriod} />)
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'CEB' } })
+    fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 'Ethics' } })
+    fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2023-01-01' } })
+    fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '1.5' } })
+    fireEvent.change(screen.getByLabelText(/^legal ethics$/i), { target: { value: '1.5' } })
+
+    expect(screen.getByText(/different reporting cycle/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ completionDate: '2023-01-01' }))
+  })
+
+  it('shows no out-of-cycle warning when the completion date is inside the current cycle', () => {
+    render(<CreditForm submitLabel="Save credit" onSave={vi.fn()} currentPeriod={currentPeriod} />)
+    fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
+    expect(screen.queryByText(/different reporting cycle/i)).not.toBeInTheDocument()
+  })
+
+  it('shows no out-of-cycle warning when no currentPeriod is supplied', () => {
+    render(<CreditForm submitLabel="Save credit" onSave={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2023-01-01' } })
+    expect(screen.queryByText(/different reporting cycle/i)).not.toBeInTheDocument()
+  })
 })

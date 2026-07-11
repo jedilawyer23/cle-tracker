@@ -68,3 +68,12 @@ it('renders the signInMessage note inside the wrap', () => {
   )
   expect(screen.getByText('Saved to your Google account.')).toBeInTheDocument()
 })
+
+it('warns when the entered date falls outside the passed-through currentPeriod', () => {
+  render(
+    <AddCredit onSave={vi.fn()} onBack={vi.fn()}
+      currentPeriod={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }} />,
+  )
+  fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2023-01-01' } })
+  expect(screen.getByText(/different reporting cycle/i)).toBeInTheDocument()
+})

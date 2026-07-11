@@ -1,7 +1,7 @@
 // ABOUTME: Editable MCLE credit form shared by the Add and credit-detail edit flows.
 // ABOUTME: Ports the field/toggle/switch markup from mockups.html #s-add.
 import { useState } from 'react'
-import type { Credit } from '../domain/types'
+import type { Credit, Period } from '../domain/types'
 import {
   type CreditFormValues, emptyCreditForm, formToCredit, validateCreditForm,
   FORM_CATEGORIES, CATEGORY_LABELS,
@@ -16,6 +16,9 @@ interface Props {
   submitLabel: string
   initial?: CreditFormValues
   lowConfidenceFields?: FlaggableField[]
+  // When supplied, a completion date outside [start, end] shows a non-blocking note — the
+  // credit can still be saved, but it won't count toward the current cycle's requirement.
+  currentPeriod?: Period
   onSave: (credit: Omit<Credit, 'id'>) => void
   onCancel?: () => void
 }
@@ -29,10 +32,12 @@ function LowConfidenceHint({ flagged }: { flagged: boolean }) {
   )
 }
 
-export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], onSave, onCancel }: Props) {
+export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, onSave, onCancel }: Props) {
   const [values, setValues] = useState<CreditFormValues>(initial ?? emptyCreditForm())
   const [errors, setErrors] = useState<Record<string, string>>({})
   const flagged = (field: FlaggableField) => lowConfidenceFields.includes(field)
+  const isOutOfCycle = !!currentPeriod && !!values.completionDate
+    && (values.completionDate < currentPeriod.start || values.completionDate > currentPeriod.end)
 
   const set = (patch: Partial<CreditFormValues>) => setValues(v => ({ ...v, ...patch }))
   const setCat = (k: string, val: string) =>
@@ -62,6 +67,11 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], onS
           <label htmlFor="completionDate">Completion date</label>
           <input id="completionDate" type="date" value={values.completionDate} onChange={e => set({ completionDate: e.target.value })} />
           <LowConfidenceHint flagged={flagged('completionDate')} />
+          {isOutOfCycle && (
+            <div className="note" style={{ textAlign: 'left', margin: '2px 0 0', fontSize: 13 }}>
+              This certificate is from a different reporting cycle — it won't count toward your current requirement.
+            </div>
+          )}
         </div>
         <div className="field">
           <label htmlFor="totalHours">Total hours</label>
