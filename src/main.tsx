@@ -5,11 +5,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './ui/tokens.css'
 import './ui/components.css'
-import App from './App.tsx'
+import App, { messageForOutcome } from './App.tsx'
 import { auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
-import { linkGoogle } from './auth/linkGoogle'
+import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
 
 function showBootError() {
   const root = document.getElementById('root')
@@ -26,11 +26,20 @@ function showBootError() {
 async function boot() {
   try {
     const user = await ensureAnonymousUser(auth)
-    const store = new FirestoreStore(db, user.uid)
+    // Resolve a pending mobile redirect sign-in (if any) BEFORE creating the store, so a
+    // use-existing-account uid switch is already applied to auth.currentUser below.
+    const redirectOutcome = await completeRedirectLink(auth, db)
+    const uid = auth.currentUser?.uid ?? user.uid
+    const store = new FirestoreStore(db, uid)
     await store.ready()
     createRoot(document.getElementById('root')!).render(
       <StrictMode>
-        <App store={store} onLinkGoogle={() => linkGoogle(auth, db)} photoURL={user.photoURL} />
+        <App
+          store={store}
+          onLinkGoogle={() => startGoogleLink(auth, db)}
+          photoURL={(auth.currentUser ?? user).photoURL}
+          initialSignInMessage={redirectOutcome ? messageForOutcome(redirectOutcome) : null}
+        />
       </StrictMode>,
     )
   } catch (err) {
