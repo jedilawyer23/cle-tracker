@@ -7,12 +7,14 @@
     <title>CLE Tracker</title>
     <style>
       body { margin: 0; background: #F2F2F7; }
-      #boot { min-height: 100vh; display: grid; place-items: center; color: #8E8E93;
-        font: 17px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+      #boot { min-height: 100vh; display: grid; place-items: center; }
+      #boot::after { content: ""; width: 28px; height: 28px; border-radius: 50%;
+        border: 3px solid #D1D1D6; border-top-color: #007AFF; animation: spin .8s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
-    <div id="root"><div id="boot">Loading…</div></div>
+    <div id="root"><div id="boot"></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

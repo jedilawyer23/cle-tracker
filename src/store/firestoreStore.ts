@@ -27,17 +27,20 @@ export class FirestoreStore implements Store {
     this.readyPromise = new Promise((resolve) => { markReady = resolve })
     const settle = () => { if (profileLoaded && creditsLoaded) markReady() }
 
+    // On error (e.g. a transient permission failure while the auth token refreshes right after a
+    // redirect sign-in) still mark the stream loaded so ready() resolves — otherwise boot's loading
+    // state would hang forever instead of showing the app.
     this.unsubs.push(
       onSnapshot(doc(db, 'users', uid), (snap) => {
         this.profile = snap.exists() ? docToProfile(snap.data()) : null
         profileLoaded = true
         this.emit(); settle()
-      }),
+      }, () => { profileLoaded = true; settle() }),
       onSnapshot(collection(db, 'users', uid, 'credits'), (snap) => {
         this.credits = snap.docs.map((d) => docToCredit(d.id, d.data()))
         creditsLoaded = true
         this.emit(); settle()
-      }),
+      }, () => { creditsLoaded = true; settle() }),
     )
   }
 

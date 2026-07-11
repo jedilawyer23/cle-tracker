@@ -38,8 +38,6 @@ interface AppProps {
   reload?: () => void
   /** The signed-in Google account's photo, if any — threaded into the signed-in header's avatar. */
   photoURL?: string | null
-  /** Seeds signInMessage — used after a mobile redirect sign-in resolves during boot (main.tsx). */
-  initialSignInMessage?: string | null
 }
 
 function App({
@@ -48,14 +46,13 @@ function App({
   onLinkGoogle,
   reload = () => window.location.reload(),
   photoURL,
-  initialSignInMessage,
 }: AppProps) {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [ready, setReady] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confirmSeed, setConfirmSeed] = useState<ConfirmSeed | null>(null)
-  const [signInMessage, setSignInMessage] = useState<string | null>(initialSignInMessage ?? null)
+  const [signInMessage, setSignInMessage] = useState<string | null>(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const { credits, add, update, remove } = useCredits(store)

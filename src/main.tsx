@@ -10,7 +10,6 @@ import { auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
 import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
-import { messageForOutcome } from './auth/linkOutcome'
 
 function showBootError() {
   const root = document.getElementById('root')
@@ -27,22 +26,27 @@ function showBootError() {
 async function boot() {
   try {
     const user = await ensureAnonymousUser(auth)
-    // Resolve a pending mobile redirect sign-in (if any) BEFORE creating the store, so a
-    // use-existing-account uid switch is already applied to auth.currentUser below.
-    const redirectOutcome = await completeRedirectLink(auth, db)
     const uid = auth.currentUser?.uid ?? user.uid
     const store = new FirestoreStore(db, uid)
-    await store.ready()
+    // Paint immediately — App shows its own loading state until the store settles. We deliberately
+    // do NOT await the store or the redirect resolution here: on a mobile redirect return, blocking
+    // boot on getRedirectResult and its follow-up Firestore write can stall the page on a blank
+    // screen until the user manually refreshes.
     createRoot(document.getElementById('root')!).render(
       <StrictMode>
         <App
           store={store}
           onLinkGoogle={() => startGoogleLink(auth, db)}
           photoURL={(auth.currentUser ?? user).photoURL}
-          initialSignInMessage={redirectOutcome ? messageForOutcome(redirectOutcome) : null}
         />
       </StrictMode>,
     )
+    // Finalize a pending redirect sign-in after first paint. A successful link flips accountState
+    // via the store's live subscription; a use-existing-account switches uid out from under the
+    // store bound above, so a fresh boot on the new uid is needed.
+    completeRedirectLink(auth, db)
+      .then((outcome) => { if (outcome?.kind === 'use-existing-account') window.location.reload() })
+      .catch((err) => { console.error('Redirect sign-in failed:', err) })
   } catch (err) {
     console.error('Boot failed:', err)
     showBootError()
