@@ -194,6 +194,7 @@ function App({
         name={profile.name}
         photoURL={photoURL}
         currentPeriod={profile.currentPeriod}
+        today={today}
         onUploadFile={parseFile}
         parsing={parseBusy}
         onSave={c => {

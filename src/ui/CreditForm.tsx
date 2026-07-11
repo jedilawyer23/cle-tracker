@@ -19,6 +19,8 @@ interface Props {
   // When supplied, a completion date outside [start, end] shows a non-blocking note — the
   // credit can still be saved, but it won't count toward the current cycle's requirement.
   currentPeriod?: Period
+  // Used to flag (not block) a completion date after today — most likely a typo.
+  today?: string
   onSave: (credit: Omit<Credit, 'id'>) => void
   onCancel?: () => void
 }
@@ -38,12 +40,13 @@ function LowConfidenceHint({ flagged }: { flagged: boolean }) {
   )
 }
 
-export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, onSave, onCancel }: Props) {
+export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, today = new Date().toISOString().slice(0, 10), onSave, onCancel }: Props) {
   const [values, setValues] = useState<CreditFormValues>(initial ?? emptyCreditForm())
   const [errors, setErrors] = useState<Record<string, string>>({})
   const flagged = (field: FlaggableField) => lowConfidenceFields.includes(field)
   const isOutOfCycle = !!currentPeriod && !!values.completionDate
     && (values.completionDate < currentPeriod.start || values.completionDate > currentPeriod.end)
+  const isFutureDate = !!values.completionDate && values.completionDate > today
 
   const set = (patch: Partial<CreditFormValues>) => setValues(v => ({ ...v, ...patch }))
   const setCat = (k: string, val: string) =>
@@ -76,6 +79,11 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
           {isOutOfCycle && (
             <div className="note" style={{ textAlign: 'left', margin: '2px 0 0', fontSize: 13 }}>
               This certificate is from a different reporting cycle — it won't count toward your current requirement.
+            </div>
+          )}
+          {isFutureDate && (
+            <div className="note" style={{ color: 'var(--warn)', textAlign: 'left', margin: '2px 0 0', fontSize: 13 }}>
+              This date is in the future — check it's correct.
             </div>
           )}
         </div>

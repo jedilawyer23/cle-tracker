@@ -134,3 +134,9 @@ it('warns when the entered date falls outside the passed-through currentPeriod',
   fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2023-01-01' } })
   expect(screen.getByText(/different reporting cycle/i)).toBeInTheDocument()
 })
+
+it('warns when the entered date is after the passed-through today', () => {
+  render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} today="2026-07-10" />)
+  fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-08-01' } })
+  expect(screen.getByText(/this date is in the future/i)).toBeInTheDocument()
+})
