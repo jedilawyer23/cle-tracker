@@ -1,23 +1,24 @@
 // ABOUTME: Root application component — first-run onboarding (persisted to the injected async
-// ABOUTME: Store), the populated dashboard, Add-certificate -> Confirm-and-save, credit detail,
-// ABOUTME: and Google account linking via Sign-in-to-save. Backed by any async Store (FirestoreStore
-// ABOUTME: in production, the in-memory fake Store in tests).
+// ABOUTME: Store), the populated dashboard with its Add-certificate action sheet, Confirm-and-save,
+// ABOUTME: credit detail, and Google account linking via Sign-in-to-save. Backed by any async Store
+// ABOUTME: (FirestoreStore in production, the in-memory fake Store in tests).
 import { useEffect, useMemo, useState } from 'react'
 import { FirstRun, type FirstRunResult } from './ui/FirstRun'
 import { lastToken } from './ui/lastToken'
 import { Dashboard } from './ui/Dashboard'
-import { AddCertificate } from './ui/AddCertificate'
+import { AddSheet } from './ui/AddSheet'
 import { AddCredit } from './ui/AddCredit'
 import { CreditDetail } from './ui/CreditDetail'
 import { calculateCompliance } from './domain/complianceCalculator'
 import { creditsInPeriod } from './domain/creditsInPeriod'
 import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
+import { useParseFile } from './parsing/useParseFile'
 import type { Store, UserProfile } from './store/types'
 import type { LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'add' | 'confirm' | 'credit'
+type Screen = 'dashboard' | 'confirm' | 'credit'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -55,7 +56,20 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confirmSeed, setConfirmSeed] = useState<ConfirmSeed | null>(null)
   const [signInMessage, setSignInMessage] = useState<string | null>(null)
+  const [addSheetOpen, setAddSheetOpen] = useState(false)
   const { credits, add, update, remove } = useCredits(store)
+  const { busy: parseBusy, parseFile } = useParseFile(
+    state => {
+      setConfirmSeed({ draft: state.draft, lowConfidenceFields: state.lowConfidenceFields })
+      setAddSheetOpen(false)
+      setScreen('confirm')
+    },
+    message => {
+      setConfirmSeed({ message })
+      setAddSheetOpen(false)
+      setScreen('confirm')
+    },
+  )
 
   // Boot: wait for the store's initial load, then track its profile live (covers both the
   // first-run write below and any external change, e.g. Firestore's onSnapshot after linking).
@@ -121,16 +135,6 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
     return <FirstRun onContinue={handleContinue} today={today} />
   }
 
-  if (screen === 'add') {
-    return (
-      <AddCertificate
-        onParsed={state => { setConfirmSeed({ draft: state.draft, lowConfidenceFields: state.lowConfidenceFields }); setScreen('confirm') }}
-        onManual={message => { setConfirmSeed({ message }); setScreen('confirm') }}
-        onBack={() => setScreen('dashboard')}
-      />
-    )
-  }
-
   if (screen === 'confirm') {
     return (
       <AddCredit
@@ -162,18 +166,28 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   }
 
   return (
-    <Dashboard
-      group={profile.group}
-      period={profile.currentPeriod}
-      result={result}
-      credits={scopedCredits}
-      today={today}
-      accountState={profile.accountState}
-      onSignIn={handleSignIn}
-      signInMessage={signInMessage}
-      onAddCredit={() => setScreen('add')}
-      onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
-    />
+    <>
+      <Dashboard
+        group={profile.group}
+        period={profile.currentPeriod}
+        result={result}
+        credits={scopedCredits}
+        today={today}
+        accountState={profile.accountState}
+        onSignIn={handleSignIn}
+        signInMessage={signInMessage}
+        onAddCredit={() => setAddSheetOpen(true)}
+        onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+      />
+      {addSheetOpen && (
+        <AddSheet
+          busy={parseBusy}
+          onFile={parseFile}
+          onManual={() => { setConfirmSeed(null); setAddSheetOpen(false); setScreen('confirm') }}
+          onCancel={() => setAddSheetOpen(false)}
+        />
+      )}
+    </>
   )
 }
 
