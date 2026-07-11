@@ -4,12 +4,15 @@ import { List } from './List'
 import { Row } from './Row'
 import { CategoryRow } from './CategoryRow'
 import { SignInToSave } from './SignInToSave'
+import { Disclaimer } from './Disclaimer'
+import { ExportButton } from './ExportButton'
 import { buildDashboardRows, type DashboardRow } from './dashboardRows'
 import { formatDate } from './formatDate'
 import type { ComplianceResult, Credit, Group, Period, RequirementProgress } from '../domain/types'
 import type { UserProfile } from '../store/types'
 
 export interface DashboardProps {
+  name: string
   group: Group
   period: Period
   result: ComplianceResult
@@ -87,7 +90,7 @@ function daysUntil(iso: string, today: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
 }
 
-export function Dashboard({ period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
+export function Dashboard({ name, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
   const topLevel = result.progress.filter(p => !p.parent)
   const totalRule = result.progress.find(p => p.key === 'total')
 
@@ -156,8 +159,9 @@ export function Dashboard({ period, result, credits, today = new Date().toISOStr
       )}
 
       <button className="btn" onClick={onAddCredit}>Add a certificate</button>
+      <ExportButton name={name} group={group} period={period} result={result} credits={credits} today={today} />
       <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
-      <div className="note">Not legal advice — confirm your compliance with the State Bar of California.</div>
+      <Disclaimer />
     </div>
   )
 }

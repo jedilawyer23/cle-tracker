@@ -41,6 +41,9 @@ describe('linkGoogle', () => {
     const snap = await getDoc(doc(db, 'users', anonUid))
     expect(snap.data()!.accountState).toBe('linked')
     expect(snap.data()!.name).toBe('Maya') // data preserved
+    // M5: the linked Google email is persisted so the reminder sweep has somewhere to send to.
+    expect(snap.data()!.email).toBe(auth.currentUser!.email)
+    expect(snap.data()!.email).toMatch(/^x\d+@example\.com$/)
   })
 
   it('resolves to use-existing-account when the Google credential is already linked elsewhere', async () => {

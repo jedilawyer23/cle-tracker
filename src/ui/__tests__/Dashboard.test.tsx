@@ -8,7 +8,7 @@ import type { Credit } from '../../domain/types'
 
 it('shows the empty requirement with the deadline', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -20,7 +20,7 @@ it('shows the empty requirement with the deadline', () => {
 
 it('shows the reporting cycle window on the empty dashboard', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -35,7 +35,7 @@ it('shows the reporting cycle window on the populated dashboard', () => {
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -46,7 +46,7 @@ it('shows the reporting cycle window on the populated dashboard', () => {
 
 it('renders the sign-in affordance as the first child inside the content wrap', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  const { container } = render(<Dashboard group={2}
+  const { container } = render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -58,7 +58,7 @@ it('renders the sign-in affordance as the first child inside the content wrap', 
 
 it('renders the signInMessage note inside the wrap, under the topline', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}} signInMessage="Saved to your Google account."
@@ -72,7 +72,7 @@ it('shows the binding constraint and grouped lists when credits exist', () => {
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -94,7 +94,7 @@ it('excludes a parent from Complete when its sub-minimum is unmet, and the headl
     { id: 'tech', provider: 'p', activityTitle: 'Tech', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
   ]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -116,7 +116,7 @@ it('renders Total hours and Participatory as flat rows with no expand control', 
     { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
   ]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -133,7 +133,7 @@ it('renders Total hours and Participatory as flat rows with no expand control', 
 
 it('hides the Past cycles link by default on both the empty and populated dashboard', () => {
   const emptyResult = calculateCompliance(REQUIREMENT_RULES, [])
-  const { rerender } = render(<Dashboard group={2}
+  const { rerender } = render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={emptyResult} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -145,7 +145,7 @@ it('hides the Past cycles link by default on both the empty and populated dashbo
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const populatedResult = calculateCompliance(REQUIREMENT_RULES, credits)
-  rerender(<Dashboard group={2}
+  rerender(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={populatedResult} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -156,7 +156,7 @@ it('hides the Past cycles link by default on both the empty and populated dashbo
 it('shows the Past cycles link on the empty dashboard when hasPastCycles is true, and calls onOpenPastCycles', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
   const onOpenPastCycles = vi.fn()
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
@@ -174,7 +174,7 @@ it('shows the Past cycles link on the populated dashboard when hasPastCycles is 
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
   const onOpenPastCycles = vi.fn()
-  render(<Dashboard group={2}
+  render(<Dashboard name="Maya Hoffman" group={2}
     period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}

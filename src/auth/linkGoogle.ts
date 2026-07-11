@@ -20,7 +20,16 @@ export async function linkGoogle(
   if (!user) return { kind: 'error', code: 'auth/no-current-user' }
   try {
     const result = await link(user)
-    await setDoc(doc(db, 'users', result.user.uid), { accountState: 'linked' }, { merge: true })
+    // Persist the linked Google email so the M5 reminder sweep has somewhere to send to.
+    // Guests (never linked) keep no email field — dueReminders treats that as hasEmail=false.
+    // Firestore rejects an explicit `undefined` field value, so only include the key when
+    // there's an actual email to write.
+    const email = auth.currentUser?.email
+    await setDoc(
+      doc(db, 'users', result.user.uid),
+      { accountState: 'linked', ...(email ? { email } : {}) },
+      { merge: true },
+    )
     return { kind: 'linked' }
   } catch (err) {
     const code = (err as { code?: string }).code ?? 'auth/unknown'

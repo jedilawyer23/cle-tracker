@@ -185,6 +185,7 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   return (
     <>
       <Dashboard
+        name={profile.name}
         group={profile.group}
         period={profile.currentPeriod}
         result={result}
