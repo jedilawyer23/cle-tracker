@@ -148,6 +148,7 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
         accountState={profile.accountState}
         onSignIn={handleSignIn}
         signInMessage={signInMessage}
+        currentPeriod={profile.currentPeriod}
         onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
         onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
       />

@@ -1,6 +1,6 @@
 // ABOUTME: The "Confirm & save" screen for adding a credit — blank for manual entry, or seeded
 // ABOUTME: from a parsed certificate draft (mockups.html #s-add) with low-confidence fields flagged.
-import type { Credit } from '../domain/types'
+import type { Credit, Period } from '../domain/types'
 import type { UserProfile } from '../store/types'
 import { CreditForm, type FlaggableField } from './CreditForm'
 import { creditToForm, type CreditFormValues } from './creditFormValues'
@@ -18,9 +18,12 @@ interface Props {
   accountState?: UserProfile['accountState']
   onSignIn?: () => void
   signInMessage?: string | null
+  // The user's current compliance period — passed through to CreditForm so it can flag a
+  // completion date that falls outside it as belonging to a different reporting cycle.
+  currentPeriod?: Period
 }
 
-export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage }: Props) {
+export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, message, accountState, onSignIn, signInMessage, currentPeriod }: Props) {
   const initialValues: CreditFormValues | undefined = initial ? creditToForm({ ...initial, id: '' }) : undefined
   const sub = initial
     ? 'We read the certificate. Review anything flagged below.'
@@ -42,6 +45,7 @@ export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, messag
         submitLabel="Save credit"
         initial={initialValues}
         lowConfidenceFields={lowConfidenceFields}
+        currentPeriod={currentPeriod}
         onSave={onSave}
         onCancel={onBack}
       />
