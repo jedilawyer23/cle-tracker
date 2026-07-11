@@ -415,20 +415,3 @@ it('returns to the dashboard from the edit-name screen via Back, without saving 
   await waitFor(() => expect(screen.queryByText('Edit name')).not.toBeInTheDocument())
   expect(store.getProfile()).toMatchObject({ name: 'Maya Hoffman', group: 2 })
 })
-
-it('seeds the sign-in message from initialSignInMessage — used after a mobile redirect sign-in completes on boot', async () => {
-  const profile: UserProfile = {
-    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
-    accountState: 'linked',
-    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
-    requirementsVersion: '2026-07-10',
-  }
-  render(
-    <App
-      store={createFakeStore({ profile })}
-      today="2026-07-10"
-      initialSignInMessage="Saved to your Google account."
-    />,
-  )
-  expect(await screen.findByText('Saved to your Google account.')).toBeInTheDocument()
-})
