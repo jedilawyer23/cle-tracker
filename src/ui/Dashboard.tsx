@@ -3,16 +3,14 @@
 import { BarRow } from './BarRow'
 import { SignInToSave } from './SignInToSave'
 import { Disclaimer } from './Disclaimer'
-import { ExportButton } from './ExportButton'
 import { buildDashboardRows, type DashboardRow } from './dashboardRows'
 import { formatDate } from './formatDate'
-import type { ComplianceResult, Credit, Group, Period } from '../domain/types'
+import type { ComplianceResult, Credit, Period } from '../domain/types'
 import type { UserProfile } from '../store/types'
 
 export interface DashboardProps {
   name: string
   photoURL?: string | null
-  group: Group
   period: Period
   result: ComplianceResult
   credits: Credit[]
@@ -26,6 +24,7 @@ export interface DashboardProps {
   hasPastCycles?: boolean
   onOpenPastCycles?: () => void
   onSettings?: () => void
+  onOpenReport?: () => void
 }
 
 function PastCyclesLink({ hasPastCycles, onOpenPastCycles }: { hasPastCycles?: boolean; onOpenPastCycles?: () => void }) {
@@ -57,7 +56,7 @@ function RequirementsList({ rows, onOpenCredit }: { rows: DashboardRow[]; onOpen
   )
 }
 
-export function Dashboard({ name, photoURL, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles, onSettings }: DashboardProps) {
+export function Dashboard({ name, photoURL, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles, onSettings, onOpenReport }: DashboardProps) {
   const totalRule = result.progress.find(p => p.key === 'total')!
   // Carry-forward (M1 review, item 1): the headline count and the parent-complete gating both
   // come from buildDashboardRows — the same unified rows that are rendered, so "N requirements
@@ -101,7 +100,7 @@ export function Dashboard({ name, photoURL, group, period, result, credits, toda
       <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
 
       <button className="btn" onClick={onAddCredit}>Add a certificate</button>
-      <ExportButton name={name} group={group} period={period} result={result} credits={credits} today={today} />
+      <button className="btn tinted" onClick={onOpenReport}>Export report (PDF)</button>
       <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
       <Disclaimer />
     </div>

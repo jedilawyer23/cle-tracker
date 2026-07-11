@@ -14,7 +14,7 @@ const TOP_LEVEL_LABELS = [
 
 it('shows the empty requirement list with the deadline', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -24,7 +24,7 @@ it('shows the empty requirement list with the deadline', () => {
 
 it('shows the reporting cycle window on the empty dashboard', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -38,7 +38,7 @@ it('shows the reporting cycle window on the populated dashboard', () => {
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -53,7 +53,7 @@ it('shows the clekeeper wordmark on both the empty and populated dashboards', ()
   }]
   for (const list of [[], credits]) {
     const result = calculateCompliance(REQUIREMENT_RULES, list)
-    const { unmount } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+    const { unmount } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
       result={result} credits={list} today="2026-07-10"
       accountState="guest" onSignIn={() => {}}
       onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -64,7 +64,7 @@ it('shows the clekeeper wordmark on both the empty and populated dashboards', ()
 
 it('renders the sign-in affordance as the first child inside the content wrap', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  const { container } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -75,7 +75,7 @@ it('renders the sign-in affordance as the first child inside the content wrap', 
 
 it('renders the signInMessage note inside the wrap, under the topline', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}} signInMessage="Saved to your Google account."
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -88,7 +88,7 @@ it('shows a single unified requirements list (no Still-needed/Complete split) wi
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  const { container } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -111,7 +111,7 @@ it('shows a single unified requirements list (no Still-needed/Complete split) wi
 
 it('shows the unified list on the empty dashboard too, with all bars unmet', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
-  const { container } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -134,7 +134,7 @@ it('counts a parent with an unmet sub-minimum as unmet in the headline "N requir
     { id: 'tech', provider: 'p', activityTitle: 'Tech Course', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
   ]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  const { container } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -153,7 +153,7 @@ it('lets a category row expand to its contributing credits, and does not expand 
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -174,7 +174,7 @@ it('lets a category row expand to its contributing credits, and does not expand 
 
 it('hides the Past cycles link by default on both the empty and populated dashboard', () => {
   const emptyResult = calculateCompliance(REQUIREMENT_RULES, [])
-  const { rerender } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  const { rerender } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={emptyResult} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -185,7 +185,7 @@ it('hides the Past cycles link by default on both the empty and populated dashbo
     totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
   }]
   const populatedResult = calculateCompliance(REQUIREMENT_RULES, credits)
-  rerender(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  rerender(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={populatedResult} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -195,7 +195,7 @@ it('hides the Past cycles link by default on both the empty and populated dashbo
 it('shows the Past cycles link on the empty dashboard when hasPastCycles is true, and calls onOpenPastCycles', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
   const onOpenPastCycles = vi.fn()
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={[]} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}}
@@ -212,7 +212,7 @@ it('shows the Past cycles link on the populated dashboard when hasPastCycles is 
   }]
   const result = calculateCompliance(REQUIREMENT_RULES, credits)
   const onOpenPastCycles = vi.fn()
-  render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
     result={result} credits={credits} today="2026-07-10"
     accountState="guest" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}}
@@ -223,7 +223,7 @@ it('shows the Past cycles link on the populated dashboard when hasPastCycles is 
 })
 
 it('threads name and photoURL to the signed-in header', () => {
-  render(<Dashboard name="Maya Hoffman" photoURL="https://example.com/p.jpg" group={2} period={PERIOD}
+  render(<Dashboard name="Maya Hoffman" photoURL="https://example.com/p.jpg" period={PERIOD}
     result={calculateCompliance(REQUIREMENT_RULES, [])} credits={[]} today="2026-07-10"
     accountState="linked" onSignIn={() => {}}
     onAddCredit={() => {}} onOpenCredit={() => {}} />)
@@ -239,7 +239,7 @@ it('forwards onSettings to the signed-in header on both the empty and populated 
   }]
   for (const list of [[], credits]) {
     const result = calculateCompliance(REQUIREMENT_RULES, list)
-    const { unmount } = render(<Dashboard name="Maya Hoffman" group={2} period={PERIOD}
+    const { unmount } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
       result={result} credits={list} today="2026-07-10"
       accountState="guest" onSignIn={() => {}} onSettings={onSettings}
       onAddCredit={() => {}} onOpenCredit={() => {}} />)
