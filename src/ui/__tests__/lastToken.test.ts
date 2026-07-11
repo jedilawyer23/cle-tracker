@@ -35,6 +35,15 @@ describe('lastToken', () => {
     expect(lastToken('Smith')).toBe('Smith')
   })
 
+  it('strips a trailing suffix from the "Last, First" segment too', () => {
+    expect(lastToken('Smith Jr, John')).toBe('Smith')
+  })
+
+  it('falls through to plain-name logic for a leading-comma name rather than returning empty', () => {
+    // Malformed input (no surname before the comma) — degrade to the token logic, not "".
+    expect(lastToken(', John')).toBe('John')
+  })
+
   it('returns an empty string for a blank name', () => {
     expect(lastToken('  ')).toBe('')
   })

@@ -1,7 +1,7 @@
 // ABOUTME: Single-credit screen: view details, edit via the shared form, or remove.
 // ABOUTME: Ports mockups.html #s-credit; shows which requirements the credit counts toward.
 import { useState } from 'react'
-import type { Credit, RequirementRule } from '../domain/types'
+import type { Credit, RequirementRule, Period } from '../domain/types'
 import { REQUIREMENT_RULES } from '../domain/requirements'
 import { requirementsForCredit, hoursToward } from '../domain/creditContribution'
 import { creditToForm } from './creditFormValues'
@@ -14,9 +14,12 @@ interface Props {
   onUpdate: (id: string, patch: Omit<Credit, 'id'>) => void
   onRemove: (id: string) => void
   onBack: () => void
+  // Threaded into the edit form so the same out-of-cycle / future-date warnings apply when editing.
+  currentPeriod?: Period
+  today?: string
 }
 
-export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRemove, onBack }: Props) {
+export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRemove, onBack, currentPeriod, today }: Props) {
   const [editing, setEditing] = useState(false)
 
   if (editing) {
@@ -25,6 +28,7 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
         <div className="topline"><button className="back" onClick={() => setEditing(false)}>‹ Back</button><div className="sp" /></div>
         <h1 className="h1">Edit credit</h1>
         <CreditForm submitLabel="Save credit" initial={creditToForm(credit)}
+          currentPeriod={currentPeriod} today={today}
           onSave={patch => { onUpdate(credit.id, patch); setEditing(false) }}
           onCancel={() => setEditing(false)} />
       </div>

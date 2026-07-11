@@ -220,6 +220,8 @@ function App({
       return (
         <CreditDetail
           credit={found}
+          currentPeriod={profile.currentPeriod}
+          today={today}
           onUpdate={(id, patch) => { update(id, patch) }}
           onRemove={id => { remove(id); setScreen('dashboard') }}
           onBack={() => setScreen('dashboard')}

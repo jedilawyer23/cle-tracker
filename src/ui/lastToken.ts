@@ -12,10 +12,15 @@ export function lastToken(name: string): string {
   if (!trimmed) return ''
 
   // "Last, First" — the surname is the whole segment before the first comma, so a multi-word
-  // surname (e.g. "Van Der Berg, John") stays intact rather than losing everything but its
-  // own last word.
+  // surname (e.g. "Van Der Berg, John") stays intact rather than losing everything but its own
+  // last word. Strip a trailing generational suffix ("Smith Jr, John" -> "Smith"). A leading
+  // comma (", John") has no surname segment, so fall through to the plain-name logic below.
   const commaIndex = trimmed.indexOf(',')
-  if (commaIndex !== -1) return trimmed.slice(0, commaIndex).trim()
+  if (commaIndex > 0) {
+    const seg = trimmed.slice(0, commaIndex).trim().split(/\s+/).filter(Boolean)
+    while (seg.length > 1 && isGenerationalSuffix(seg[seg.length - 1])) seg.pop()
+    return seg.join(' ')
+  }
 
   const tokens = trimmed.split(/\s+/).filter(Boolean)
   while (tokens.length > 1 && isGenerationalSuffix(tokens[tokens.length - 1])) {
