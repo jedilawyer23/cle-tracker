@@ -12,6 +12,7 @@ import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
 import { calculateCompliance } from './domain/complianceCalculator'
 import { creditsInPeriod } from './domain/creditsInPeriod'
+import { isDuplicateCredit } from './domain/creditSignature'
 import { REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import { useParseFile } from './parsing/useParseFile'
@@ -58,6 +59,7 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
   const [confirmSeed, setConfirmSeed] = useState<ConfirmSeed | null>(null)
   const [signInMessage, setSignInMessage] = useState<string | null>(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
   const { credits, add, update, remove } = useCredits(store)
   const { busy: parseBusy, parseFile } = useParseFile(
     state => {
@@ -149,8 +151,19 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
         onSignIn={handleSignIn}
         signInMessage={signInMessage}
         currentPeriod={profile.currentPeriod}
-        onSave={c => { add(c); setConfirmSeed(null); setScreen('dashboard') }}
-        onBack={() => { setConfirmSeed(null); setScreen('dashboard') }}
+        onSave={c => {
+          // Same certificate (provider/title/date/hours/type/breakdown, ignoring case and
+          // whitespace) already logged — skip the add rather than double-count it.
+          if (isDuplicateCredit(c, credits)) {
+            setNotice("This certificate is already logged — it wasn't added again.")
+          } else {
+            setNotice(null)
+            add(c)
+          }
+          setConfirmSeed(null)
+          setScreen('dashboard')
+        }}
+        onBack={() => { setNotice(null); setConfirmSeed(null); setScreen('dashboard') }}
       />
     )
   }
@@ -194,16 +207,17 @@ function App({ store, today = new Date().toISOString().slice(0, 10), onLinkGoogl
         accountState={profile.accountState}
         onSignIn={handleSignIn}
         signInMessage={signInMessage}
-        onAddCredit={() => setAddSheetOpen(true)}
-        onOpenCredit={id => { setSelectedId(id); setScreen('credit') }}
+        notice={notice}
+        onAddCredit={() => { setNotice(null); setAddSheetOpen(true) }}
+        onOpenCredit={id => { setNotice(null); setSelectedId(id); setScreen('credit') }}
         hasPastCycles={hasPastCycles}
-        onOpenPastCycles={() => setScreen('past')}
+        onOpenPastCycles={() => { setNotice(null); setScreen('past') }}
       />
       {addSheetOpen && (
         <AddSheet
           busy={parseBusy}
           onFile={parseFile}
-          onManual={() => { setConfirmSeed(null); setAddSheetOpen(false); setScreen('confirm') }}
+          onManual={() => { setNotice(null); setConfirmSeed(null); setAddSheetOpen(false); setScreen('confirm') }}
           onCancel={() => setAddSheetOpen(false)}
         />
       )}

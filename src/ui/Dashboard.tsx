@@ -21,6 +21,7 @@ export interface DashboardProps {
   accountState: UserProfile['accountState']
   onSignIn: () => void
   signInMessage?: string | null
+  notice?: string | null
   onAddCredit: () => void
   onOpenCredit: (id: string) => void
   hasPastCycles?: boolean
@@ -90,7 +91,7 @@ function daysUntil(iso: string, today: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
 }
 
-export function Dashboard({ name, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
+export function Dashboard({ name, group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles }: DashboardProps) {
   const topLevel = result.progress.filter(p => !p.parent)
   const totalRule = result.progress.find(p => p.key === 'total')
 
@@ -99,6 +100,7 @@ export function Dashboard({ name, group, period, result, credits, today = new Da
       <div className="wrap">
         <SignInToSave accountState={accountState} onSignIn={onSignIn} />
         {signInMessage && <div className="note">{signInMessage}</div>}
+        {notice && <div className="note">{notice}</div>}
         <h1 className="h1">Add your first credit</h1>
         <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
         <div className="sub">{totalRule?.required} hours required · report by {formatDate(period.reportBy)}</div>
@@ -128,6 +130,7 @@ export function Dashboard({ name, group, period, result, credits, today = new Da
     <div className="wrap">
       <SignInToSave accountState={accountState} onSignIn={onSignIn} />
       {signInMessage && <div className="note">{signInMessage}</div>}
+      {notice && <div className="note">{notice}</div>}
       <h1 className="h1">{stillNeeded.length === 0 ? "You're compliant" : `${stillNeeded.length} requirement${stillNeeded.length === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
       <div className="sub">Report by {formatDate(period.reportBy)} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
