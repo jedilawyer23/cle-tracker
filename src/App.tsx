@@ -36,6 +36,8 @@ interface AppProps {
   onLinkGoogle?: () => Promise<LinkOutcome>
   /** Injectable so tests can spy on it; defaults to a real full-page reload. */
   reload?: () => void
+  /** The signed-in Google account's photo, if any — threaded into the signed-in header's avatar. */
+  photoURL?: string | null
 }
 
 function messageForOutcome(outcome: LinkOutcome): string | null {
@@ -58,6 +60,7 @@ function App({
   today = new Date().toISOString().slice(0, 10),
   onLinkGoogle,
   reload = () => window.location.reload(),
+  photoURL,
 }: AppProps) {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [ready, setReady] = useState(false)
@@ -164,6 +167,8 @@ function App({
         accountState={profile.accountState}
         onSignIn={handleSignIn}
         signInMessage={signInMessage}
+        name={profile.name}
+        photoURL={photoURL}
         currentPeriod={profile.currentPeriod}
         onSave={c => {
           // Same certificate (provider/title/date/hours/type/breakdown, ignoring case and
@@ -213,6 +218,7 @@ function App({
     <>
       <Dashboard
         name={profile.name}
+        photoURL={photoURL}
         group={profile.group}
         period={profile.currentPeriod}
         result={result}

@@ -73,8 +73,9 @@ it('adds a credit from the dashboard via manual entry and reflects it', async ()
   fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '4' } })
   fireEvent.change(screen.getByLabelText(/^legal ethics$/i), { target: { value: '4' } })
   fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
-  await waitFor(() => expect(screen.getByText('Complete')).toBeInTheDocument())
-  expect(screen.getByText('Legal Ethics')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText(/requirements left/i)).toBeInTheDocument())
+  const ethicsRow = screen.getByText('Legal Ethics').closest('.item')!
+  expect(ethicsRow.querySelector('.chkcol .ck')).toBeInTheDocument()
   expect(store.getCredits()).toHaveLength(1)
 })
 
@@ -145,8 +146,9 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
   expect(screen.getByText(/couldn.?t read — please confirm/i)).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
-  await waitFor(() => expect(screen.getByText('Complete')).toBeInTheDocument())
-  expect(screen.getByText('Technology')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText(/requirements left/i)).toBeInTheDocument())
+  const technologyRow = screen.getByText('Technology').closest('.item')!
+  expect(technologyRow.querySelector('.chkcol .ck')).toBeInTheDocument()
 })
 
 it('falls back to a blank Confirm screen with a message when parsing fails', async () => {
@@ -203,6 +205,22 @@ it('shows "Sign in to save" for a guest and hides it once linked', async () => {
   expect(onLinkGoogle).toHaveBeenCalled()
   await waitFor(() => expect(screen.queryByRole('button', { name: /sign in to save/i })).not.toBeInTheDocument())
   expect(screen.getByText(/saved to your google account/i)).toBeInTheDocument()
+  // Once linked, the header shows the whoami pill with the profile's name instead of the button.
+  expect(screen.getByText('Maya Hoffman')).toBeInTheDocument()
+})
+
+it('threads the photoURL prop into the signed-in header avatar', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'linked',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" photoURL="https://example.com/p.jpg" />)
+  await screen.findByText('Maya Hoffman')
+  const avatar = document.querySelector('.avatar')!
+  expect(avatar.tagName).toBe('IMG')
+  expect(avatar).toHaveAttribute('src', 'https://example.com/p.jpg')
 })
 
 it('on use-existing-account: flips to linked, shows the merged-credits message, and reloads', async () => {
