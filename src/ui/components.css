@@ -77,7 +77,22 @@
    progress bar | earned | /required | check | chevron. Every value column is a fixed pixel width
    so numbers and checks align vertically down the whole list, widened for two-digit/decimal
    values (e.g. "18", "10.5"). */
-.rowbar { display: grid; grid-template-columns: 132px 1fr 38px 54px 22px 18px; align-items: center; gap: 10px; padding: 13px 16px; }
+/* Mobile-first: the fixed label + number + check + chevron columns leave too little room for an
+   inline bar on a phone, so the bar drops to its own full-width line under the label/numbers. */
+.rowbar { display: grid; grid-template-columns: 1fr 38px 54px 22px 18px;
+  grid-template-areas: "rn ev rv chk chev" "bar bar bar bar bar";
+  align-items: center; column-gap: 10px; row-gap: 10px; padding: 13px 16px; }
+.rowbar .rn { grid-area: rn; }
+.rowbar .pbar { grid-area: bar; }
+.rowbar .ev { grid-area: ev; }
+.rowbar .rv { grid-area: rv; }
+.rowbar .chkcol { grid-area: chk; }
+.rowbar .chevcol { grid-area: chev; }
+/* Wider screens have room for the inline single-row layout (the approved table-mocks.html look). */
+@media (min-width: 480px) {
+  .rowbar { grid-template-columns: 132px 1fr 38px 54px 22px 18px;
+    grid-template-areas: "rn bar ev rv chk chev"; row-gap: 0; }
+}
 .rowbar.tap { cursor: pointer; }
 .rowbar.tap:active { background: #FAFAFB; }
 .rowbar .rn { font-size: 16px; letter-spacing: -.01em; min-width: 0; }

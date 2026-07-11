@@ -111,6 +111,7 @@ export async function completeRedirectLink(auth: Auth, db: Firestore): Promise<L
   // Success — same uid now Google-linked. Persist accountState in the background: awaiting this
   // write on the redirect return can stall (the auth token is mid-refresh), and the store's live
   // subscription reflects the linked state as soon as the write lands.
-  void markAccountLinked(db, result.user.uid, auth.currentUser?.email).catch(() => {})
+  void markAccountLinked(db, result.user.uid, auth.currentUser?.email)
+    .catch((err) => { console.error('Failed to persist linked account state:', err) })
   return { kind: 'linked' }
 }
