@@ -178,6 +178,8 @@ function App({
         name={profile.name}
         photoURL={photoURL}
         currentPeriod={profile.currentPeriod}
+        onUploadFile={parseFile}
+        parsing={parseBusy}
         onSave={c => {
           // Same certificate (provider/title/date/hours/type/breakdown, ignoring case and
           // whitespace) already logged — skip the add rather than double-count it.

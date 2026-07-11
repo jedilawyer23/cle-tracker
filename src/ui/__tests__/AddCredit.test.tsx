@@ -39,6 +39,31 @@ it('shows the fallback message when a parse failed', () => {
   expect(screen.getByText(/we couldn.?t read that certificate/i)).toBeInTheDocument()
 })
 
+it('offers a re-upload control after a failed upload and passes the picked file to onUploadFile', () => {
+  const onUploadFile = vi.fn()
+  render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} message="This doesn't look like a CLE certificate." onUploadFile={onUploadFile} />)
+  const input = screen.getByLabelText(/choose a different file/i)
+  const file = new File([new Uint8Array([1])], 'cert.pdf', { type: 'application/pdf' })
+  fireEvent.change(input, { target: { files: [file] } })
+  expect(onUploadFile).toHaveBeenCalledWith(file)
+})
+
+it('offers an "upload to auto-fill" control in plain manual entry', () => {
+  render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} onUploadFile={vi.fn()} />)
+  expect(screen.getByLabelText(/upload a certificate to auto-fill/i)).toBeInTheDocument()
+})
+
+it('does not offer a re-upload control once a certificate has parsed', () => {
+  render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} onUploadFile={vi.fn()}
+    initial={{ provider: 'PLI', activityTitle: 'AI Law', completionDate: '2026-06-18', totalHours: 1.5, participatory: true, categoryHours: { technology: 1 } }} />)
+  expect(screen.queryByText(/choose a different file|upload a certificate to auto-fill/i)).not.toBeInTheDocument()
+})
+
+it('disables the re-upload control while a file is being read', () => {
+  render(<AddCredit onSave={vi.fn()} onBack={vi.fn()} message="…" onUploadFile={vi.fn()} parsing />)
+  expect(screen.getByRole('button', { name: /reading/i })).toBeDisabled()
+})
+
 it('shows the sign-in button to the right of the back control in the existing topline', () => {
   const onSignIn = vi.fn()
   const { container } = render(

@@ -34,6 +34,7 @@
 .btn:active { filter: brightness(.92); }
 .btn:disabled { opacity: .4; cursor: default; }
 .btn.tinted { background: var(--tint); color: var(--accent); margin-top: 10px; }
+.uploadbtn { cursor: pointer; }
 .btn.tinted:active { background: rgba(0,122,255,.18); filter: none; }
 .link { display: block; width: 100%; min-height: 44px; text-align: center; background: none; border: 0; color: var(--accent); font-size: 16px; font-weight: 400; margin-top: 6px; padding: 12px; }
 .link:active { opacity: .4; }
