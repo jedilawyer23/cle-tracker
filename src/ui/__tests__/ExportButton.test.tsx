@@ -41,7 +41,9 @@ it('renders the report and downloads on click', () => {
       result={result} credits={[]} today="2026-07-10" onExport={onExport}
     />,
   )
-  fireEvent.click(screen.getByRole('button', { name: /export report/i }))
+  const button = screen.getByRole('button', { name: /export report/i })
+  expect(button).toHaveClass('btn', 'tinted')
+  fireEvent.click(button)
   expect(onExport).toHaveBeenCalledWith(expect.objectContaining({ verdict: expect.stringMatching(/not yet compliant/i) }))
 })
 
@@ -54,6 +56,7 @@ it('shows a disabled "Preparing report…" state while the blob URL is generatin
   )
   const button = screen.getByRole('button', { name: /preparing report/i })
   expect(button).toBeDisabled()
+  expect(button).toHaveClass('btn', 'tinted')
   expect(screen.queryByRole('link')).not.toBeInTheDocument()
 })
 
