@@ -18,6 +18,32 @@ it('shows the empty requirement with the deadline', () => {
   expect(screen.getByText(/0 \/ 25|0\/25/)).toBeInTheDocument()
 })
 
+it('shows the reporting cycle window on the empty dashboard', () => {
+  const result = calculateCompliance(REQUIREMENT_RULES, [])
+  render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={[]} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText(/Reporting cycle:.*Feb 1, 2024.*Mar 29, 2027/)).toBeInTheDocument()
+  expect(screen.getByText(/hours required.*report by.*Mar 30, 2027/)).toBeInTheDocument()
+})
+
+it('shows the reporting cycle window on the populated dashboard', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard group={2}
+    period={{ start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' }}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText(/Reporting cycle:.*Feb 1, 2024.*Mar 29, 2027/)).toBeInTheDocument()
+  expect(screen.getByText(/Report by.*Mar 30, 2027.*days left.*4 of 25 hours logged/)).toBeInTheDocument()
+})
+
 it('renders the sign-in affordance as the first child inside the content wrap', () => {
   const result = calculateCompliance(REQUIREMENT_RULES, [])
   const { container } = render(<Dashboard group={2}

@@ -80,7 +80,7 @@ function daysUntil(iso: string, today: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000)
 }
 
-export function Dashboard({ group, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit }: DashboardProps) {
+export function Dashboard({ period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, onAddCredit, onOpenCredit }: DashboardProps) {
   const topLevel = result.progress.filter(p => !p.parent)
   const totalRule = result.progress.find(p => p.key === 'total')
 
@@ -90,7 +90,8 @@ export function Dashboard({ group, period, result, credits, today = new Date().t
         <SignInToSave accountState={accountState} onSignIn={onSignIn} />
         {signInMessage && <div className="note">{signInMessage}</div>}
         <h1 className="h1">Add your first credit</h1>
-        <div className="sub">Group {group} · {totalRule?.required} hours due by {formatDate(period.reportBy)}</div>
+        <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
+        <div className="sub">{totalRule?.required} hours required · report by {formatDate(period.reportBy)}</div>
 
         <div className="label">Your requirement</div>
         <List>
@@ -117,7 +118,8 @@ export function Dashboard({ group, period, result, credits, today = new Date().t
       <SignInToSave accountState={accountState} onSignIn={onSignIn} />
       {signInMessage && <div className="note">{signInMessage}</div>}
       <h1 className="h1">{stillNeeded.length === 0 ? "You're compliant" : `${stillNeeded.length} requirement${stillNeeded.length === 1 ? '' : 's'} left`}</h1>
-      <div className="sub">Group {group} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
+      <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
+      <div className="sub">Report by {formatDate(period.reportBy)} · {daysUntil(period.reportBy, today)} days left · {earned} of {total} hours logged</div>
 
       {stillNeeded.length > 0 && (
         <>
