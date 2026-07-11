@@ -13,7 +13,9 @@
     "test:emulator": "firebase emulators:exec --only auth,firestore --project demo-cle \"vitest run --config vitest.emulator.config.ts --passWithNoTests\""
   },
   "dependencies": {
+    "@types/pdfmake": "^0.3.3",
     "firebase": "^12.16.0",
+    "pdfmake": "^0.3.11",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

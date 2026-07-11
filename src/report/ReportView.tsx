@@ -1,6 +1,8 @@
-// ABOUTME: Printable MCLE compliance report — a styled preview screen whose "Save as PDF" action
-// ABOUTME: calls window.print(), letting the OS produce the PDF (no client-side PDF engine).
+// ABOUTME: Compliance report — a styled preview screen plus a "Save as PDF" that hands the reader
+// ABOUTME: a real PDF file (native <a download>), the delivery iOS Safari actually supports.
+import { useEffect, useRef, useState } from 'react'
 import type { ReportContent } from './buildReportContent'
+import { generateReportPdfBlob } from './generateReportPdf'
 import { formatDate } from '../ui/formatDate'
 
 function daysBetween(fromIso: string, toIso: string): number {
@@ -12,22 +14,45 @@ function daysBetween(fromIso: string, toIso: string): number {
 interface Props {
   content: ReportContent
   onBack: () => void
-  /** Injectable so tests can assert the print call; defaults to the browser's print-to-PDF. */
-  print?: () => void
+  /** Injectable so tests skip the real pdfmake dynamic import. */
+  generatePdf?: (content: ReportContent) => Promise<Blob>
 }
 
-export function ReportView({ content, onBack, print = () => window.print() }: Props) {
+export function ReportView({ content, onBack, generatePdf = generateReportPdfBlob }: Props) {
   const total = content.requirements.find(r => r.label === 'Total hours')
   const earned = total?.earned ?? 0
   const required = total?.required ?? 25
   const daysToReport = Math.max(0, daysBetween(content.generatedOn, content.period.reportBy))
+
+  // Build the PDF in the background the moment the report opens, so it's ready by the time the
+  // reader reaches "Save as PDF". The finished blob is handed to a native <a download> — on iOS
+  // that opens the PDF for saving to Files, which window.print() fails to do.
+  const [url, setUrl] = useState<string | null>(null)
+  const urlRef = useRef<string | null>(null)
+  const contentKey = JSON.stringify(content)
+  useEffect(() => {
+    let cancelled = false
+    setUrl(null)
+    generatePdf(content).then(blob => {
+      if (cancelled) return
+      const fresh = URL.createObjectURL(blob)
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current)
+      urlRef.current = fresh
+      setUrl(fresh)
+    }).catch(() => { /* stay in "Preparing…" rather than crash */ })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentKey])
+  useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current) }, [])
 
   return (
     <>
       <div className="report-actions">
         <button className="back" onClick={onBack}>‹ Back</button>
         <div className="sp" />
-        <button type="button" className="navbtn" onClick={print}>Save as PDF</button>
+        {url
+          ? <a className="navbtn" href={url} download={`MCLE-report-${content.generatedOn}.pdf`}>Save as PDF</a>
+          : <button type="button" className="navbtn" disabled>Preparing…</button>}
       </div>
 
       <div className="report">
