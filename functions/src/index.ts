@@ -41,7 +41,10 @@ export const parseCertificate = onCall(
     }
 
     const today = new Date().toISOString().slice(0, 10)
-    await enforceParseQuota(parseQuotaDeps(), request.auth.uid, today, resolveParseDailyLimit())
+    // Unknown/missing provider falls to the cheaper anonymous limit — only an explicit Google
+    // sign-in earns the higher authenticated quota.
+    const isAnonymous = request.auth.token.firebase?.sign_in_provider !== 'google.com'
+    await enforceParseQuota(parseQuotaDeps(), request.auth.uid, today, resolveParseDailyLimit(process.env, isAnonymous))
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
     try {
