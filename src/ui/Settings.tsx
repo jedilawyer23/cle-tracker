@@ -13,6 +13,8 @@ interface Props {
   onEditName: () => void
   onSignOut: () => void
   onDeleteAccount: () => void
+  /** Surfaces a failed Sign out attempt (App catches the rejection and passes the message here). */
+  error?: string | null
 }
 
 // Builds the CSV in memory and hands it to a native <a download> — synchronous, so it stays
@@ -29,11 +31,12 @@ function exportCredits(credits: Credit[]) {
   URL.revokeObjectURL(url)
 }
 
-export function Settings({ accountState, credits, onBack, onEditName, onSignOut, onDeleteAccount }: Props) {
+export function Settings({ accountState, credits, onBack, onEditName, onSignOut, onDeleteAccount, error }: Props) {
   return (
     <div className="wrap">
       <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>
       <h1 className="h1">Settings</h1>
+      {error && <div className="note">{error}</div>}
 
       <List>
         <Row label="Edit name" onClick={onEditName} />

@@ -45,7 +45,12 @@ interface AppProps {
   photoURL?: string | null
   /** Signs out and re-boots a fresh session; defaults to a no-op so tests don't need Firebase. */
   onSignOut?: () => Promise<void>
-  /** Deletes all account data and the account itself; defaults to a no-op so tests don't need Firebase. */
+  /**
+   * Deletes all account data and the account itself. Must reload the page on success (see
+   * main.tsx) — App has no data left to show once this resolves, so it doesn't navigate away on
+   * its own; a resolving implementation that doesn't reload leaves the busy Delete screen up.
+   * Defaults to a no-op so tests don't need Firebase.
+   */
   onDeleteAccount?: () => Promise<void>
 }
 
@@ -68,6 +73,7 @@ function App({
   const [notice, setNotice] = useState<string | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
   const { credits, add, update, remove } = useCredits(store)
   const { busy: parseBusy, parseFile } = useParseFile(
     state => {
@@ -180,6 +186,15 @@ function App({
     }
   }
 
+  async function handleSignOut() {
+    try {
+      await onSignOut()
+    } catch {
+      // A rejected sign-out must never be a silent no-op, same reasoning as handleSignIn above.
+      setSignOutError("Couldn't sign out — please try again.")
+    }
+  }
+
   async function handleDeleteAccount() {
     setDeleteBusy(true)
     setDeleteError(null)
@@ -198,6 +213,22 @@ function App({
       <div className="wrap" aria-busy="true">
         <div className="sub">Loading…</div>
       </div>
+    )
+  }
+
+  // Checked before the `!profile` fallback below: a real Store's profile subscription fires with
+  // null the instant deleteAccountData removes the profile doc — before onDeleteAccount's own
+  // auth deletion + reload finish. DeleteAccountConfirm doesn't need `profile`, so staying on this
+  // screen through that window is safe, and avoids bouncing the busy delete screen to onboarding.
+  if (screen === 'deleteAccount') {
+    return (
+      <DeleteAccountConfirm
+        creditsCount={credits.length}
+        busy={deleteBusy}
+        error={deleteError}
+        onCancel={() => { setDeleteError(null); setScreen('settings') }}
+        onConfirm={handleDeleteAccount}
+      />
     )
   }
 
@@ -271,10 +302,11 @@ function App({
       <Settings
         accountState={profile.accountState}
         credits={credits}
-        onBack={() => setScreen('dashboard')}
-        onEditName={() => setScreen('editName')}
-        onSignOut={onSignOut}
-        onDeleteAccount={() => { setDeleteError(null); setScreen('deleteAccount') }}
+        error={signOutError}
+        onBack={() => { setSignOutError(null); setScreen('dashboard') }}
+        onEditName={() => { setSignOutError(null); setScreen('editName') }}
+        onSignOut={handleSignOut}
+        onDeleteAccount={() => { setSignOutError(null); setDeleteError(null); setScreen('deleteAccount') }}
       />
     )
   }
@@ -287,18 +319,6 @@ function App({
         today={today}
         onContinue={handleEditName}
         onBack={() => setScreen('settings')}
-      />
-    )
-  }
-
-  if (screen === 'deleteAccount') {
-    return (
-      <DeleteAccountConfirm
-        creditsCount={credits.length}
-        busy={deleteBusy}
-        error={deleteError}
-        onCancel={() => { setDeleteError(null); setScreen('settings') }}
-        onConfirm={handleDeleteAccount}
       />
     )
   }

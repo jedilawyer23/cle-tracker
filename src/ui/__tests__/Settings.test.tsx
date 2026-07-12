@@ -71,6 +71,14 @@ it('fires onBack, onEditName, onSignOut, and onDeleteAccount on tap', () => {
   expect(onDeleteAccount).toHaveBeenCalledTimes(1)
 })
 
+it('surfaces a sign-out failure instead of failing silently', () => {
+  render(
+    <Settings accountState="linked" credits={[]} onBack={() => {}} onEditName={() => {}}
+      onSignOut={() => {}} onDeleteAccount={() => {}} error="Couldn't sign out — please try again." />,
+  )
+  expect(screen.getByText(/couldn.?t sign out/i)).toBeInTheDocument()
+})
+
 it('exporting builds a text/csv blob and triggers a download named clekeeper-credits.csv', () => {
   const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   render(
