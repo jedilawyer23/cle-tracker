@@ -7,12 +7,26 @@ import './ui/tokens.css'
 import './ui/components.css'
 import './ui/report.css'
 import { signOut } from 'firebase/auth'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import App from './App.tsx'
-import { auth, db } from './firebase.ts'
+import { app, auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
 import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
 import { deleteAccount } from './auth/deleteAccount'
+
+// App Check attaches an invisible reCAPTCHA v3 attestation token to backend calls so bots/scripts
+// can't reach the paid certificate parser (denial-of-wallet defense). This site key is public and
+// domain-restricted — safe to ship in client code. Server-side ENFORCEMENT is enabled separately;
+// until then this only feeds the App Check monitoring dashboard, so a failure here can't block use.
+try {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Le5BE8tAAAAAGgqoypF8-6KMSRU1YkZwSazn-LT'),
+    isTokenAutoRefreshEnabled: true,
+  })
+} catch (err) {
+  console.error('App Check init failed:', err)
+}
 
 function showBootError() {
   const root = document.getElementById('root')
