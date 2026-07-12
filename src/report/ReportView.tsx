@@ -28,21 +28,24 @@ export function ReportView({ content, onBack, generatePdf = generateReportPdfBlo
   // reader reaches "Save as PDF". The finished blob is handed to a native <a download> — on iOS
   // that opens the PDF for saving to Files, which window.print() fails to do.
   const [url, setUrl] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const urlRef = useRef<string | null>(null)
   const contentKey = JSON.stringify(content)
   useEffect(() => {
     let cancelled = false
     setUrl(null)
+    setFailed(false)
     generatePdf(content).then(blob => {
       if (cancelled) return
       const fresh = URL.createObjectURL(blob)
       if (urlRef.current) URL.revokeObjectURL(urlRef.current)
       urlRef.current = fresh
       setUrl(fresh)
-    }).catch(() => { /* stay in "Preparing…" rather than crash */ })
+    }).catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentKey])
+  }, [contentKey, retryCount])
   useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current) }, [])
 
   return (
@@ -52,7 +55,9 @@ export function ReportView({ content, onBack, generatePdf = generateReportPdfBlo
         <div className="sp" />
         {url
           ? <a className="navbtn" href={url} download={`MCLE-report-${content.generatedOn}.pdf`}>Save as PDF</a>
-          : <button type="button" className="navbtn" disabled>Preparing…</button>}
+          : failed
+            ? <button type="button" className="navbtn" onClick={() => setRetryCount(n => n + 1)}>Couldn't build the PDF — Retry</button>
+            : <button type="button" className="navbtn" disabled>Preparing…</button>}
       </div>
 
       <div className="report">
