@@ -77,8 +77,8 @@ export function FirstRun({
         <div className="sub">Update your name to correct your MCLE group.</div>
       ) : (
         <>
-          <div className="sub">Upload your CLE certificates — clekeeper sorts the credits and counts down to your California Bar deadline.</div>
-          <div className="submeta">Enter your name and we'll look up your California MCLE requirement.</div>
+          <div className="sub">Upload your CLE certificates — we sort the credits and count down to your Bar deadline.</div>
+          <div className="submeta">Enter your name and we'll look up your requirement.</div>
         </>
       )}
 
