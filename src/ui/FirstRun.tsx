@@ -135,7 +135,7 @@ export function FirstRun({
       >
         {mode === 'edit' ? 'Save' : 'Continue'}
       </button>
-      {mode === 'setup' && <div className="note">No sign-in required — you can save with Google later.</div>}
+      {mode === 'setup' && <div className="note">Sign in with Google later to save your progress.</div>}
       <Disclaimer />
     </div>
   )

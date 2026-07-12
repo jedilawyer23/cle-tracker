@@ -27,7 +27,7 @@ it('setup mode (default): shows "Get started", Continue, the note, and the wordm
   render(<FirstRun onContinue={vi.fn()} />)
   expect(screen.getByText('Get started')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
-  expect(screen.getByText(/no sign-in required/i)).toBeInTheDocument()
+  expect(screen.getByText(/sign in with Google later/i)).toBeInTheDocument()
   expect(document.querySelector('.brand')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /back/i })).not.toBeInTheDocument()
 })
@@ -40,7 +40,7 @@ it('edit mode: prefills the name, shows "Edit name"/Save/Back, and hides the sig
   expect(screen.getByText('Edit name')).toBeInTheDocument()
   expect(screen.getByLabelText(/full name/i)).toHaveValue('Jane Roe')
   expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
-  expect(screen.queryByText(/no sign-in required/i)).not.toBeInTheDocument()
+  expect(screen.queryByText(/sign in with Google later/i)).not.toBeInTheDocument()
 
   const backBtn = screen.getByRole('button', { name: /back/i })
   fireEvent.click(backBtn)
