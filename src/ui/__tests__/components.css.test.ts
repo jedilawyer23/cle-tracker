@@ -23,4 +23,19 @@ describe('components.css', () => {
     expect(rule).not.toBeNull()
     expect(rule![1]).toMatch(/max-height:\s*0/)
   })
+
+  it('bumps the nav pill toward a 44px tap target', () => {
+    const rule = css.match(/\.navbtn\s*{([^}]*)}/)
+    expect(rule).not.toBeNull()
+    const minHeight = Number(rule![1].match(/min-height:\s*(\d+)px/)?.[1])
+    expect(minHeight).toBeGreaterThanOrEqual(44)
+  })
+
+  it('disables the accordion, toggle, and chevron animations under prefers-reduced-motion', () => {
+    const reducedMotionBlocks = [...css.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*{([^]*?)}\s*}/g)]
+    expect(reducedMotionBlocks.length).toBeGreaterThan(0)
+    const body = reducedMotionBlocks.map(m => m[1]).join('\n')
+    expect(body).toMatch(/\.credits/)
+    expect(body).toMatch(/\.switch/)
+  })
 })
