@@ -1,5 +1,7 @@
 // ABOUTME: Verifies the AddSheet action sheet renders Take Photo/Upload/Manual/Cancel, wires the
-// ABOUTME: two hidden file inputs correctly, and closes on backdrop/Cancel clicks.
+// ABOUTME: two hidden file inputs correctly, closes on backdrop/Cancel/Escape, and behaves as an
+// ABOUTME: accessible modal dialog (focus moved in on open, restored to the opener on close).
+import { useState } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import { AddSheet } from '../AddSheet'
@@ -67,4 +69,43 @@ it('shows a busy state and hides the options while busy', () => {
   expect(screen.getByText(/reading/i)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Enter Manually' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+})
+
+it('has modal dialog semantics with an accessible name', () => {
+  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  const dialog = screen.getByRole('dialog')
+  expect(dialog).toHaveAttribute('aria-modal', 'true')
+  expect(dialog).toHaveAccessibleName()
+})
+
+it('moves focus into the sheet when it opens', () => {
+  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  expect(screen.getByRole('dialog')).toHaveFocus()
+})
+
+it('closes on Escape', () => {
+  const onCancel = vi.fn()
+  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+  expect(onCancel).toHaveBeenCalledTimes(1)
+})
+
+it('restores focus to the element that opened it, once closed', () => {
+  function Harness() {
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Add a certificate</button>
+        {open && <AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={() => setOpen(false)} />}
+      </>
+    )
+  }
+  render(<Harness />)
+  const opener = screen.getByRole('button', { name: /add a certificate/i })
+  opener.focus()
+  fireEvent.click(opener)
+  expect(screen.getByRole('dialog')).toHaveFocus()
+
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+  expect(opener).toHaveFocus()
 })
