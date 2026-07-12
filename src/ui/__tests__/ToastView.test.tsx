@@ -40,4 +40,16 @@ describe('ToastView', () => {
     vi.advanceTimersByTime(1000)
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
+
+  // Call sites pass an inline `onDismiss` arrow, so a fresh function identity arrives on every
+  // parent re-render — the dismiss timer must not restart just because an unrelated parent state
+  // change re-rendered while the toast is up, or it could linger well past its duration.
+  it('does not reset its timer when the parent re-renders with a new onDismiss but the same message', () => {
+    const onDismiss = vi.fn()
+    const { rerender } = render(<ToastView message="Same." onDismiss={() => onDismiss()} duration={4000} />)
+    vi.advanceTimersByTime(3000)
+    rerender(<ToastView message="Same." onDismiss={() => onDismiss()} duration={4000} />)
+    vi.advanceTimersByTime(1000)
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
 })

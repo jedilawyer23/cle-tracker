@@ -12,7 +12,7 @@ import { SignInToSave } from './SignInToSave'
 type Draft = Omit<Credit, 'id'>
 
 interface Props {
-  onSave: (credit: Omit<Credit, 'id'>) => void
+  onSave: (credit: Omit<Credit, 'id'>) => void | Promise<void>
   onBack: () => void
   initial?: Draft
   lowConfidenceFields?: FlaggableField[]

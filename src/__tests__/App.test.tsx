@@ -151,6 +151,34 @@ it('shows a toast and stays on Confirm (without saving) when adding a credit fai
   expect(store.getCredits()).toHaveLength(0)
 })
 
+it('does not double-add a credit when Save is tapped twice before a slow write resolves', async () => {
+  const store = createFakeStore()
+  let resolveWrite!: () => void
+  const addSpy = vi.spyOn(store, 'addCredit').mockImplementation(() => new Promise<void>(r => { resolveWrite = r }))
+  render(<App store={store} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+  fireEvent.click(screen.getByRole('button', { name: 'Enter Manually' }))
+  fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'CEB' } })
+  fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 'Conflicts of Interest' } })
+  fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
+  fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '4' } })
+  fireEvent.change(screen.getByLabelText(/^legal ethics$/i), { target: { value: '4' } })
+
+  const saveBtn = screen.getByRole('button', { name: /save credit/i })
+  fireEvent.click(saveBtn)
+  fireEvent.click(saveBtn) // second tap while the first write is still in flight
+  expect(saveBtn).toBeDisabled()
+
+  resolveWrite()
+  // Confirm resolves and navigates back to the dashboard — the Save button is gone.
+  await waitFor(() => expect(screen.queryByRole('button', { name: /save credit/i })).not.toBeInTheDocument())
+  expect(addSpy).toHaveBeenCalledTimes(1)
+})
+
 it('shows a toast and does not navigate to the dashboard when removing a credit fails', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,

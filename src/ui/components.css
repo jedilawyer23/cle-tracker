@@ -70,8 +70,14 @@
 
 .item .chev { transition: transform .22s ease; }
 .item.open > .rowbar .chev { transform: rotate(180deg); }
-.credits { max-height: 0; overflow: hidden; opacity: 0; transition: max-height .24s ease, opacity .2s ease; padding: 0 16px 0 32px; }
-.item.open .credits { max-height: 3000px; overflow-y: auto; opacity: 1; padding-top: 2px; padding-bottom: 8px; }
+/* Animate open/closed via a 0fr→1fr grid row track (with the inner wrapper's overflow:hidden
+   doing the clip) rather than a fixed max-height: the accordion animates to its real content
+   height at any length, so a long credit list is never clipped and a short one never snaps open
+   from an over-large cap. */
+.credits { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .24s ease, opacity .2s ease; padding: 0 16px 0 32px; }
+.item.open .credits { grid-template-rows: 1fr; opacity: 1; }
+.credits-inner { overflow: hidden; }
+.item.open .credits-inner { padding: 2px 0 8px; }
 @media (prefers-reduced-motion: reduce) { .credits, .item .chev, .switch, .switch::after { transition: none; } }
 .crow { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: .5px solid var(--sep); cursor: pointer; }
 .crow .t { flex: 1; min-width: 0; }

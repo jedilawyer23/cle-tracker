@@ -40,6 +40,18 @@ describe('CreditDetail', () => {
     expect(screen.getByLabelText(/total hours/i)).toHaveValue('3')
   })
 
+  it('moves focus to the heading when switching into the edit sub-view', () => {
+    render(<CreditDetail credit={ethics} onUpdate={vi.fn()} onRemove={vi.fn()} onBack={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /edit credit/i }))
+    expect(screen.getByRole('heading', { name: 'Edit credit' })).toHaveFocus()
+  })
+
+  it('moves focus to the heading when switching into the remove-confirm sub-view', () => {
+    render(<CreditDetail credit={ethics} onUpdate={vi.fn()} onRemove={vi.fn()} onBack={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /remove credit/i }))
+    expect(screen.getByRole('heading', { name: /remove this credit/i })).toHaveFocus()
+  })
+
   it('asks for confirmation before removing, and Cancel backs out without calling onRemove', () => {
     const onRemove = vi.fn()
     render(<CreditDetail credit={ethics} onUpdate={vi.fn()} onRemove={onRemove} onBack={vi.fn()} />)

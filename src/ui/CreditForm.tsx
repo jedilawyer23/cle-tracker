@@ -21,7 +21,9 @@ interface Props {
   currentPeriod?: Period
   // Used to flag (not block) a completion date after today — most likely a typo.
   today?: string
-  onSave: (credit: Omit<Credit, 'id'>) => void
+  // May be async (it awaits a Store write) — the form disables its submit button until it settles
+  // so a double-tap can't fire two writes for the same credit.
+  onSave: (credit: Omit<Credit, 'id'>) => void | Promise<void>
   onCancel?: () => void
 }
 
@@ -43,6 +45,7 @@ function LowConfidenceHint({ flagged }: { flagged: boolean }) {
 export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], currentPeriod, today = new Date().toISOString().slice(0, 10), onSave, onCancel }: Props) {
   const [values, setValues] = useState<CreditFormValues>(initial ?? emptyCreditForm())
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
   const flagged = (field: FlaggableField) => lowConfidenceFields.includes(field)
   const isOutOfCycle = !!currentPeriod && !!values.completionDate
     && (values.completionDate < currentPeriod.start || values.completionDate > currentPeriod.end)
@@ -52,10 +55,16 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
   const setCat = (k: string, val: string) =>
     setValues(v => ({ ...v, categoryHours: { ...v.categoryHours, [k]: val } }))
 
-  const submit = () => {
+  const submit = async () => {
     const errs = validateCreditForm(values)
     setErrors(errs)
-    if (Object.keys(errs).length === 0) onSave(formToCredit(values))
+    if (Object.keys(errs).length !== 0) return
+    setSubmitting(true)
+    try {
+      await onSave(formToCredit(values))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -135,7 +144,7 @@ export function CreditForm({ submitLabel, initial, lowConfidenceFields = [], cur
         </div>
       )}
 
-      <button className="btn" onClick={submit}>{submitLabel}</button>
+      <button className="btn" onClick={submit} disabled={submitting}>{submitLabel}</button>
       {onCancel && <button className="link" onClick={onCancel}>Cancel</button>}
     </>
   )

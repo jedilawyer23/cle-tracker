@@ -80,23 +80,25 @@ export function BarRow({ row, expandable, onOpenCredit }: Props) {
       </div>
       {expandable && (
         <div className="credits">
-          {row.credits.length === 0 && (
-            <div className="empty">No {row.label.toLowerCase()} CLE yet — add one to close this.</div>
-          )}
-          {row.credits.map(c => (
-            <div className="crow" key={c.id} role="button" tabIndex={0}
-              onClick={() => onOpenCredit(c.id)} onKeyDown={activateOnKey(() => onOpenCredit(c.id))}>
-              <div className="t">
-                <div className="cn">{c.activityTitle}</div>
-                <div className="cm">{c.provider} · {formatDate(c.completionDate)}</div>
+          <div className="credits-inner">
+            {row.credits.length === 0 && (
+              <div className="empty">No {row.label.toLowerCase()} CLE yet — add one to close this.</div>
+            )}
+            {row.credits.map(c => (
+              <div className="crow" key={c.id} role="button" tabIndex={0}
+                onClick={() => onOpenCredit(c.id)} onKeyDown={activateOnKey(() => onOpenCredit(c.id))}>
+                <div className="t">
+                  <div className="cn">{c.activityTitle}</div>
+                  <div className="cm">{c.provider} · {formatDate(c.completionDate)}</div>
+                </div>
+                <div className="chn">{hoursToward(row.key, c).toFixed(1)} hr</div>
+                <ChevRight />
               </div>
-              <div className="chn">{hoursToward(row.key, c).toFixed(1)} hr</div>
-              <ChevRight />
-            </div>
-          ))}
-          {!row.met && row.credits.length > 0 && (
-            <div className="empty">{gapHint(row)}</div>
-          )}
+            ))}
+            {!row.met && row.credits.length > 0 && (
+              <div className="empty">{gapHint(row)}</div>
+            )}
+          </div>
         </div>
       )}
     </div>
