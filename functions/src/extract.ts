@@ -12,7 +12,7 @@ export class NotACleCertificateError extends Error {}
 
 // Overridable via env (e.g. for rollout to a different model); defaults to the
 // model this parser's prompt and schema were built against.
-const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-sonnet-5'
+export const PARSE_MODEL = process.env.PARSE_MODEL ?? 'claude-sonnet-5'
 
 export interface ExtractInput {
   fileBase64: string
@@ -28,11 +28,22 @@ export interface ExtractInput {
 // `content` array's text blocks have this shape.
 export interface MessagesClient {
   messages: {
-    create(params: unknown): Promise<{ content: Array<{ type: string; text?: string }> }>
+    create(params: unknown): Promise<{
+      content: Array<{ type: string; text?: string }>
+      usage?: { input_tokens: number; output_tokens: number }
+    }>
   }
 }
 
-export async function extractParsedCredit(client: MessagesClient, input: ExtractInput): Promise<ParsedCredit> {
+export interface ParseUsage {
+  inputTokens: number
+  outputTokens: number
+}
+
+export async function extractParsedCredit(
+  client: MessagesClient,
+  input: ExtractInput,
+): Promise<{ parsed: ParsedCredit; usage: ParseUsage }> {
   const fileBlock = buildFileBlock(input.mimeType, input.fileBase64)
   const response = await client.messages.create({
     model: PARSE_MODEL,
@@ -51,5 +62,10 @@ export async function extractParsedCredit(client: MessagesClient, input: Extract
   if (raw && typeof raw === 'object' && raw.isCleCertificate === false) {
     throw new NotACleCertificateError()
   }
-  return validateParsedCredit(raw)
+  const parsed = validateParsedCredit(raw)
+  const usage: ParseUsage = {
+    inputTokens: response.usage?.input_tokens ?? 0,
+    outputTokens: response.usage?.output_tokens ?? 0,
+  }
+  return { parsed, usage }
 }

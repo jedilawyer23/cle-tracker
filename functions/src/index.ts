@@ -1,18 +1,19 @@
 // ABOUTME: Cloud Functions entry point — the parseCertificate callable and the daily
 // ABOUTME: sendReminders scheduled function. Both read secrets/data at call time only.
 import { initializeApp } from 'firebase-admin/app'
+import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
 import { defineSecret } from 'firebase-functions/params'
 import Anthropic from '@anthropic-ai/sdk'
-import { extractParsedCredit, NotACleCertificateError } from './extract.js'
+import { extractParsedCredit, NotACleCertificateError, PARSE_MODEL } from './extract.js'
 import { processReminders } from './reminders/processReminders.js'
 import { firestoreDeps } from './reminders/firestoreDeps.js'
 import { DEFAULT_REMINDER_CONFIG } from './reminders/config.js'
 import { runRuleMonitor } from './ruleMonitor/runRuleMonitor.js'
 import { ruleMonitorDeps } from './ruleMonitor/firestoreDeps.js'
-import { enforceParseQuota } from './parseQuota/enforceParseQuota.js'
+import { enforceParseQuota, parseQuotaKey } from './parseQuota/enforceParseQuota.js'
 import { parseQuotaDeps } from './parseQuota/firestoreDeps.js'
 import { resolveParseDailyLimit } from './parseQuota/config.js'
 
@@ -48,7 +49,21 @@ export const parseCertificate = onCall(
 
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
     try {
-      return await extractParsedCredit(client, { fileBase64, mimeType })
+      const { parsed, usage } = await extractParsedCredit(client, { fileBase64, mimeType })
+      // Best-effort cost accounting — a logging failure must never fail the parse itself.
+      try {
+        await getFirestore().collection('usage_logs').add({
+          uid: request.auth.uid,
+          date: today,
+          model: PARSE_MODEL,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          createdAt: FieldValue.serverTimestamp(),
+        })
+      } catch (err) {
+        logger.warn('usage log write failed', err)
+      }
+      return parsed
     } catch (err) {
       // The model judged the upload not to be a CLE certificate at all — a distinct case the
       // client maps to "this doesn't look like a CLE certificate" (vs. a generic parse failure).
@@ -60,6 +75,19 @@ export const parseCertificate = onCall(
     }
   },
 )
+
+// Read-only companion to parseCertificate: lets the UI show "X parses left today" without
+// spending a parse. Same auth gate and provider-based limit, but never increments the counter.
+export const getParseQuota = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Sign in required to check parse quota')
+  }
+  const today = new Date().toISOString().slice(0, 10)
+  const isAnonymous = request.auth.token.firebase?.sign_in_provider !== 'google.com'
+  const used = await parseQuotaDeps().getCount(parseQuotaKey(request.auth.uid, today))
+  const limit = resolveParseDailyLimit(isAnonymous)
+  return { used, limit, remaining: Math.max(0, limit - used) }
+})
 
 // Daily sweep: loads every user via the Admin SDK (bypasses security rules by design — this
 // is server-only, never callable by a client), reuses M1's calculateCompliance, and delegates

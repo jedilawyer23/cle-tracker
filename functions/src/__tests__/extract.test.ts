@@ -20,10 +20,13 @@ const validJson = JSON.stringify({
   },
 })
 
-function fakeClient(content: Array<{ type: string; text?: string }>): MessagesClient {
+function fakeClient(
+  content: Array<{ type: string; text?: string }>,
+  usage: { input_tokens: number; output_tokens: number } = { input_tokens: 1200, output_tokens: 340 },
+): MessagesClient {
   return {
     messages: {
-      create: vi.fn().mockResolvedValue({ content }),
+      create: vi.fn().mockResolvedValue({ content, usage }),
     },
   }
 }
@@ -46,10 +49,30 @@ describe('extractParsedCredit', () => {
   it('builds a request, reads the text block, and returns a validated ParsedCredit', async () => {
     const client = fakeClient([{ type: 'text', text: validJson }])
 
-    const result = await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
+    const { parsed } = await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
 
-    expect(result.provider).toBe('Practising Law Institute')
-    expect(result.confidence.participatory).toBe('low')
+    expect(parsed.provider).toBe('Practising Law Institute')
+    expect(parsed.confidence.participatory).toBe('low')
+  })
+
+  it('surfaces the token usage from the Anthropic response', async () => {
+    const client = fakeClient([{ type: 'text', text: validJson }], { input_tokens: 1200, output_tokens: 340 })
+
+    const { usage } = await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
+
+    expect(usage.inputTokens).toBe(1200)
+    expect(usage.outputTokens).toBe(340)
+  })
+
+  it('defaults token usage to zero when the response omits a usage field', async () => {
+    const client: MessagesClient = {
+      messages: { create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: validJson }] }) },
+    }
+
+    const { usage } = await extractParsedCredit(client, { fileBase64: 'QUJD', mimeType: 'application/pdf' })
+
+    expect(usage.inputTokens).toBe(0)
+    expect(usage.outputTokens).toBe(0)
   })
 
   it('passes the file as a content block and the schema in output_config', async () => {

@@ -19,7 +19,7 @@ describe.skipIf(!hasKey)('extractParsedCredit (real API, real certificate)', () 
       // Real client, same construction as index.ts's parseCertificate callable.
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-      const result = await extractParsedCredit(client, {
+      const { parsed: result } = await extractParsedCredit(client, {
         fileBase64: png.toString('base64'),
         mimeType: 'image/png',
       })
