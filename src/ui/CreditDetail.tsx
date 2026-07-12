@@ -1,5 +1,5 @@
-// ABOUTME: Single-credit screen: view details, edit via the shared form, or remove.
-// ABOUTME: Ports mockups.html #s-credit; shows which requirements the credit counts toward.
+// ABOUTME: Single-credit screen: view details, edit via the shared form, or remove (behind a
+// ABOUTME: confirmation step). Ports mockups.html #s-credit; shows which requirements it counts toward.
 import { useState } from 'react'
 import type { Credit, RequirementRule, Period } from '../domain/types'
 import { REQUIREMENT_RULES } from '../domain/requirements'
@@ -7,11 +7,12 @@ import { requirementsForCredit, hoursToward } from '../domain/creditContribution
 import { creditToForm } from './creditFormValues'
 import { CreditForm } from './CreditForm'
 import { formatDate } from './formatDate'
+import { ToastView } from './ToastView'
 
 interface Props {
   credit: Credit
   rules?: RequirementRule[]
-  onUpdate: (id: string, patch: Omit<Credit, 'id'>) => void
+  onUpdate: (id: string, patch: Omit<Credit, 'id'>) => Promise<void>
   onRemove: (id: string) => void
   onBack: () => void
   // Threaded into the edit form so the same out-of-cycle / future-date warnings apply when editing.
@@ -21,6 +22,8 @@ interface Props {
 
 export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRemove, onBack, currentPeriod, today }: Props) {
   const [editing, setEditing] = useState(false)
+  const [confirmingRemove, setConfirmingRemove] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   if (editing) {
     return (
@@ -29,8 +32,27 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
         <h1 className="h1">Edit credit</h1>
         <CreditForm submitLabel="Save credit" initial={creditToForm(credit)}
           currentPeriod={currentPeriod} today={today}
-          onSave={patch => { onUpdate(credit.id, patch); setEditing(false) }}
+          onSave={patch => {
+            onUpdate(credit.id, patch)
+              .then(() => { setSaveError(null); setEditing(false) })
+              .catch(() => setSaveError("Couldn't save changes — please try again."))
+          }}
           onCancel={() => setEditing(false)} />
+        <ToastView message={saveError} onDismiss={() => setSaveError(null)} />
+      </div>
+    )
+  }
+
+  if (confirmingRemove) {
+    return (
+      <div className="wrap">
+        <div className="topline"><button className="back" onClick={() => setConfirmingRemove(false)}>‹ Back</button><div className="sp" /></div>
+        <h1 className="h1">Remove this credit?</h1>
+        <div className="sub">{credit.activityTitle}</div>
+        <div className="note">This can't be undone.</div>
+        <button className="btn" style={{ background: '#FF3B30' }}
+          onClick={() => { setConfirmingRemove(false); onRemove(credit.id) }}>Remove</button>
+        <button className="link" onClick={() => setConfirmingRemove(false)}>Cancel</button>
       </div>
     )
   }
@@ -50,7 +72,7 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
       </div>
 
       <button className="btn" onClick={() => setEditing(true)}>Edit credit</button>
-      <button className="link" style={{ color: '#FF3B30' }} onClick={() => onRemove(credit.id)}>Remove credit</button>
+      <button className="link" style={{ color: '#FF3B30' }} onClick={() => setConfirmingRemove(true)}>Remove credit</button>
       <div className="note">One certificate can count toward more than one requirement.</div>
     </div>
   )

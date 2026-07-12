@@ -125,6 +125,56 @@ it('does not add a duplicate certificate a second time, and shows a notice — b
   expect(screen.queryByText(/already logged/i)).not.toBeInTheDocument()
 })
 
+it('shows a toast and stays on Confirm (without saving) when adding a credit fails', async () => {
+  const store = createFakeStore()
+  vi.spyOn(store, 'addCredit').mockRejectedValue(new Error('offline'))
+  render(<App store={store} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+  fireEvent.click(screen.getByRole('button', { name: 'Enter Manually' }))
+  fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: 'CEB' } })
+  fireEvent.change(screen.getByLabelText(/activity title/i), { target: { value: 'Conflicts of Interest' } })
+  fireEvent.change(screen.getByLabelText(/completion date/i), { target: { value: '2026-01-22' } })
+  fireEvent.change(screen.getByLabelText(/total hours/i), { target: { value: '4' } })
+  fireEvent.change(screen.getByLabelText(/^legal ethics$/i), { target: { value: '4' } })
+  fireEvent.click(screen.getByRole('button', { name: /save credit/i }))
+
+  const status = await screen.findByRole('status')
+  expect(status).toHaveTextContent(/couldn.?t save/i)
+  expect(screen.queryByText(/requirements left/i)).not.toBeInTheDocument()
+  expect(screen.getByLabelText(/provider/i)).toHaveValue('CEB')
+  expect(store.getCredits()).toHaveLength(0)
+})
+
+it('shows a toast and does not navigate to the dashboard when removing a credit fails', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  const credits: Credit[] = [
+    { id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+  ]
+  const store = createFakeStore({ profile, credits })
+  vi.spyOn(store, 'removeCredit').mockRejectedValue(new Error('offline'))
+  render(<App store={store} today="2026-07-10" />)
+  await waitFor(() => expect(screen.getByText(/of 25 hours logged/i)).toBeInTheDocument())
+
+  fireEvent.click(screen.getByText('Conflicts of Interest'))
+  await screen.findByRole('button', { name: /remove credit/i })
+  fireEvent.click(screen.getByRole('button', { name: /remove credit/i }))
+  fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
+
+  const status = await screen.findByRole('status')
+  expect(status).toHaveTextContent(/couldn.?t remove/i)
+  expect(screen.queryByText(/requirements left/i)).not.toBeInTheDocument()
+  expect(store.getCredits()).toHaveLength(1)
+})
+
 it('routes a parsed certificate into Confirm with low-confidence fields flagged, then saves it', async () => {
   ;(parseCertificate as ReturnType<typeof vi.fn>).mockResolvedValue({
     provider: 'Practising Law Institute', activityTitle: 'AI and the Practice of Law',

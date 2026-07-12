@@ -12,6 +12,7 @@ import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
 import { Settings } from './ui/Settings'
 import { DeleteAccountConfirm } from './ui/DeleteAccountConfirm'
+import { ToastView } from './ui/ToastView'
 import { ReportView } from './report/ReportView'
 import { buildReportContent } from './report/buildReportContent'
 import { calculateCompliance } from './domain/complianceCalculator'
@@ -22,6 +23,7 @@ import { GROUP_CALENDAR, REQUIREMENT_RULES } from './domain/requirements'
 import { useCredits } from './store/useCredits'
 import { useParseFile } from './parsing/useParseFile'
 import type { Store, UserProfile } from './store/types'
+import type { Credit } from './domain/types'
 import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
@@ -71,6 +73,7 @@ function App({
   const [signInMessage, setSignInMessage] = useState<string | null>(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [signOutError, setSignOutError] = useState<string | null>(null)
@@ -160,6 +163,37 @@ function App({
     setScreen('dashboard')
   }
 
+  // Skips the add for an exact duplicate. Otherwise awaits the write — a rejected write (offline,
+  // permission, quota) must not be mistaken for a save: stay on Confirm with the entered values
+  // intact and surface a toast, rather than silently dropping the credit.
+  async function handleSaveCredit(c: Omit<Credit, 'id'>) {
+    if (isDuplicateCredit(c, credits)) {
+      setNotice("This certificate is already logged — it wasn't added again.")
+      setConfirmSeed(null)
+      setScreen('dashboard')
+      return
+    }
+    try {
+      await add(c)
+      setNotice(null)
+      setConfirmSeed(null)
+      setScreen('dashboard')
+    } catch {
+      setToast("Couldn't save this credit — please try again.")
+    }
+  }
+
+  // Awaits the write before navigating away — otherwise a rejected delete (offline, permission,
+  // quota) looks successful because the dashboard already moved on.
+  async function handleRemoveCredit(id: string) {
+    try {
+      await remove(id)
+      setScreen('dashboard')
+    } catch {
+      setToast("Couldn't remove this credit — please try again.")
+    }
+  }
+
   async function handleSignIn() {
     if (!onLinkGoogle) return
     let outcome: LinkOutcome
@@ -220,6 +254,8 @@ function App({
   // null the instant deleteAccountData removes the profile doc — before onDeleteAccount's own
   // auth deletion + reload finish. DeleteAccountConfirm doesn't need `profile`, so staying on this
   // screen through that window is safe, and avoids bouncing the busy delete screen to onboarding.
+  const toastEl = <ToastView message={toast} onDismiss={() => setToast(null)} />
+
   if (screen === 'deleteAccount') {
     return (
       <DeleteAccountConfirm
@@ -238,33 +274,25 @@ function App({
 
   if (screen === 'confirm') {
     return (
-      <AddCredit
-        initial={confirmSeed?.draft}
-        lowConfidenceFields={confirmSeed?.lowConfidenceFields}
-        message={confirmSeed?.message}
-        accountState={profile.accountState}
-        onSignIn={handleSignIn}
-        signInMessage={signInMessage}
-        name={profile.name}
-        photoURL={photoURL}
-        currentPeriod={profile.currentPeriod}
-        today={today}
-        onUploadFile={parseFile}
-        parsing={parseBusy}
-        onSave={c => {
-          // Same certificate (provider/title/date/hours/type/breakdown, ignoring case and
-          // whitespace) already logged — skip the add rather than double-count it.
-          if (isDuplicateCredit(c, credits)) {
-            setNotice("This certificate is already logged — it wasn't added again.")
-          } else {
-            setNotice(null)
-            add(c)
-          }
-          setConfirmSeed(null)
-          setScreen('dashboard')
-        }}
-        onBack={() => { setNotice(null); setConfirmSeed(null); setScreen('dashboard') }}
-      />
+      <>
+        <AddCredit
+          initial={confirmSeed?.draft}
+          lowConfidenceFields={confirmSeed?.lowConfidenceFields}
+          message={confirmSeed?.message}
+          accountState={profile.accountState}
+          onSignIn={handleSignIn}
+          signInMessage={signInMessage}
+          name={profile.name}
+          photoURL={photoURL}
+          currentPeriod={profile.currentPeriod}
+          today={today}
+          onUploadFile={parseFile}
+          parsing={parseBusy}
+          onSave={handleSaveCredit}
+          onBack={() => { setNotice(null); setConfirmSeed(null); setScreen('dashboard') }}
+        />
+        {toastEl}
+      </>
     )
   }
 
@@ -272,14 +300,17 @@ function App({
     const found = credits.find(c => c.id === selectedId)
     if (found) {
       return (
-        <CreditDetail
-          credit={found}
-          currentPeriod={profile.currentPeriod}
-          today={today}
-          onUpdate={(id, patch) => { update(id, patch) }}
-          onRemove={id => { remove(id); setScreen('dashboard') }}
-          onBack={() => setScreen('dashboard')}
-        />
+        <>
+          <CreditDetail
+            credit={found}
+            currentPeriod={profile.currentPeriod}
+            today={today}
+            onUpdate={async (id, patch) => { await update(id, patch) }}
+            onRemove={handleRemoveCredit}
+            onBack={() => setScreen('dashboard')}
+          />
+          {toastEl}
+        </>
       )
     }
     // Credit no longer exists (e.g. removed elsewhere) — fall through to the dashboard.
@@ -359,6 +390,7 @@ function App({
           onCancel={() => setAddSheetOpen(false)}
         />
       )}
+      {toastEl}
     </>
   )
 }
