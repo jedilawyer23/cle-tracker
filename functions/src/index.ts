@@ -78,7 +78,7 @@ export const parseCertificate = onCall(
 
 // Read-only companion to parseCertificate: lets the UI show "X parses left today" without
 // spending a parse. Same auth gate and provider-based limit, but never increments the counter.
-export const getParseQuota = onCall(async (request) => {
+export const getParseQuota = onCall({ maxInstances: 10 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Sign in required to check parse quota')
   }
