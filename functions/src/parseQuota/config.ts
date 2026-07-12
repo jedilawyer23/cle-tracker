@@ -2,9 +2,8 @@
 // ABOUTME: Check (tracked follow-up). Split by sign-in provider; PARSE_DAILY_LIMIT overrides both.
 export const ANONYMOUS_PARSE_DAILY_LIMIT = 10
 export const AUTHENTICATED_PARSE_DAILY_LIMIT = 25
-export const DEFAULT_PARSE_DAILY_LIMIT = AUTHENTICATED_PARSE_DAILY_LIMIT
 
-export function resolveParseDailyLimit(env: NodeJS.ProcessEnv = process.env, isAnonymous: boolean): number {
+export function resolveParseDailyLimit(isAnonymous: boolean, env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.PARSE_DAILY_LIMIT
   const parsed = raw ? Number(raw) : NaN
   if (Number.isFinite(parsed) && parsed > 0) {
