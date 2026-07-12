@@ -1,6 +1,7 @@
 // ABOUTME: iOS-style action sheet for adding a certificate — Take Photo, Upload PDF or Image, or
-// ABOUTME: Enter Manually, plus Cancel. Presentational; the two hidden file inputs are its only I/O.
-import type { ChangeEvent } from 'react'
+// ABOUTME: Enter Manually, plus Cancel. A modal dialog: focus moves in on open, Escape or the
+// ABOUTME: backdrop cancels, and focus returns to whatever opened it once it closes.
+import { useEffect, useRef, type ChangeEvent, type KeyboardEvent } from 'react'
 
 interface Props {
   busy?: boolean
@@ -10,15 +11,36 @@ interface Props {
 }
 
 export function AddSheet({ busy, onFile, onManual, onCancel }: Props) {
+  const sheetRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
+    sheetRef.current?.focus()
+    return () => opener?.focus()
+  }, [])
+
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (file) onFile(file)
   }
 
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Escape') onCancel()
+  }
+
   return (
     <div className="sheet-backdrop" onClick={onCancel}>
-      <div className="sheet" onClick={e => e.stopPropagation()}>
+      <div
+        className="sheet"
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a certificate"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        onClick={e => e.stopPropagation()}
+      >
         {busy ? (
           <div className="sheet-busy">Reading…</div>
         ) : (

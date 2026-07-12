@@ -52,6 +52,23 @@ it('shows Preparing… until the PDF is built, then a native download link', asy
   expect(link).toHaveAttribute('download', 'MCLE-report-2026-07-10.pdf')
 })
 
+it('shows a retry control instead of staying on Preparing… forever when PDF generation fails, and retrying can succeed', async () => {
+  const generatePdf = vi.fn()
+    .mockRejectedValueOnce(new Error('boom'))
+    .mockResolvedValueOnce(new Blob(['%PDF-'], { type: 'application/pdf' }))
+  render(<ReportView content={contentFor([credit])} onBack={() => {}} generatePdf={generatePdf} />)
+
+  const retry = await screen.findByRole('button', { name: /couldn.?t build the pdf.*retry/i })
+  expect(retry).not.toBeDisabled()
+  expect(screen.queryByRole('button', { name: /preparing/i })).not.toBeInTheDocument()
+
+  fireEvent.click(retry)
+  expect(await screen.findByRole('button', { name: /preparing/i })).toBeDisabled()
+  const link = await screen.findByRole('link', { name: /save as pdf/i })
+  expect(link).toHaveAttribute('href', 'blob:report')
+  expect(generatePdf).toHaveBeenCalledTimes(2)
+})
+
 it('navigates back when Back is tapped', () => {
   const onBack = vi.fn()
   render(<ReportView content={contentFor([credit])} onBack={onBack} generatePdf={fakePdf} />)

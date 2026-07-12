@@ -65,6 +65,37 @@ describe('BarRow', () => {
     expect(onOpen).toHaveBeenCalledWith('a')
   })
 
+  it('is keyboard-focusable and toggles open on Enter, reflecting state via aria-expanded', () => {
+    render(<BarRow row={row({})} expandable onOpenCredit={() => {}} />)
+    const rowbar = document.querySelector('.rowbar.tap')!
+    expect(rowbar).toHaveAttribute('role', 'button')
+    expect(rowbar).toHaveAttribute('tabIndex', '0')
+    expect(rowbar).toHaveAttribute('aria-expanded', 'false')
+
+    fireEvent.keyDown(rowbar, { key: 'Enter' })
+    expect(rowbar).toHaveAttribute('aria-expanded', 'true')
+    expect(rowbar.closest('.item')).toHaveClass('open')
+  })
+
+  it('toggles open on Space too', () => {
+    render(<BarRow row={row({})} expandable onOpenCredit={() => {}} />)
+    const rowbar = document.querySelector('.rowbar.tap')!
+    fireEvent.keyDown(rowbar, { key: ' ' })
+    expect(rowbar).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('lets a credit row inside the accordion be opened via the keyboard', () => {
+    const onOpen = vi.fn()
+    const credits = [{ id: 'a', provider: 'CEB', activityTitle: 'Ethics', completionDate: '2026-01-22', totalHours: 2, participatory: true, categoryHours: { ethics: 2 } }]
+    render(<BarRow row={row({ credits })} expandable onOpenCredit={onOpen} />)
+    fireEvent.click(screen.getByText('Legal Ethics'))
+    const crow = document.querySelector('.crow')!
+    expect(crow).toHaveAttribute('role', 'button')
+    expect(crow).toHaveAttribute('tabIndex', '0')
+    fireEvent.keyDown(crow, { key: 'Enter' })
+    expect(onOpen).toHaveBeenCalledWith('a')
+  })
+
   it('renders a flat (non-expandable) row with no chevron, no credits panel, and no tap target', () => {
     const { container } = render(<BarRow row={row({ key: 'total', label: 'Total hours' })} expandable={false} onOpenCredit={() => {}} />)
     expect(container.querySelector('.chev')).not.toBeInTheDocument()

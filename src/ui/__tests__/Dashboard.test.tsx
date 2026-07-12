@@ -48,6 +48,37 @@ it('rounds a floating-point earned total for display', () => {
   expect(screen.queryByText(/3\.4000000000000004/)).not.toBeInTheDocument()
 })
 
+it('shows a compliant affirmation banner once every requirement is met', () => {
+  const credits: Credit[] = [
+    { id: '1', provider: 'A', activityTitle: 'Ethics', completionDate: '2026-01-02', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: '2', provider: 'B', activityTitle: 'Competence', completionDate: '2026-01-03', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: '3', provider: 'C', activityTitle: 'Bias', completionDate: '2026-01-04', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } },
+    { id: '4', provider: 'D', activityTitle: 'Tech', completionDate: '2026-01-05', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    { id: '5', provider: 'E', activityTitle: 'Civility', completionDate: '2026-01-06', totalHours: 1, participatory: true, categoryHours: { civility: 1 } },
+    { id: '6', provider: 'F', activityTitle: 'General', completionDate: '2026-01-07', totalHours: 15, participatory: true, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(screen.getByText("You're compliant")).toBeInTheDocument()
+  expect(document.querySelector('.compliant-banner')).toBeInTheDocument()
+})
+
+it('does not show the compliant affirmation banner while requirements remain', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(document.querySelector('.compliant-banner')).not.toBeInTheDocument()
+})
+
 it('shows the reporting cycle window on the populated dashboard', () => {
   const credits: Credit[] = [{
     id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',

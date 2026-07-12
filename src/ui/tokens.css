@@ -1,9 +1,12 @@
 /* ABOUTME: Design tokens (CSS custom properties) and body base styles ported from mockups.html. */
 /* ABOUTME: Loaded after Tailwind so these tokens are available to all components. */
 :root {
-  --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #8E8E93; --faint: #C7C7CC;
+  --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #6E6E73; --faint: #C7C7CC;
   --sep: rgba(60,60,67,.29); --accent: #007AFF; --good: #34C759; --warn: #FF9500;
   --track: #E9E9EB; --tint: rgba(0,122,255,.10);
+  /* Text-only variants of --faint/--warn/--good: the originals stay put for bars, switches, and
+     the check-circle background, but read at too low a contrast on --card as body text. */
+  --faint-text: #767676; --warn-text: #B25900; --good-text: #198038;
 }
 body {
   margin: 0; background: var(--bg); color: var(--ink);

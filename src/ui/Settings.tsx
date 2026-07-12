@@ -35,7 +35,7 @@ export function Settings({ accountState, credits, onBack, onEditName, onSignOut,
   return (
     <div className="wrap">
       <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>
-      <h1 className="h1">Settings</h1>
+      <h1 className="h1" tabIndex={-1}>Settings</h1>
       {error && <div className="note" style={{ color: '#FF3B30' }}>{error}</div>}
 
       <List>

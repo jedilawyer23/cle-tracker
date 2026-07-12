@@ -72,6 +72,21 @@ it('renders a credit row with title, provider/date, and hours, and opens it on c
   expect(onOpenCredit).toHaveBeenCalledWith('past-1')
 })
 
+it('makes a credit row keyboard-focusable and operable via Enter and Space', () => {
+  const onOpenCredit = vi.fn()
+  render(<PastCycles group={3} currentPeriod={currentPeriod} credits={[pastCredit]}
+    onOpenCredit={onOpenCredit} onBack={() => {}} />)
+  const row = document.querySelector('.row.tap')!
+  expect(row).toHaveAttribute('role', 'button')
+  expect(row).toHaveAttribute('tabIndex', '0')
+
+  fireEvent.keyDown(row, { key: 'Enter' })
+  expect(onOpenCredit).toHaveBeenCalledWith('past-1')
+
+  fireEvent.keyDown(row, { key: ' ' })
+  expect(onOpenCredit).toHaveBeenCalledTimes(2)
+})
+
 it('lists multiple credits within the same past cycle, newest first', () => {
   const earlier: Credit = {
     id: 'past-2', provider: 'Bar Assoc', activityTitle: 'Earlier CLE', completionDate: '2023-06-01',

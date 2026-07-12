@@ -12,7 +12,7 @@ import { SignInToSave } from './SignInToSave'
 type Draft = Omit<Credit, 'id'>
 
 interface Props {
-  onSave: (credit: Omit<Credit, 'id'>) => void
+  onSave: (credit: Omit<Credit, 'id'>) => void | Promise<void>
   onBack: () => void
   initial?: Draft
   lowConfidenceFields?: FlaggableField[]
@@ -55,7 +55,7 @@ export function AddCredit({ onSave, onBack, initial, lowConfidenceFields, messag
         ? <SignInToSave accountState={accountState} onSignIn={onSignIn ?? (() => {})} name={name} photoURL={photoURL} onBack={onBack} />
         : <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>}
       {signInMessage && <div className="note">{signInMessage}</div>}
-      <h1 className="h1">Confirm &amp; save</h1>
+      <h1 className="h1" tabIndex={-1}>Confirm &amp; save</h1>
       <div className="sub">{sub}</div>
       {showUpload && (
         parsing
