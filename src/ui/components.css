@@ -29,6 +29,9 @@
 .need { font-size: 17px; font-weight: 600; color: var(--warn); }
 .row.tap { cursor: pointer; }
 .row.tap:active { background: #FAFAFB; }
+.row.tap:focus-visible, .rowbar.tap:focus-visible, .crow:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
 
 .btn { display: block; width: 100%; text-align: center; margin-top: 24px; background: var(--accent); color: #fff; border: 0; border-radius: 12px; font-size: 17px; font-weight: 600; padding: 16px 18px; }
 .btn:active { filter: brightness(.92); }

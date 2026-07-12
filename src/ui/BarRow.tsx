@@ -5,6 +5,7 @@ import type { DashboardRow } from './dashboardRows'
 import { hoursToward } from '../domain/creditContribution'
 import { formatDate } from './formatDate'
 import { formatHours } from './formatHours'
+import { activateOnKey } from './activateOnKey'
 
 const ChevDown = () => (
   <svg className="chev" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -62,6 +63,10 @@ export function BarRow({ row, expandable, onOpenCredit }: Props) {
       <div
         className={expandable ? 'rowbar tap' : 'rowbar'}
         onClick={expandable ? () => setOpen(o => !o) : undefined}
+        onKeyDown={expandable ? activateOnKey(() => setOpen(o => !o)) : undefined}
+        role={expandable ? 'button' : undefined}
+        tabIndex={expandable ? 0 : undefined}
+        aria-expanded={expandable ? open : undefined}
       >
         <div className="rn">
           {row.label}
@@ -79,7 +84,8 @@ export function BarRow({ row, expandable, onOpenCredit }: Props) {
             <div className="empty">No {row.label.toLowerCase()} CLE yet — add one to close this.</div>
           )}
           {row.credits.map(c => (
-            <div className="crow" key={c.id} onClick={() => onOpenCredit(c.id)}>
+            <div className="crow" key={c.id} role="button" tabIndex={0}
+              onClick={() => onOpenCredit(c.id)} onKeyDown={activateOnKey(() => onOpenCredit(c.id))}>
               <div className="t">
                 <div className="cn">{c.activityTitle}</div>
                 <div className="cm">{c.provider} · {formatDate(c.completionDate)}</div>

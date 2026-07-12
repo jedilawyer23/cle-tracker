@@ -4,6 +4,7 @@ import { groupCreditsByPeriod } from '../domain/groupCreditsByPeriod'
 import { calculateCompliance } from '../domain/complianceCalculator'
 import { REQUIREMENT_RULES, GROUP_CALENDAR } from '../domain/requirements'
 import { formatDate } from './formatDate'
+import { activateOnKey } from './activateOnKey'
 import type { Credit, Group, Period } from '../domain/types'
 
 interface Props {
@@ -38,7 +39,8 @@ export function PastCycles({ group, currentPeriod, credits, onOpenCredit, onBack
               : <div className="sub">{totalRule.earned} of {totalRule.required} hrs · not compliant</div>}
             <div className="list">
               {cycleCredits.map(credit => (
-                <div className="row tap" key={credit.id} onClick={() => onOpenCredit(credit.id)}>
+                <div className="row tap" key={credit.id} role="button" tabIndex={0}
+                  onClick={() => onOpenCredit(credit.id)} onKeyDown={activateOnKey(() => onOpenCredit(credit.id))}>
                   <div className="t">
                     <div className="n">{credit.activityTitle}</div>
                     <div className="m q">{credit.provider} · {formatDate(credit.completionDate)}</div>
