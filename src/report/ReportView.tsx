@@ -62,7 +62,7 @@ export function ReportView({ content, onBack, generatePdf = generateReportPdfBlo
         </div>
         <div className="rep-rule" />
 
-        <h1 className="rep-name">{content.name}</h1>
+        <h1 className="rep-name" tabIndex={-1}>{content.name}</h1>
         <div className="rep-sub">
           Group {content.group}&ensp;·&ensp;{formatDate(content.period.start)} – {formatDate(content.period.end)}
           &ensp;·&ensp;Report by {formatDate(content.period.reportBy)}

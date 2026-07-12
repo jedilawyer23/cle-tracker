@@ -72,7 +72,7 @@ export function FirstRun({
         {onBack ? <button className="back" onClick={onBack}>‹ Back</button> : <Wordmark />}
         <div className="sp" />
       </div>
-      <h1 className="h1">{mode === 'edit' ? 'Edit name' : 'Get started'}</h1>
+      <h1 className="h1" tabIndex={-1}>{mode === 'edit' ? 'Edit name' : 'Get started'}</h1>
       <div className="sub">
         {mode === 'edit'
           ? 'Update your name to correct your MCLE group.'

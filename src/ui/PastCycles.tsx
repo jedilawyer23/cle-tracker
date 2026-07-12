@@ -22,7 +22,7 @@ export function PastCycles({ group, currentPeriod, credits, onOpenCredit, onBack
   return (
     <div className="wrap">
       <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>
-      <h1 className="h1">Past cycles</h1>
+      <h1 className="h1" tabIndex={-1}>Past cycles</h1>
 
       {groups.length === 0 && (
         <div className="note">No credits from prior reporting cycles.</div>

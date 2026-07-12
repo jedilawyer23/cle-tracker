@@ -29,7 +29,7 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
     return (
       <div className="wrap">
         <div className="topline"><button className="back" onClick={() => setEditing(false)}>‹ Back</button><div className="sp" /></div>
-        <h1 className="h1">Edit credit</h1>
+        <h1 className="h1" tabIndex={-1}>Edit credit</h1>
         <CreditForm submitLabel="Save credit" initial={creditToForm(credit)}
           currentPeriod={currentPeriod} today={today}
           onSave={patch => {
@@ -47,7 +47,7 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
     return (
       <div className="wrap">
         <div className="topline"><button className="back" onClick={() => setConfirmingRemove(false)}>‹ Back</button><div className="sp" /></div>
-        <h1 className="h1">Remove this credit?</h1>
+        <h1 className="h1" tabIndex={-1}>Remove this credit?</h1>
         <div className="sub">{credit.activityTitle}</div>
         <div className="note">This can't be undone.</div>
         <button className="btn" style={{ background: '#FF3B30' }}
@@ -61,7 +61,7 @@ export function CreditDetail({ credit, rules = REQUIREMENT_RULES, onUpdate, onRe
   return (
     <div className="wrap">
       <div className="topline"><button className="back" onClick={onBack}>‹ Back</button><div className="sp" /></div>
-      <h1 className="h1">{credit.activityTitle}</h1>
+      <h1 className="h1" tabIndex={-1}>{credit.activityTitle}</h1>
       <div className="sub">{credit.provider} · {formatDate(credit.completionDate)}</div>
 
       <div className="label">Details</div>

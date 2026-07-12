@@ -72,7 +72,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
         <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
         {signInMessage && <div className="note">{signInMessage}</div>}
         {notice && <div className="note">{notice}</div>}
-        <h1 className="h1">Add your first credit</h1>
+        <h1 className="h1" tabIndex={-1}>Add your first credit</h1>
         <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
         <div className="submeta">{totalRule.required} hours required · report by {formatDate(period.reportBy)}</div>
 
@@ -94,7 +94,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
       {signInMessage && <div className="note">{signInMessage}</div>}
       {notice && <div className="note">{notice}</div>}
-      <h1 className="h1">{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
+      <h1 className="h1" tabIndex={-1}>{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
       <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {formatHours(earned)} of {total} hours logged</div>
 

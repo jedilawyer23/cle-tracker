@@ -12,7 +12,7 @@ export function DeleteAccountConfirm({ creditsCount, busy, error, onCancel, onCo
   return (
     <div className="wrap">
       <div className="topline"><button className="back" onClick={onCancel}>‹ Back</button><div className="sp" /></div>
-      <h1 className="h1">Delete account & data</h1>
+      <h1 className="h1" tabIndex={-1}>Delete account & data</h1>
       <div className="sub">
         This permanently deletes your profile and all {creditsCount} logged credit{creditsCount === 1 ? '' : 's'},
         and removes your account. This can't be undone.

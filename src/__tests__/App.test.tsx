@@ -422,6 +422,39 @@ it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async
   expect(screen.getByText(/PLI/)).toBeInTheDocument()
 })
 
+it('moves focus to the dashboard heading once first-run onboarding completes', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await waitFor(() => expect(screen.getByText(/Legal Ethics/)).toBeInTheDocument())
+  expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
+})
+
+it('moves focus to the new screen\'s heading when navigating to Settings', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+  fireEvent.click(screen.getByRole('button', { name: /settings/i }))
+  const heading = await screen.findByRole('heading', { name: 'Settings' })
+  expect(heading).toHaveFocus()
+})
+
+it('does not steal focus from a form field being typed into (no screen change)', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  const nameField = await screen.findByLabelText(/full name/i)
+  nameField.focus()
+  fireEvent.change(nameField, { target: { value: 'Maya' } })
+  expect(nameField).toHaveFocus()
+  fireEvent.change(nameField, { target: { value: 'Maya Hoffman' } })
+  expect(nameField).toHaveFocus()
+})
+
 it('opens the Settings menu from the dashboard gear (not straight to name-edit), and Edit name still works', async () => {
   const profile: UserProfile = {
     name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: '2010-01-01',
