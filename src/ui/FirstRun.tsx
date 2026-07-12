@@ -72,12 +72,15 @@ export function FirstRun({
         {onBack ? <button className="back" onClick={onBack}>‹ Back</button> : <Wordmark />}
         <div className="sp" />
       </div>
-      <h1 className="h1" tabIndex={-1}>{mode === 'edit' ? 'Edit name' : 'Get started'}</h1>
-      <div className="sub">
-        {mode === 'edit'
-          ? 'Update your name to correct your MCLE group.'
-          : "Enter your name and we'll look up your California MCLE requirement."}
-      </div>
+      <h1 className="h1" tabIndex={-1}>{mode === 'edit' ? 'Edit name' : 'Your California MCLE, tracked.'}</h1>
+      {mode === 'edit' ? (
+        <div className="sub">Update your name to correct your MCLE group.</div>
+      ) : (
+        <>
+          <div className="sub">Upload your CLE certificates — clekeeper sorts the credits and counts down to your California Bar deadline.</div>
+          <div className="submeta">Enter your name and we'll look up your California MCLE requirement.</div>
+        </>
+      )}
 
       <div className="label">Your name</div>
       <List>

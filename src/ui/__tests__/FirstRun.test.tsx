@@ -23,9 +23,10 @@ it('shows the not-legal-advice disclaimer', () => {
   expect(screen.getByText(/not legal advice/i)).toBeInTheDocument()
 })
 
-it('setup mode (default): shows "Get started", Continue, the note, and the wordmark not a back control', () => {
+it('setup mode (default): shows the value headline, the instruction, Continue, the note, and the wordmark not a back control', () => {
   render(<FirstRun onContinue={vi.fn()} />)
-  expect(screen.getByText('Get started')).toBeInTheDocument()
+  expect(screen.getByText(/your california mcle, tracked/i)).toBeInTheDocument()
+  expect(screen.getByText(/enter your name and we'll look up your/i)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
   expect(screen.getByText(/sign in with Google later/i)).toBeInTheDocument()
   expect(document.querySelector('.brand')).toBeInTheDocument()
