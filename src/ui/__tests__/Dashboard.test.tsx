@@ -294,7 +294,7 @@ it('threads name and photoURL to the signed-in header', () => {
   expect(document.querySelector('img.avatar')).toHaveAttribute('src', 'https://example.com/p.jpg')
 })
 
-it('forwards onSettings to the signed-in header on both the empty and populated dashboards', () => {
+it('shows a Settings link in the footer nav that fires onSettings on both the empty and populated dashboards', () => {
   const onSettings = vi.fn()
   const credits: Credit[] = [{
     id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',

@@ -63,25 +63,3 @@ it('omits the wordmark on the back-header variant even if brand is set', () => {
   expect(document.querySelector('.brand')).not.toBeInTheDocument()
   expect(document.querySelector('.back')).toBeInTheDocument()
 })
-
-it('renders a settings gear before the account pill when onSettings is given, and fires it on click', () => {
-  const onSettings = vi.fn()
-  render(<SignInToSave accountState="guest" onSignIn={() => {}} onSettings={onSettings} />)
-  const topline = document.querySelector('.topline')!
-  const gearBtn = screen.getByRole('button', { name: /settings/i })
-  const navBtn = topline.querySelector('.navbtn')!
-  expect(gearBtn.compareDocumentPosition(navBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  fireEvent.click(gearBtn)
-  expect(onSettings).toHaveBeenCalled()
-})
-
-it('omits the settings gear when onSettings is not passed', () => {
-  render(<SignInToSave accountState="guest" onSignIn={() => {}} />)
-  expect(screen.queryByRole('button', { name: /settings/i })).not.toBeInTheDocument()
-})
-
-it('omits the settings gear on the back-header variant even if onSettings is set', () => {
-  render(<SignInToSave accountState="guest" onSignIn={() => {}} onBack={() => {}} onSettings={() => {}} />)
-  expect(screen.queryByRole('button', { name: /settings/i })).not.toBeInTheDocument()
-  expect(document.querySelector('.back')).toBeInTheDocument()
-})

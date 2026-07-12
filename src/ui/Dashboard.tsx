@@ -28,9 +28,15 @@ export interface DashboardProps {
   onOpenReport?: () => void
 }
 
-function PastCyclesLink({ hasPastCycles, onOpenPastCycles }: { hasPastCycles?: boolean; onOpenPastCycles?: () => void }) {
-  if (!hasPastCycles) return null
-  return <button className="link" onClick={onOpenPastCycles}>Past cycles ›</button>
+// Bottom navigation: Settings (always) and, when there are prior-cycle credits, Past cycles —
+// side by side, replacing the old floating settings gear in the header.
+function FooterNav({ hasPastCycles, onOpenPastCycles, onSettings }: { hasPastCycles?: boolean; onOpenPastCycles?: () => void; onSettings?: () => void }) {
+  return (
+    <div className="footnav">
+      {hasPastCycles && <button className="navlink" onClick={onOpenPastCycles}>Past cycles ›</button>}
+      <button className="navlink" onClick={onSettings}>Settings ›</button>
+    </div>
+  )
 }
 
 // Total hours and Participatory are plain, non-expandable rows in the mockup — no chevron, no
@@ -69,7 +75,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
   if (credits.length === 0) {
     return (
       <div className="wrap">
-        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
+        <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
         {signInMessage && <div className="note">{signInMessage}</div>}
         {notice && <div className="note">{notice}</div>}
         <h1 className="h1" tabIndex={-1}>Add your first credit</h1>
@@ -80,7 +86,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
         <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
 
         <button className="btn" onClick={onAddCredit}>Add a certificate</button>
-        <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
+        <FooterNav hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} onSettings={onSettings} />
         <div className="note">Upload a certificate and we'll sort it into the right categories. Not legal advice — verify with the State Bar of California.</div>
       </div>
     )
@@ -91,7 +97,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
 
   return (
     <div className="wrap">
-      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand onSettings={onSettings} />
+      <SignInToSave accountState={accountState} onSignIn={onSignIn} name={name} photoURL={photoURL} brand />
       {signInMessage && <div className="note">{signInMessage}</div>}
       {notice && <div className="note">{notice}</div>}
       <h1 className="h1" tabIndex={-1}>{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
@@ -106,7 +112,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
 
       <button className="btn" onClick={onAddCredit}>Add a certificate</button>
       <button className="btn tinted" onClick={onOpenReport}>Export report (PDF)</button>
-      <PastCyclesLink hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} />
+      <FooterNav hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} onSettings={onSettings} />
       <Disclaimer />
     </div>
   )
