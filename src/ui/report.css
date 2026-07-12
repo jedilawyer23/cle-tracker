@@ -15,7 +15,7 @@
 .rep-kicker-r { color: #6B7075; font-size: 9.5px; }
 .rep-rule { height: 2px; background: #E31937; margin: 7px 0 18px; }
 .rep-name { font-size: 26px; font-weight: 700; margin: 0 0 3px; letter-spacing: -.01em; }
-.rep-name:focus:not(:focus-visible) { outline: none; }
+.rep-name:focus { outline: none; }
 .rep-sub { color: #6B7075; font-size: 13px; margin-bottom: 18px; }
 
 .rep-banner { background: #16181C; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; break-inside: avoid; }
