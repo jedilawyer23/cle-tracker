@@ -65,7 +65,7 @@
 .item .chev { transition: transform .22s ease; }
 .item.open > .rowbar .chev { transform: rotate(180deg); }
 .credits { max-height: 0; overflow: hidden; opacity: 0; transition: max-height .24s ease, opacity .2s ease; padding: 0 16px 0 32px; }
-.item.open .credits { max-height: 340px; opacity: 1; padding-top: 2px; padding-bottom: 8px; }
+.item.open .credits { max-height: 3000px; overflow-y: auto; opacity: 1; padding-top: 2px; padding-bottom: 8px; }
 .crow { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: .5px solid var(--sep); cursor: pointer; }
 .crow .t { flex: 1; min-width: 0; }
 .crow .cn { font-size: 15px; font-weight: 400; letter-spacing: -.01em; }
