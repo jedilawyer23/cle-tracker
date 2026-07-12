@@ -97,6 +97,9 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       <h1 className="h1" tabIndex={-1}>{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
       <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {formatHours(earned)} of {total} hours logged</div>
+      {unmetCount === 0 && (
+        <div className="compliant-banner"><span className="ck">✓</span> All requirements met for this cycle</div>
+      )}
 
       <div className="label">Requirements</div>
       <RequirementsList rows={rows} onOpenCredit={onOpenCredit} />
