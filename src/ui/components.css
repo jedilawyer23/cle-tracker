@@ -13,6 +13,10 @@
 .navlink { background: none; border: 0; color: var(--accent); font-size: 16px; font-weight: 400; min-height: 44px; padding: 12px 6px; cursor: pointer; }
 .navlink:active { opacity: .4; }
 .h1 { font-size: 30px; line-height: 1.16; letter-spacing: -.024em; font-weight: 700; margin: 6px 0 0; text-wrap: balance; }
+/* Headings are focused on screen change so screen readers announce the new screen, but they're
+   not keyboard-tabbable — so hide the focus ring for that programmatic/mouse focus, keeping it
+   only for genuine keyboard focus. Avoids a stray "selection box" around the heading on load. */
+.h1:focus:not(:focus-visible) { outline: none; }
 .sub { font-size: 16px; color: var(--muted); margin-top: 7px; letter-spacing: -.01em; }
 .submeta { font-size: 14px; color: var(--muted); margin-top: 3px; letter-spacing: -.005em; }
 
