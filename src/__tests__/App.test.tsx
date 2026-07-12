@@ -18,9 +18,11 @@ vi.mock('../parsing/fileToBase64', async (importOriginal) => ({
 }))
 import { parseCertificate } from '../parsing/parseCertificate'
 
-it('shows a loading state before the store is ready', () => {
+it('shows a loading state before the store is ready, announced via a live region', () => {
   render(<App store={createFakeStore()} />)
-  expect(screen.getByText(/loading/i)).toBeInTheDocument()
+  const status = screen.getByRole('status')
+  expect(status).toHaveTextContent(/loading/i)
+  expect(status).toHaveAttribute('aria-live')
 })
 
 it('goes from first run to the dashboard, persisting the derived profile to the store', async () => {

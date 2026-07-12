@@ -253,7 +253,7 @@ function App({
 
   if (!ready) {
     return (
-      <div className="wrap" aria-busy="true">
+      <div className="wrap" role="status" aria-live="polite" aria-busy="true">
         <div className="sub">Loading…</div>
       </div>
     )
