@@ -112,11 +112,13 @@ function App({
   // Move focus to the new screen's heading on every transition — `setScreen` swaps the whole
   // screen with no navigation of its own, which would otherwise strand keyboard/screen-reader
   // users wherever they last were. Keyed on `screen` plus profile's presence/absence (onboarding
-  // completing swaps FirstRun for the dashboard without `screen` itself changing) — never on
-  // anything that changes mid-typing (notices, toasts), so it never steals focus from a field.
+  // completing swaps FirstRun for the dashboard without `screen` itself changing) plus `ready`
+  // (a brand-new user goes straight from loading to FirstRun with no profile either side, so
+  // `!!profile` alone wouldn't change) — never on anything that changes mid-typing (notices,
+  // toasts), so it never steals focus from a field.
   useEffect(() => {
     document.querySelector<HTMLElement>('h1[tabindex="-1"]')?.focus()
-  }, [screen, !!profile])
+  }, [screen, !!profile, ready])
 
   // `currentPeriod` is set once at onboarding and otherwise read verbatim — once its reportBy
   // passes it goes stale (new credits stop counting, "days left" goes negative). Re-derive the

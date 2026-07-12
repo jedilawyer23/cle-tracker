@@ -424,6 +424,12 @@ it('navigates dashboard -> Past cycles -> a past credit\'s detail screen', async
   expect(screen.getByText(/PLI/)).toBeInTheDocument()
 })
 
+it('moves focus to the first-run heading on initial load for a brand-new user (no profile either side of ready)', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
+})
+
 it('moves focus to the dashboard heading once first-run onboarding completes', async () => {
   render(<App store={createFakeStore()} today="2026-07-10" />)
   await screen.findByLabelText(/full name/i)
