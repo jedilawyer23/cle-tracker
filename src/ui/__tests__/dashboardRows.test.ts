@@ -1,7 +1,7 @@
 // ABOUTME: Tests grouping requirement progress into the dashboard's unified top-level rows.
 // ABOUTME: Includes the M1 carry-forward case: a met parent with an unmet sub-minimum stays unmet.
 import { describe, it, expect } from 'vitest'
-import { buildDashboardRows } from '../dashboardRows'
+import { buildDashboardRows, shortfallsWithTotalMet } from '../dashboardRows'
 import { calculateCompliance } from '../../domain/complianceCalculator'
 import { REQUIREMENT_RULES } from '../../domain/requirements'
 import type { Credit } from '../../domain/types'
@@ -72,5 +72,68 @@ describe('buildDashboardRows', () => {
 
     const competenceRow = rows.find(r => r.key === 'competence')!
     expect(competenceRow.met).toBe(false)
+  })
+})
+
+// The failure mode this catches: an attorney logs 25+ hours, assumes they're done, and misses a
+// small standalone or sub-requirement still outstanding.
+describe('shortfallsWithTotalMet', () => {
+  const shortfalls = (credits: Credit[]) =>
+    shortfallsWithTotalMet(buildDashboardRows(calculateCompliance(REQUIREMENT_RULES, credits), credits))
+
+  it('names a short standalone requirement once the total is met', () => {
+    // 25 total hours, everything met except the 1-hour Civility standalone.
+    const credits = [
+      credit({ id: 'ethics', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } }),
+      credit({ id: 'competence', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } }),
+      credit({ id: 'bias', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } }),
+      credit({ id: 'tech', totalHours: 1, participatory: true, categoryHours: { technology: 1 } }),
+      credit({ id: 'general', totalHours: 16, participatory: true, categoryHours: {} }),
+    ]
+    expect(shortfalls(credits)).toEqual([{ label: 'Civility', remaining: 1 }])
+  })
+
+  it('names a short sub-minimum by its own label even when its parent total is met', () => {
+    // Bias hours met (2/2) but the Implicit Bias sub-minimum is untouched.
+    const credits = [
+      credit({ id: 'ethics', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } }),
+      credit({ id: 'competence', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } }),
+      credit({ id: 'bias', totalHours: 2, participatory: true, categoryHours: { bias: 2 } }),
+      credit({ id: 'tech', totalHours: 1, participatory: true, categoryHours: { technology: 1 } }),
+      credit({ id: 'civility', totalHours: 1, participatory: true, categoryHours: { civility: 1 } }),
+      credit({ id: 'general', totalHours: 15, participatory: true, categoryHours: {} }),
+    ]
+    expect(shortfalls(credits)).toEqual([{ label: 'Implicit Bias', remaining: 1 }])
+  })
+
+  it('names a short participatory minimum once the total is met', () => {
+    // 25 total hours, but only 10 of them participatory (12.5 required).
+    const credits = [
+      credit({ id: 'ethics', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } }),
+      credit({ id: 'competence', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } }),
+      credit({ id: 'bias', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } }),
+      credit({ id: 'tech', totalHours: 1, participatory: true, categoryHours: { technology: 1 } }),
+      credit({ id: 'civility', totalHours: 1, participatory: true, categoryHours: { civility: 1 } }),
+      credit({ id: 'general', totalHours: 15, participatory: false, categoryHours: {} }),
+    ]
+    expect(shortfalls(credits)).toEqual([{ label: 'Participatory', remaining: 2.5 }])
+  })
+
+  it('returns empty when the total is not yet met (the main list already tells the story)', () => {
+    expect(shortfalls([])).toEqual([])
+    const partial = [credit({ id: 'ethics', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } })]
+    expect(shortfalls(partial)).toEqual([])
+  })
+
+  it('returns empty when every requirement is met', () => {
+    const credits = [
+      credit({ id: 'ethics', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } }),
+      credit({ id: 'competence', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } }),
+      credit({ id: 'bias', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } }),
+      credit({ id: 'tech', totalHours: 1, participatory: true, categoryHours: { technology: 1 } }),
+      credit({ id: 'civility', totalHours: 1, participatory: true, categoryHours: { civility: 1 } }),
+      credit({ id: 'general', totalHours: 15, participatory: true, categoryHours: {} }),
+    ]
+    expect(shortfalls(credits)).toEqual([])
   })
 })

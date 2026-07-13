@@ -3,7 +3,7 @@
 import { BarRow } from './BarRow'
 import { SignInToSave } from './SignInToSave'
 import { Disclaimer } from './Disclaimer'
-import { buildDashboardRows, type DashboardRow } from './dashboardRows'
+import { buildDashboardRows, shortfallsWithTotalMet, type DashboardRow, type Shortfall } from './dashboardRows'
 import { formatDate } from './formatDate'
 import { formatHours } from './formatHours'
 import type { ComplianceResult, Credit, Period } from '../domain/types'
@@ -54,6 +54,19 @@ function daysUntil(iso: string, today: string): number {
   return Math.max(0, Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86_400_000))
 }
 
+// Guidance callout for the "logged 25 hours, assumed done" trap: when the total is met but small
+// standalone or sub-requirements remain, name them plainly. Calm (amber), not an alarm.
+function SubRequirementCatch({ totalHours, shortfalls }: { totalHours: number; shortfalls: Shortfall[] }) {
+  const phrase = shortfalls
+    .map(s => `${formatHours(s.remaining)} ${s.label} hour${s.remaining === 1 ? '' : 's'}`)
+    .join(', ')
+  return (
+    <div className="subreq-catch" style={{ display: 'flex', gap: 8, background: 'rgba(255,149,0,.12)', color: 'var(--warn-text)', borderRadius: 12, padding: '10px 14px', marginTop: 14, fontSize: 14, fontWeight: 500 }}>
+      You've got the {totalHours} hours — but you're still short on {phrase}.
+    </div>
+  )
+}
+
 function RequirementsList({ rows, onOpenCredit }: { rows: DashboardRow[]; onOpenCredit: (id: string) => void }) {
   return (
     <div className="list">
@@ -71,6 +84,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
   // left" always equals the number of unmet rows in the visible list below.
   const rows = buildDashboardRows(result, credits)
   const unmetCount = rows.filter(r => !r.met).length
+  const shortfalls = shortfallsWithTotalMet(rows)
 
   if (credits.length === 0) {
     return (
@@ -103,6 +117,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       <h1 className="h1" tabIndex={-1}>{unmetCount === 0 ? "You're compliant" : `${unmetCount} requirement${unmetCount === 1 ? '' : 's'} left`}</h1>
       <div className="sub">Reporting cycle: {formatDate(period.start)} – {formatDate(period.end)}</div>
       <div className="submeta">Report by {formatDate(period.reportBy)} · {today > period.reportBy ? 'Overdue' : `${daysUntil(period.reportBy, today)} days left`} · {formatHours(earned)} of {total} hours logged</div>
+      {shortfalls.length > 0 && <SubRequirementCatch totalHours={total} shortfalls={shortfalls} />}
       {unmetCount === 0 && (
         <div className="compliant-banner"><span className="ck">✓</span> All requirements met for this cycle</div>
       )}
