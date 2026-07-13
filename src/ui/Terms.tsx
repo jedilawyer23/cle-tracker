@@ -34,6 +34,12 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
+    heading: 'Indemnification',
+    paragraphs: [
+      'You agree to indemnify and hold clekeeper harmless from any claim, loss, or expense arising out of your misuse of the app or your violation of these terms.',
+    ],
+  },
+  {
     heading: 'Acceptable use',
     paragraphs: [
       'Use clekeeper only for its intended purpose. Do not attempt to disrupt, overload, or misuse the service.',
@@ -61,6 +67,12 @@ const SECTIONS: LegalSection[] = [
     heading: 'Governing law',
     paragraphs: [
       'These terms are governed by the laws of the State of California.',
+    ],
+  },
+  {
+    heading: 'Arbitration',
+    paragraphs: [
+      'Any dispute relating to these terms or your use of clekeeper will be resolved by binding, individual arbitration rather than in court, and you and clekeeper each waive the right to a jury trial and to bring claims as part of a class action.',
     ],
   },
   {

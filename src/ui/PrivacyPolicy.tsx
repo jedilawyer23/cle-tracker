@@ -19,7 +19,7 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'Certificate files',
     paragraphs: [
-      'When you upload a certificate photo or PDF, we send it to our AI parsing provider (Anthropic) to read the credit details, then discard it. The file itself is never stored, and Anthropic does not use it to train its models. Only the credit details you review and save are kept.',
+      'When you upload a certificate photo or PDF, we send it to our AI parsing provider (Anthropic) to read the credit details, then discard it. The file itself is never stored. Only the credit details you review and save are kept.',
     ],
   },
   {
