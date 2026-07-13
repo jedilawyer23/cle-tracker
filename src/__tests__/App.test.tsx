@@ -16,7 +16,20 @@ vi.mock('../parsing/fileToBase64', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../parsing/fileToBase64')>()), // keep the real size cap/check
   fileToBase64: vi.fn(async () => ({ fileBase64: 'QUJD', mimeType: 'application/pdf' })),
 }))
+// The batch review screen's own bulk-parse and quota calls are mocked so a multi-file selection
+// renders it with no real network — App's routing (count -> screen) is what these tests exercise.
+const { bulkRun } = vi.hoisted(() => ({ bulkRun: vi.fn() }))
+vi.mock('../parsing/useBulkParse', () => ({
+  useBulkParse: () => ({ items: [], run: bulkRun }),
+}))
+vi.mock('../parsing/getParseQuota', () => ({
+  getParseQuota: vi.fn(async () => ({ used: 0, limit: 10, remaining: 10 })),
+}))
 import { parseCertificate } from '../parsing/parseCertificate'
+
+function pdf(name: string) {
+  return new File([new Uint8Array([65, 66, 67])], name, { type: 'application/pdf' })
+}
 
 it('shows a loading state before the store is ready, announced via a live region', () => {
   render(<App store={createFakeStore()} />)
@@ -233,6 +246,26 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
   await waitFor(() => expect(screen.getByText(/requirements left/i)).toBeInTheDocument())
   const technologyRow = screen.getByText('Technology').closest('.item')!
   expect(technologyRow.querySelector('.chkcol .ck')).toBeInTheDocument()
+})
+
+it('routes a multi-file upload selection to the batch review screen, not the single Confirm flow', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Maya Hoffman' } })
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+  await screen.findByRole('button', { name: /add a certificate/i })
+  fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
+
+  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const a = pdf('a.pdf')
+  const b = pdf('b.pdf')
+  fireEvent.change(fileInput, { target: { files: [a, b] } })
+
+  // Batch review, not the single-cert Confirm form — and the two picked files reach its parser.
+  await screen.findByText(/left today/i)
+  expect(screen.getByRole('heading', { name: /certificates read/i })).toBeInTheDocument()
+  expect(screen.queryByLabelText(/^provider$/i)).not.toBeInTheDocument()
+  expect(bulkRun).toHaveBeenCalledWith([a, b])
 })
 
 it('falls back to a blank Confirm screen with a message when parsing fails', async () => {

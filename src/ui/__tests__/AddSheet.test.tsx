@@ -11,7 +11,7 @@ function file() {
 }
 
 it('renders the three options and Cancel', () => {
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   expect(screen.getByText('Take Photo')).toBeInTheDocument()
   expect(screen.getByText('Upload PDF or Image')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Enter Manually' })).toBeInTheDocument()
@@ -19,38 +19,54 @@ it('renders the three options and Cancel', () => {
 })
 
 it("wires Take Photo's hidden input to device capture", () => {
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   const input = screen.getByLabelText('Take Photo') as HTMLInputElement
   expect(input.accept).toBe('image/*')
   expect(input.getAttribute('capture')).toBe('environment')
 })
 
 it("wires Upload's hidden input to accept PDF/images without device capture", () => {
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   const input = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
   expect(input.accept).toBe('application/pdf,image/png,image/jpeg,image/webp,image/gif')
   expect(input.hasAttribute('capture')).toBe(false)
 })
 
-it('reports a file picked via either input through onFile', () => {
+it('reports a single photo captured via Take Photo through onFile', () => {
   const onFile = vi.fn()
-  render(<AddSheet onFile={onFile} onManual={vi.fn()} onCancel={vi.fn()} />)
-  const input = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  render(<AddSheet onFile={onFile} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  const input = screen.getByLabelText('Take Photo') as HTMLInputElement
   const picked = file()
   fireEvent.change(input, { target: { files: [picked] } })
   expect(onFile).toHaveBeenCalledWith(picked)
 })
 
+it('reports all files picked via Upload through onFiles', () => {
+  const onFiles = vi.fn()
+  render(<AddSheet onFile={vi.fn()} onFiles={onFiles} onManual={vi.fn()} onCancel={vi.fn()} />)
+  const input = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const a = new File([new Uint8Array([65])], 'a.pdf', { type: 'application/pdf' })
+  const b = new File([new Uint8Array([66])], 'b.pdf', { type: 'application/pdf' })
+  fireEvent.change(input, { target: { files: [a, b] } })
+  expect(onFiles).toHaveBeenCalledWith([a, b])
+})
+
+it('lets Upload accept multiple files, while Take Photo stays single', () => {
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  expect((screen.getByLabelText('Upload PDF or Image') as HTMLInputElement).multiple).toBe(true)
+  expect((screen.getByLabelText('Take Photo') as HTMLInputElement).multiple).toBe(false)
+})
+
 it('fires onManual for Enter Manually', () => {
   const onManual = vi.fn()
-  render(<AddSheet onFile={vi.fn()} onManual={onManual} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={onManual} onCancel={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', { name: 'Enter Manually' }))
   expect(onManual).toHaveBeenCalled()
 })
 
 it('fires onCancel on Cancel click and on backdrop click', () => {
   const onCancel = vi.fn()
-  const { container } = render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
+  const { container } = render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(onCancel).toHaveBeenCalledTimes(1)
   fireEvent.click(container.querySelector('.sheet-backdrop')!)
@@ -59,33 +75,33 @@ it('fires onCancel on Cancel click and on backdrop click', () => {
 
 it('does not close when clicking inside the sheet itself', () => {
   const onCancel = vi.fn()
-  const { container } = render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
+  const { container } = render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
   fireEvent.click(container.querySelector('.sheet')!)
   expect(onCancel).not.toHaveBeenCalled()
 })
 
 it('shows a busy state and hides the options while busy', () => {
-  render(<AddSheet busy onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet busy onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   expect(screen.getByText(/reading/i)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Enter Manually' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
 })
 
 it('has modal dialog semantics with an accessible name', () => {
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   const dialog = screen.getByRole('dialog')
   expect(dialog).toHaveAttribute('aria-modal', 'true')
   expect(dialog).toHaveAccessibleName()
 })
 
 it('moves focus into the sheet when it opens', () => {
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   expect(screen.getByRole('dialog')).toHaveFocus()
 })
 
 it('closes on Escape', () => {
   const onCancel = vi.fn()
-  render(<AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
+  render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={onCancel} />)
   fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
   expect(onCancel).toHaveBeenCalledTimes(1)
 })
@@ -96,7 +112,7 @@ it('restores focus to the element that opened it, once closed', () => {
     return (
       <>
         <button onClick={() => setOpen(true)}>Add a certificate</button>
-        {open && <AddSheet onFile={vi.fn()} onManual={vi.fn()} onCancel={() => setOpen(false)} />}
+        {open && <AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={() => setOpen(false)} />}
       </>
     )
   }
