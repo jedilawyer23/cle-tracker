@@ -210,6 +210,121 @@ it('counts a parent with an unmet sub-minimum as unmet in the headline "N requir
   expect(competenceRow.querySelector('.chkcol .ck')).not.toBeInTheDocument()
 })
 
+// The sub-requirement catch: 25+ hours logged is easy to mistake for "done" while a small
+// standalone or sub-minimum is still short. Surface it prominently and by name.
+it('calls out a short standalone requirement by name once the total hours are met', () => {
+  const credits: Credit[] = [
+    { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'competence', provider: 'p', activityTitle: 'Competence', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: 'bias', provider: 'p', activityTitle: 'Bias', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } },
+    { id: 'tech', provider: 'p', activityTitle: 'Tech', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    { id: 'general', provider: 'p', activityTitle: 'General', completionDate: '2026-01-01', totalHours: 16, participatory: true, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  const callout = container.querySelector('.subreq-catch')!
+  expect(callout).toBeInTheDocument()
+  expect(callout).toHaveTextContent(/25 hours/)
+  expect(callout).toHaveTextContent(/1 Civility hour\b/)
+})
+
+// A met parent (Elimination of Bias 2/2) with an unmet sub-minimum (Implicit Bias 0/1) must name
+// the child, not the parent — that's the gap the attorney would miss.
+it('names an unmet sub-minimum by its own label in the catch callout', () => {
+  const credits: Credit[] = [
+    { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'competence', provider: 'p', activityTitle: 'Competence', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: 'bias', provider: 'p', activityTitle: 'Bias', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { bias: 2 } },
+    { id: 'tech', provider: 'p', activityTitle: 'Tech', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    { id: 'civility', provider: 'p', activityTitle: 'Civility', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { civility: 1 } },
+    { id: 'general', provider: 'p', activityTitle: 'General', completionDate: '2026-01-01', totalHours: 15, participatory: true, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  const callout = container.querySelector('.subreq-catch')!
+  expect(callout).toBeInTheDocument()
+  expect(callout).toHaveTextContent(/Implicit Bias/)
+})
+
+// Multiple simultaneous gaps read in REQUIREMENT_RULES order, joined, with correct singular/plural.
+it('lists multiple catch shortfalls in order with correct singular/plural wording', () => {
+  const credits: Credit[] = [
+    { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'competence', provider: 'p', activityTitle: 'Competence', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: 'bias', provider: 'p', activityTitle: 'Bias', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } },
+    { id: 'tech', provider: 'p', activityTitle: 'Tech', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    // 16 non-participatory general hours reach 25 total but leave participatory at 9/12.5, and
+    // civility untouched — two gaps at once.
+    { id: 'general', provider: 'p', activityTitle: 'General', completionDate: '2026-01-01', totalHours: 16, participatory: false, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  const callout = container.querySelector('.subreq-catch')!
+  expect(callout).toHaveTextContent('still short on 1 Civility hour, 3.5 Participatory hours.')
+})
+
+// The displayed hour count drives singular/plural, not the raw float: a remaining of 1.04 shows
+// as "1" and must read "1 hour", never "1 hours".
+it('pluralizes the catch wording from the displayed hours, not the raw remaining', () => {
+  const credits: Credit[] = [
+    { id: 'ethics', provider: 'p', activityTitle: 'Ethics', completionDate: '2026-01-01', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: 'competence', provider: 'p', activityTitle: 'Competence', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: 'bias', provider: 'p', activityTitle: 'Bias', completionDate: '2026-01-01', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } },
+    { id: 'tech', provider: 'p', activityTitle: 'Tech', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    { id: 'civility', provider: 'p', activityTitle: 'Civility', completionDate: '2026-01-01', totalHours: 1, participatory: true, categoryHours: { civility: 1 } },
+    // Participatory reaches 11.46 (remaining 1.04, shown as 1); non-participatory hours top up to 25.
+    { id: 'partial', provider: 'p', activityTitle: 'Partial', completionDate: '2026-01-01', totalHours: 1.46, participatory: true, categoryHours: {} },
+    { id: 'general', provider: 'p', activityTitle: 'General', completionDate: '2026-01-01', totalHours: 13.54, participatory: false, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  const callout = container.querySelector('.subreq-catch')!
+  expect(callout).toHaveTextContent('1 Participatory hour.')
+  expect(callout).not.toHaveTextContent('1 Participatory hours')
+})
+
+it('does not show the catch callout while the total hours are still short', () => {
+  const credits: Credit[] = [{
+    id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',
+    totalHours: 4, participatory: true, categoryHours: { ethics: 4 },
+  }]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(container.querySelector('.subreq-catch')).not.toBeInTheDocument()
+})
+
+it('does not show the catch callout once every requirement is met', () => {
+  const credits: Credit[] = [
+    { id: '1', provider: 'A', activityTitle: 'Ethics', completionDate: '2026-01-02', totalHours: 4, participatory: true, categoryHours: { ethics: 4 } },
+    { id: '2', provider: 'B', activityTitle: 'Competence', completionDate: '2026-01-03', totalHours: 2, participatory: true, categoryHours: { competence: 2, competencePrevention: 1 } },
+    { id: '3', provider: 'C', activityTitle: 'Bias', completionDate: '2026-01-04', totalHours: 2, participatory: true, categoryHours: { bias: 2, biasImplicit: 1 } },
+    { id: '4', provider: 'D', activityTitle: 'Tech', completionDate: '2026-01-05', totalHours: 1, participatory: true, categoryHours: { technology: 1 } },
+    { id: '5', provider: 'E', activityTitle: 'Civility', completionDate: '2026-01-06', totalHours: 1, participatory: true, categoryHours: { civility: 1 } },
+    { id: '6', provider: 'F', activityTitle: 'General', completionDate: '2026-01-07', totalHours: 15, participatory: true, categoryHours: {} },
+  ]
+  const result = calculateCompliance(REQUIREMENT_RULES, credits)
+  const { container } = render(<Dashboard name="Maya Hoffman" period={PERIOD}
+    result={result} credits={credits} today="2026-07-10"
+    accountState="guest" onSignIn={() => {}}
+    onAddCredit={() => {}} onOpenCredit={() => {}} />)
+  expect(container.querySelector('.subreq-catch')).not.toBeInTheDocument()
+})
+
 it('lets a category row expand to its contributing credits, and does not expand Total hours or Participatory', () => {
   const credits: Credit[] = [{
     id: 'a', provider: 'CEB', activityTitle: 'Conflicts of Interest', completionDate: '2026-01-22',

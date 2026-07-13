@@ -8,6 +8,7 @@ import { lastToken } from './ui/lastToken'
 import { Dashboard } from './ui/Dashboard'
 import { AddSheet } from './ui/AddSheet'
 import { AddCredit } from './ui/AddCredit'
+import { BatchReview } from './ui/BatchReview'
 import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
 import { Settings } from './ui/Settings'
@@ -27,7 +28,7 @@ import type { Credit } from './domain/types'
 import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'credit' | 'past' | 'settings' | 'editName' | 'deleteAccount' | 'report'
+type Screen = 'dashboard' | 'confirm' | 'batch' | 'credit' | 'past' | 'settings' | 'editName' | 'deleteAccount' | 'report'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -72,6 +73,7 @@ function App({
   const [confirmSeed, setConfirmSeed] = useState<ConfirmSeed | null>(null)
   const [signInMessage, setSignInMessage] = useState<string | null>(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [batchFiles, setBatchFiles] = useState<File[]>([])
   const [notice, setNotice] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
@@ -194,6 +196,25 @@ function App({
     }
   }
 
+  // The Upload input yields one or more files. A single file keeps the existing parse -> Confirm
+  // flow untouched; two or more route to the batch review screen instead.
+  function handleUploadFiles(files: File[]) {
+    if (files.length === 1) {
+      parseFile(files[0])
+      return
+    }
+    setBatchFiles(files)
+    setAddSheetOpen(false)
+    setScreen('batch')
+  }
+
+  // Saves each credit BatchReview has already accepted (deduped upstream). Lets a rejected write
+  // propagate so BatchReview keeps the user on the review screen and surfaces its own save toast,
+  // rather than navigating away as if the batch had saved.
+  async function handleBatchSave(toSave: Array<Omit<Credit, 'id'>>) {
+    for (const c of toSave) await add(c)
+  }
+
   // Awaits the write before navigating away — otherwise a rejected delete (offline, permission,
   // quota) looks successful because the dashboard already moved on.
   async function handleRemoveCredit(id: string) {
@@ -307,6 +328,19 @@ function App({
     )
   }
 
+  if (screen === 'batch') {
+    return (
+      <BatchReview
+        files={batchFiles}
+        existingCredits={credits}
+        isGuest={profile.accountState === 'guest'}
+        onSave={handleBatchSave}
+        onBack={() => { setBatchFiles([]); setScreen('dashboard') }}
+        onDone={() => { setBatchFiles([]); setScreen('dashboard') }}
+      />
+    )
+  }
+
   if (screen === 'credit') {
     const found = credits.find(c => c.id === selectedId)
     if (found) {
@@ -397,6 +431,7 @@ function App({
         <AddSheet
           busy={parseBusy}
           onFile={parseFile}
+          onFiles={handleUploadFiles}
           onManual={() => { setNotice(null); setConfirmSeed(null); setAddSheetOpen(false); setScreen('confirm') }}
           onCancel={() => setAddSheetOpen(false)}
         />

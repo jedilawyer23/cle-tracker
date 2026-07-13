@@ -7,6 +7,15 @@ export interface ParseQuotaDeps {
   // whether the call is allowed. Implementations MUST do this as a single transaction so
   // concurrent calls can't both read the same under-limit count and both proceed.
   checkAndIncrement(key: string, limit: number): Promise<boolean>
+  // Reads today's count for `key` without mutating it; returns 0 when no doc exists yet.
+  getCount(key: string): Promise<number>
+}
+
+// The single source of truth for a caller's per-day quota doc key. Both the enforce (write)
+// and read paths must derive the key here so they can never drift apart and silently read/write
+// different docs.
+export function parseQuotaKey(uid: string, today: string): string {
+  return `${uid}_${today}`
 }
 
 export async function enforceParseQuota(
@@ -15,7 +24,7 @@ export async function enforceParseQuota(
   today: string,
   limit: number,
 ): Promise<void> {
-  const allowed = await deps.checkAndIncrement(`${uid}_${today}`, limit)
+  const allowed = await deps.checkAndIncrement(parseQuotaKey(uid, today), limit)
   if (!allowed) {
     throw new HttpsError('resource-exhausted', 'DAILY_LIMIT')
   }

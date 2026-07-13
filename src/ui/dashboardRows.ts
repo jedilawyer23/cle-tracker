@@ -30,3 +30,29 @@ export function buildDashboardRows(result: ComplianceResult, credits: Credit[]):
         required: p.required, children, credits: creditsForRequirement(p.key, credits) }
     })
 }
+
+export interface Shortfall {
+  label: string
+  remaining: number
+}
+
+// The failure mode this catches: an attorney logs 25+ hours, assumes they're compliant, and misses
+// a small standalone or sub-requirement still outstanding. Given the dashboard rows, and only once
+// the total-hours requirement is met, list every remaining gap — categories, sub-minimums by their
+// own label (e.g. "Implicit Bias"), and participatory — so the UI can call them out specifically.
+// Returns empty while the total is still short (the main requirements list already tells that
+// story) or when nothing is outstanding.
+export function shortfallsWithTotalMet(rows: DashboardRow[]): Shortfall[] {
+  const total = rows.find(r => r.key === 'total')
+  if (!total || !total.met) return []
+  const shortfalls: Shortfall[] = []
+  for (const row of rows) {
+    if (row.key === 'total') continue
+    const ownRemaining = Math.max(0, row.required - row.earned)
+    if (ownRemaining > 0) shortfalls.push({ label: row.label, remaining: ownRemaining })
+    for (const child of row.children) {
+      if (!child.met) shortfalls.push({ label: child.label, remaining: child.remaining })
+    }
+  }
+  return shortfalls
+}
