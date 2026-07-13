@@ -2,6 +2,7 @@
 // ABOUTME: through the single-cert path (size guard → base64 → parseCertificate) and exposes progress.
 import { useCallback, useState } from 'react'
 import { fileToBase64, isFileTooLarge } from './fileToBase64'
+import { downscaleImageFile } from './downscaleImage'
 import { parseCertificate, NotACleCertificateError, DailyLimitReachedError } from './parseCertificate'
 import { runBulkParse } from './runBulkParse'
 import type { BulkItem } from './bulkParseTypes'
@@ -11,10 +12,11 @@ export function useBulkParse() {
 
   const run = useCallback(async (files: File[]) => {
     const parseOne = async (file: File) => {
-      if (isFileTooLarge(file)) {
+      const prepared = await downscaleImageFile(file)
+      if (isFileTooLarge(prepared)) {
         throw new Error('That file is too large — please upload a certificate under ~6 MB.')
       }
-      const payload = await fileToBase64(file)
+      const payload = await fileToBase64(prepared)
       try {
         return await parseCertificate(payload)
       } catch (err) {
