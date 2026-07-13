@@ -2,6 +2,7 @@
 // ABOUTME: screen seed or a fallback message. The file itself is never stored, only its base64.
 import { useCallback, useState } from 'react'
 import { fileToBase64, isFileTooLarge } from './fileToBase64'
+import { downscaleImageFile } from './downscaleImage'
 import { parseCertificate, NotACleCertificateError, DailyLimitReachedError } from './parseCertificate'
 import { parsedCreditToConfirmState, type ConfirmState } from './parsedCreditToConfirmState'
 
@@ -12,13 +13,14 @@ export function useParseFile(
   const [busy, setBusy] = useState(false)
 
   const parseFile = useCallback(async (file: File) => {
-    if (isFileTooLarge(file)) {
-      onError('That file is too large — please upload a certificate under ~6 MB.')
-      return
-    }
     setBusy(true)
     try {
-      const payload = await fileToBase64(file)
+      const prepared = await downscaleImageFile(file)
+      if (isFileTooLarge(prepared)) {
+        onError('That file is too large — please upload a certificate under ~6 MB.')
+        return
+      }
+      const payload = await fileToBase64(prepared)
       const parsed = await parseCertificate(payload)
       onParsed(parsedCreditToConfirmState(parsed))
     } catch (err) {
