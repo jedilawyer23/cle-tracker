@@ -1,4 +1,4 @@
-// ABOUTME: iOS-style action sheet for adding a certificate — Take Photo, Upload PDF or Image, or
+// ABOUTME: iOS-style action sheet for adding a certificate — Take Photo, Upload PDFs or Photos, or
 // ABOUTME: Enter Manually, plus Cancel. A modal dialog: focus moves in on open, Escape or the
 // ABOUTME: backdrop cancels, and focus returns to whatever opened it once it closes.
 import { useEffect, useRef, type ChangeEvent, type KeyboardEvent } from 'react'
@@ -54,7 +54,7 @@ export function AddSheet({ busy, onFile, onFiles, onManual, onCancel }: Props) {
           <>
             <div className="sheet-options">
               <label className="sheet-row" htmlFor="addsheet-camera">Take Photo</label>
-              <label className="sheet-row" htmlFor="addsheet-upload">Upload PDF or Image</label>
+              <label className="sheet-row" htmlFor="addsheet-upload">Upload PDFs or Photos</label>
               <button type="button" className="sheet-row" onClick={onManual}>Enter Manually</button>
             </div>
             <button type="button" className="sheet-cancel" onClick={onCancel}>Cancel</button>
@@ -71,7 +71,7 @@ export function AddSheet({ busy, onFile, onFiles, onManual, onCancel }: Props) {
         <input
           id="addsheet-upload"
           type="file"
-          accept="application/pdf,image/png,image/jpeg,image/webp,image/gif"
+          accept="application/pdf,image/*"
           multiple
           onChange={handleUpload}
           hidden

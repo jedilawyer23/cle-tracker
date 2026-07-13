@@ -13,7 +13,7 @@ function file() {
 it('renders the three options and Cancel', () => {
   render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
   expect(screen.getByText('Take Photo')).toBeInTheDocument()
-  expect(screen.getByText('Upload PDF or Image')).toBeInTheDocument()
+  expect(screen.getByText('Upload PDFs or Photos')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Enter Manually' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
 })
@@ -25,10 +25,11 @@ it("wires Take Photo's hidden input to device capture", () => {
   expect(input.getAttribute('capture')).toBe('environment')
 })
 
-it("wires Upload's hidden input to accept PDF/images without device capture", () => {
+it("wires Upload's hidden input to accept PDFs and any image without device capture", () => {
   render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
-  const input = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
-  expect(input.accept).toBe('application/pdf,image/png,image/jpeg,image/webp,image/gif')
+  const input = screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement
+  // image/* (not a fixed list) so iOS surfaces the Photo Library and hands HEIC photos over as JPEG.
+  expect(input.accept).toBe('application/pdf,image/*')
   expect(input.hasAttribute('capture')).toBe(false)
 })
 
@@ -44,7 +45,7 @@ it('reports a single photo captured via Take Photo through onFile', () => {
 it('reports all files picked via Upload through onFiles', () => {
   const onFiles = vi.fn()
   render(<AddSheet onFile={vi.fn()} onFiles={onFiles} onManual={vi.fn()} onCancel={vi.fn()} />)
-  const input = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const input = screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement
   const a = new File([new Uint8Array([65])], 'a.pdf', { type: 'application/pdf' })
   const b = new File([new Uint8Array([66])], 'b.pdf', { type: 'application/pdf' })
   fireEvent.change(input, { target: { files: [a, b] } })
@@ -53,7 +54,7 @@ it('reports all files picked via Upload through onFiles', () => {
 
 it('lets Upload accept multiple files, while Take Photo stays single', () => {
   render(<AddSheet onFile={vi.fn()} onFiles={vi.fn()} onManual={vi.fn()} onCancel={vi.fn()} />)
-  expect((screen.getByLabelText('Upload PDF or Image') as HTMLInputElement).multiple).toBe(true)
+  expect((screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement).multiple).toBe(true)
   expect((screen.getByLabelText('Take Photo') as HTMLInputElement).multiple).toBe(false)
 })
 

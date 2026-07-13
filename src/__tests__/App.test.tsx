@@ -75,7 +75,7 @@ it('opens the add-certificate action sheet from the dashboard and closes it on C
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
   expect(screen.getByText('Take Photo')).toBeInTheDocument()
-  expect(screen.getByText('Upload PDF or Image')).toBeInTheDocument()
+  expect(screen.getByText('Upload PDFs or Photos')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Enter Manually' })).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -241,7 +241,7 @@ it('routes a parsed certificate into Confirm with low-confidence fields flagged,
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
-  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const fileInput = screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement
   const file = new File([new Uint8Array([65, 66, 67])], 'cert.pdf', { type: 'application/pdf' })
   fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -262,7 +262,7 @@ it('routes a multi-file upload selection to the batch review screen, not the sin
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
-  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const fileInput = screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement
   const a = pdf('a.pdf')
   const b = pdf('b.pdf')
   fireEvent.change(fileInput, { target: { files: [a, b] } })
@@ -283,7 +283,7 @@ it('falls back to a blank Confirm screen with a message when parsing fails', asy
   await screen.findByRole('button', { name: /add a certificate/i })
   fireEvent.click(screen.getByRole('button', { name: /add a certificate/i }))
 
-  const fileInput = screen.getByLabelText('Upload PDF or Image') as HTMLInputElement
+  const fileInput = screen.getByLabelText('Upload PDFs or Photos') as HTMLInputElement
   const file = new File([new Uint8Array([65, 66, 67])], 'cert.pdf', { type: 'application/pdf' })
   fireEvent.change(fileInput, { target: { files: [file] } })
 
