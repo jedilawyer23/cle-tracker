@@ -5,7 +5,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import type { Credit, ParsedCredit } from '../domain/types'
 import { creditSignature, isDuplicateCredit } from '../domain/creditSignature'
 import { useBulkParse } from '../parsing/useBulkParse'
-import { getParseQuota } from '../parsing/getParseQuota'
+import { getParseQuota, type ParseQuota } from '../parsing/getParseQuota'
 import type { BulkItem } from '../parsing/bulkParseTypes'
 import { CreditForm, type FlaggableField } from './CreditForm'
 import { creditToForm, formToCredit, CATEGORY_LABELS, FORM_CATEGORIES } from './creditFormValues'
@@ -132,20 +132,21 @@ export function BatchReview({ files, existingCredits, isGuest, onSave, onBack, o
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [remaining, setRemaining] = useState<number | null>(null)
+  const [quota, setQuota] = useState<ParseQuota | null>(null)
 
   const started = useRef(false)
   useEffect(() => {
     if (started.current) return
     started.current = true
-    run(files)
-  }, [run, files])
-
-  useEffect(() => {
     let alive = true
-    getParseQuota().then(q => { if (alive) setRemaining(q.remaining) }).catch(() => {})
+    // Read the quota baseline before parsing, then decrement it per parsed item below — that keeps
+    // "N left today" in step with the server's per-parse tally instead of freezing a stale snapshot.
+    getParseQuota()
+      .then(q => { if (alive) setQuota(q) })
+      .catch(() => {})
+      .finally(() => { run(files) })
     return () => { alive = false }
-  }, [])
+  }, [run, files])
 
   const parsedFor = (item: BulkItem) => edits[item.id] ?? item.parsed
 
@@ -154,8 +155,10 @@ export function BatchReview({ files, existingCredits, isGuest, onSave, onBack, o
   const readyItems = items.filter(i => parsedFor(i) !== undefined)
   const couldntUse = items.filter(i => (i.status === 'skipped' || i.status === 'error') && edits[i.id] === undefined)
   const limitReached = items.some(i => i.status === 'limit')
-  const settling = items.some(i => i.status === 'pending' || i.status === 'parsing')
-  const readCount = items.filter(i => i.status !== 'limit').length
+  // No items yet means the parse hasn't reported its first update — treat that as still settling so
+  // the heading never flashes "0 certificates read" before the first file starts.
+  const settling = items.length === 0 || items.some(i => i.status === 'pending' || i.status === 'parsing')
+  const readCount = readyItems.length
 
   const seen = new Set<string>()
   const rows = readyItems.map(item => {
@@ -199,8 +202,12 @@ export function BatchReview({ files, existingCredits, isGuest, onSave, onBack, o
   const noteParts: string[] = []
   if (duplicates.length > 0) noteParts.push(`${duplicates.length} duplicate${duplicates.length === 1 ? '' : 's'} skipped`)
   if (couldntUse.length > 0) noteParts.push(`${couldntUse.length} need${couldntUse.length === 1 ? 's' : ''} attention`)
-  const leftToday = remaining != null ? ` · ${remaining} left today` : ''
-  const dailyLimit = isGuest ? 10 : 25
+  // Each successful parse is one server increment, so the live remaining is the baseline minus the
+  // parsed items. Once the limit stop shows, suppress the count so the two banners never disagree.
+  const parsedCount = items.filter(i => i.status === 'parsed').length
+  const remaining = quota ? Math.max(0, quota.remaining - parsedCount) : null
+  const dailyLimit = quota?.limit ?? (isGuest ? 10 : 25)
+  const leftToday = !limitReached && remaining != null ? ` · ${remaining} left today` : ''
 
   return (
     <div className="wrap">

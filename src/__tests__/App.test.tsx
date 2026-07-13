@@ -19,9 +19,15 @@ vi.mock('../parsing/fileToBase64', async (importOriginal) => ({
 // The batch review screen's own bulk-parse and quota calls are mocked so a multi-file selection
 // renders it with no real network — App's routing (count -> screen) is what these tests exercise.
 const { bulkRun } = vi.hoisted(() => ({ bulkRun: vi.fn() }))
-vi.mock('../parsing/useBulkParse', () => ({
-  useBulkParse: () => ({ items: [], run: bulkRun }),
-}))
+vi.mock('../parsing/useBulkParse', () => {
+  const high = 'high'
+  const conf = { provider: high, activityTitle: high, completionDate: high, totalHours: high, participatory: high, categoryHours: high }
+  const items = [
+    { id: 'b1', fileName: 'a.pdf', status: 'parsed', parsed: { provider: 'PLI', activityTitle: 'AI Law', completionDate: '2026-06-18', totalHours: 1.5, participatory: true, categoryHours: { technology: 1.5 }, confidence: conf } },
+    { id: 'b2', fileName: 'b.pdf', status: 'parsed', parsed: { provider: 'CEB', activityTitle: 'Trusts', completionDate: '2026-06-19', totalHours: 1, participatory: true, categoryHours: { competence: 1 }, confidence: conf } },
+  ]
+  return { useBulkParse: () => ({ items, run: bulkRun }) }
+})
 vi.mock('../parsing/getParseQuota', () => ({
   getParseQuota: vi.fn(async () => ({ used: 0, limit: 10, remaining: 10 })),
 }))

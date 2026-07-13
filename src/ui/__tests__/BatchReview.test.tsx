@@ -1,9 +1,10 @@
 // ABOUTME: Tests the batch review screen — parsed rows with category chips, within/against-batch
 // ABOUTME: duplicate flagging, the skipped/error/limit sections, guest vs signed-in copy, and save.
 import { it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import type { BulkItem } from '../../parsing/bulkParseTypes'
 import type { Credit, ParsedCredit } from '../../domain/types'
+import { getParseQuota } from '../../parsing/getParseQuota'
 
 // The hook and the quota callable are mocked so tests can feed controlled items with no real
 // network — BatchReview's own logic (dedup, chips, section split, save payload) is what's exercised.
@@ -50,8 +51,9 @@ async function renderReview(props: Partial<React.ComponentProps<typeof BatchRevi
       {...props}
     />,
   )
-  // Let the getParseQuota microtask settle inside act so its setState never warns.
-  await screen.findByText(/left today/i)
+  // Flush the getParseQuota microtask (and the run it kicks off) inside act so its setState never
+  // warns — the banner suppresses the count at the limit, so we can't wait on "left today" text.
+  await act(async () => {})
   return utils
 }
 
@@ -126,19 +128,22 @@ it('lists skipped and error files under "Couldn\'t use" with their reasons', asy
   expect(screen.getAllByRole('button', { name: /enter manually/i }).length).toBeGreaterThan(0)
 })
 
-it('shows the guest banner and limit-stop copy for a guest', async () => {
+it('shows the guest banner and suppresses the left-today count once the limit is reached', async () => {
   mockItems = [item(), item({ id: 'l', fileName: 'over.pdf', status: 'limit', parsed: undefined })]
   await renderReview({ isGuest: true })
-  expect(screen.getByText(/10 certificates a day · 2 left today/i)).toBeInTheDocument()
+  expect(screen.getByText(/10 certificates a day/i)).toBeInTheDocument()
+  expect(screen.queryByText(/left today/i)).not.toBeInTheDocument()
   expect(screen.getByText(/sign in with google for 25\./i)).toBeInTheDocument()
   expect(screen.getByText(/that's your 10 for today/i)).toBeInTheDocument()
   expect(screen.getByText(/sign in with google for 25 a day/i)).toBeInTheDocument()
 })
 
-it('shows the signed-in banner and limit-stop copy without a sign-in nudge', async () => {
+it('shows the signed-in per-day number from the quota limit and no sign-in nudge', async () => {
+  vi.mocked(getParseQuota).mockResolvedValueOnce({ used: 20, limit: 25, remaining: 5 })
   mockItems = [item(), item({ id: 'l', fileName: 'over.pdf', status: 'limit', parsed: undefined })]
   await renderReview({ isGuest: false })
-  expect(screen.getByText(/25 certificates a day · 2 left today/i)).toBeInTheDocument()
+  expect(screen.getByText(/25 certificates a day/i)).toBeInTheDocument()
+  expect(screen.queryByText(/left today/i)).not.toBeInTheDocument()
   expect(screen.queryByText(/sign in with google/i)).not.toBeInTheDocument()
   expect(screen.getByText(/that's your 25 for today/i)).toBeInTheDocument()
   expect(screen.getByText(/add the rest tomorrow/i)).toBeInTheDocument()
@@ -200,6 +205,39 @@ it('shows a reading state while files are still parsing', async () => {
   mockItems = [item({ id: 'a' }), item({ id: 'b', status: 'parsing', parsed: undefined })]
   await renderReview()
   expect(screen.getByText(/reading certificates/i)).toBeInTheDocument()
+})
+
+it('decrements the left-today count by the number of parsed items', async () => {
+  vi.mocked(getParseQuota).mockResolvedValueOnce({ used: 5, limit: 10, remaining: 5 })
+  mockItems = [item({ id: 'a' }), item({ id: 'b' })]
+  await renderReview()
+  expect(screen.getByText(/3 left today/i)).toBeInTheDocument()
+  expect(screen.queryByText(/5 left today/i)).not.toBeInTheDocument()
+})
+
+it('counts only the ready rows as read, not skipped or error files', async () => {
+  mockItems = [
+    item({ id: 'ok' }),
+    item({ id: 's', fileName: 'receipt.pdf', status: 'skipped', parsed: undefined }),
+    item({ id: 'e', fileName: 'scan.jpg', status: 'error', parsed: undefined, error: 'nope' }),
+  ]
+  await renderReview()
+  expect(screen.getByRole('heading', { name: /1 certificate read/i })).toBeInTheDocument()
+  expect(screen.queryByText(/3 certificates read/i)).not.toBeInTheDocument()
+})
+
+it('shows the reading state on the initial empty render, not "0 certificates read"', async () => {
+  mockItems = []
+  await renderReview()
+  expect(screen.getByRole('heading', { name: /reading certificates/i })).toBeInTheDocument()
+  expect(screen.queryByText(/0 certificates read/i)).not.toBeInTheDocument()
+})
+
+it('shows the per-day number from the quota limit, not a hardcoded default', async () => {
+  vi.mocked(getParseQuota).mockResolvedValueOnce({ used: 0, limit: 12, remaining: 7 })
+  mockItems = [item()]
+  await renderReview({ isGuest: true })
+  expect(screen.getByText(/12 certificates a day/i)).toBeInTheDocument()
 })
 
 it('tolerates a failed quota fetch by omitting the count', async () => {
