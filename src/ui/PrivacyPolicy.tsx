@@ -19,19 +19,19 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'Certificate files',
     paragraphs: [
-      'When you upload a certificate photo or PDF, we send it to our AI parsing provider (Anthropic) to read the credit details, then discard it. The file itself is never stored. Only the credit details you review and save are kept.',
+      'When you upload a certificate photo or PDF, we send it to an AI service to read the credit details, then discard it. The file itself is never stored. Only the credit details you review and save are kept.',
     ],
   },
   {
     heading: 'Where your data is stored',
     paragraphs: [
-      'Your account and CLE records are stored in Google Firebase (Firestore), which provides our database, sign-in, and hosting. Firebase stores this data on our behalf as our service provider.',
+      'Your account and CLE records are stored with our cloud hosting provider, which runs our database and hosts the app on our behalf.',
     ],
   },
   {
     heading: 'Selling, sharing, and service providers',
     paragraphs: [
-      'We do not sell your data, use it for advertising, or give it to anyone for their own purposes. To run clekeeper we rely on two service providers that process your data only on our behalf: Google Firebase (stores your records, handles Google Sign-In, and hosts the app) and Anthropic (reads the certificates you upload, as described above). Using them to operate the app is not the same as selling or sharing your information.',
+      'We do not sell your data, use it for advertising, or give it to anyone for their own purposes. To run clekeeper we rely on service providers that process your data only on our behalf: a cloud hosting provider (stores your records and hosts the app) and an AI service (reads the certificates you upload, as described above). If you choose to sign in, Google provides the sign-in. Using these providers to operate the app is not the same as selling or sharing your information.',
     ],
   },
   {
@@ -43,7 +43,7 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'Security',
     paragraphs: [
-      "Your data is protected by Google Firebase's security infrastructure and access rules that limit each account to its own data. No online service can be perfectly secure, but we reduce risk by collecting only what the app needs and never storing your certificate files.",
+      "Your data is protected by our hosting provider's security infrastructure and access rules that limit each account to its own data. No online service can be perfectly secure, but we reduce risk by collecting only what the app needs and never storing your certificate files.",
     ],
   },
   {
