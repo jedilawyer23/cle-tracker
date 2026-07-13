@@ -33,21 +33,26 @@ export async function downscaleImageFile(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file
   try {
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    const { width, height } = targetDimensions(bitmap.width, bitmap.height, MAX_IMAGE_EDGE)
-    const canvas: OffscreenCanvas | HTMLCanvasElement =
-      typeof OffscreenCanvas !== 'undefined'
-        ? new OffscreenCanvas(width, height)
-        : Object.assign(document.createElement('canvas'), { width, height })
-    const ctx = canvas.getContext('2d') as
-      | OffscreenCanvasRenderingContext2D
-      | CanvasRenderingContext2D
-      | null
-    if (!ctx) return file
-    ctx.drawImage(bitmap, 0, 0, width, height)
-    const blob = await encodeJpeg(canvas, 0.85)
-    const name = file.name.replace(/\.[^.]+$/, '') + '.jpg'
-    const downscaled = new File([blob], name, { type: 'image/jpeg' })
-    return downscaled.size < file.size ? downscaled : file
+    try {
+      const { width, height } = targetDimensions(bitmap.width, bitmap.height, MAX_IMAGE_EDGE)
+      const canvas: OffscreenCanvas | HTMLCanvasElement =
+        typeof OffscreenCanvas !== 'undefined'
+          ? new OffscreenCanvas(width, height)
+          : Object.assign(document.createElement('canvas'), { width, height })
+      const ctx = canvas.getContext('2d') as
+        | OffscreenCanvasRenderingContext2D
+        | CanvasRenderingContext2D
+        | null
+      if (!ctx) return file
+      ctx.drawImage(bitmap, 0, 0, width, height)
+      const blob = await encodeJpeg(canvas, 0.85)
+      const name = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+      const downscaled = new File([blob], name, { type: 'image/jpeg' })
+      return downscaled.size < file.size ? downscaled : file
+    } finally {
+      // Free the decoded bitmap's backing memory — matters when a bulk photo upload decodes many.
+      bitmap.close()
+    }
   } catch {
     return file
   }
