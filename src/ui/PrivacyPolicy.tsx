@@ -19,25 +19,37 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'Certificate files',
     paragraphs: [
-      'When you upload a certificate photo or PDF, we send it to our AI parsing provider (Anthropic) to read the credit details. The file itself is not stored: it is processed and discarded. Only the credit details you review and save are kept.',
+      'When you upload a certificate photo or PDF, we send it to our AI parsing provider (Anthropic) to read the credit details, then discard it. The file itself is never stored, and Anthropic does not use it to train its models. Only the credit details you review and save are kept.',
     ],
   },
   {
     heading: 'Where your data is stored',
     paragraphs: [
-      'Your records are stored in Google Firebase (Firestore), associated with your account. We use Google Firebase for authentication, database, and hosting.',
+      'Your account and CLE records are stored in Google Firebase (Firestore), which provides our database, sign-in, and hosting. Firebase stores this data on our behalf as our service provider.',
     ],
   },
   {
-    heading: 'Who we share it with',
+    heading: 'Selling, sharing, and service providers',
     paragraphs: [
-      'We do not sell your personal information, and we do not use it for advertising. We share data only with the providers that make clekeeper work: Google (Firebase — authentication, database, hosting, and Google Sign-In) and Anthropic (to parse the certificates you upload, as described above).',
+      'We do not sell your data, use it for advertising, or give it to anyone for their own purposes. To run clekeeper we rely on two service providers that process your data only on our behalf: Google Firebase (stores your records, handles Google Sign-In, and hosts the app) and Anthropic (reads the certificates you upload, as described above). Using them to operate the app is not the same as selling or sharing your information.',
+    ],
+  },
+  {
+    heading: 'Analytics and cookies',
+    paragraphs: [
+      'clekeeper runs no analytics, tracking, or advertising, and uses no tracking cookies. Your browser stores a small amount of data locally only to keep you signed in.',
+    ],
+  },
+  {
+    heading: 'Security',
+    paragraphs: [
+      "Your data is protected by Google Firebase's security infrastructure and access rules that limit each account to its own data. No online service can be perfectly secure, but we reduce risk by collecting only what the app needs and never storing your certificate files.",
     ],
   },
   {
     heading: 'Your choices and rights',
     paragraphs: [
-      'You can edit or delete any individual CLE record, and delete your entire account and all associated data at any time from the Settings screen. As California residents, you have rights under the CCPA/CPRA, including the right to know what we hold and the right to delete it; deletion is available directly in the app, and you can also contact us.',
+      'You can edit or delete any CLE record, and delete your entire account and all associated data at any time from the Settings screen. If you are a California resident, you have rights under the CCPA/CPRA, including the right to know what we hold about you, to correct it, and to delete it. Deletion is available directly in the app, and you can also email us. We will not treat you differently for exercising these rights.',
     ],
   },
   {

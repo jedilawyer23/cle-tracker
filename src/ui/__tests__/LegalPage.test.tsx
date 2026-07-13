@@ -9,7 +9,7 @@ it('Privacy Policy renders its title, last-updated line, and distinctive prose',
   render(<PrivacyPolicy onBack={() => {}} />)
   expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument()
   expect(screen.getByText(/last updated: july 13, 2026/i)).toBeInTheDocument()
-  expect(screen.getByText(/is not stored/i)).toBeInTheDocument()
+  expect(screen.getByText(/never stored/i)).toBeInTheDocument()
   expect(screen.getByText(/do not sell/i)).toBeInTheDocument()
 })
 

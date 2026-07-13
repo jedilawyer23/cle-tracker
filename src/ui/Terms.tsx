@@ -18,7 +18,7 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'You are responsible for your own compliance',
     paragraphs: [
-      'You are solely responsible for meeting your MCLE obligations. Always confirm your requirements, credits, and deadlines directly with the State Bar of California. Do not rely on clekeeper as your system of record. Automated reading of uploaded certificates can be wrong — review every detail before you rely on it.',
+      'You are solely responsible for meeting your MCLE obligations. Always confirm your requirements, credits, and deadlines directly with the State Bar of California. Do not rely on clekeeper as your system of record. Automated reading of uploaded certificates can be wrong, so review every detail before you rely on it.',
     ],
   },
   {
@@ -30,13 +30,25 @@ const SECTIONS: LegalSection[] = [
   {
     heading: 'Limitation of liability',
     paragraphs: [
-      'To the fullest extent permitted by law, we are not liable for any damages arising from your use of, or inability to use, clekeeper — including any missed deadline, non-compliance, penalty, or loss resulting from reliance on information the app displays.',
+      'To the fullest extent permitted by law, we are not liable for any damages arising from your use of, or inability to use, clekeeper, including any missed deadline, non-compliance, penalty, or loss resulting from reliance on information the app displays.',
     ],
   },
   {
     heading: 'Acceptable use',
     paragraphs: [
       'Use clekeeper only for its intended purpose. Do not attempt to disrupt, overload, or misuse the service.',
+    ],
+  },
+  {
+    heading: 'Your content and ours',
+    paragraphs: [
+      'The CLE records you enter remain yours. The clekeeper name, application, and design are ours; please do not copy or reuse them without permission.',
+    ],
+  },
+  {
+    heading: 'Availability',
+    paragraphs: [
+      'clekeeper is free, and we may change, suspend, or discontinue it at any time. Keep your own records and do not rely on clekeeper as your only copy.',
     ],
   },
   {
