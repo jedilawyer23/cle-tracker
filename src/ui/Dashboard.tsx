@@ -58,10 +58,13 @@ function daysUntil(iso: string, today: string): number {
 // standalone or sub-requirements remain, name them plainly. Calm (amber), not an alarm.
 function SubRequirementCatch({ totalHours, shortfalls }: { totalHours: number; shortfalls: Shortfall[] }) {
   const phrase = shortfalls
-    .map(s => `${formatHours(s.remaining)} ${s.label} hour${s.remaining === 1 ? '' : 's'}`)
+    .map(s => {
+      const hours = formatHours(s.remaining)
+      return `${hours} ${s.label} hour${hours === 1 ? '' : 's'}`
+    })
     .join(', ')
   return (
-    <div className="subreq-catch" style={{ display: 'flex', gap: 8, background: 'rgba(255,149,0,.12)', color: 'var(--warn-text)', borderRadius: 12, padding: '10px 14px', marginTop: 14, fontSize: 14, fontWeight: 500 }}>
+    <div className="subreq-catch">
       You've got the {totalHours} hours — but you're still short on {phrase}.
     </div>
   )
