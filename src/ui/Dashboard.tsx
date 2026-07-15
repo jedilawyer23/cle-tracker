@@ -3,6 +3,7 @@
 import { BarRow } from './BarRow'
 import { SignInToSave } from './SignInToSave'
 import { Disclaimer } from './Disclaimer'
+import { LegalFooter } from './LegalFooter'
 import { buildDashboardRows, shortfallsWithTotalMet, type DashboardRow, type Shortfall } from './dashboardRows'
 import { formatDate } from './formatDate'
 import { formatHours } from './formatHours'
@@ -26,6 +27,8 @@ export interface DashboardProps {
   onOpenPastCycles?: () => void
   onSettings?: () => void
   onOpenReport?: () => void
+  onOpenPrivacy?: () => void
+  onOpenTerms?: () => void
 }
 
 // Bottom navigation: Settings (always) and, when there are prior-cycle credits, Past cycles —
@@ -80,7 +83,7 @@ function RequirementsList({ rows, onOpenCredit }: { rows: DashboardRow[]; onOpen
   )
 }
 
-export function Dashboard({ name, photoURL, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles, onSettings, onOpenReport }: DashboardProps) {
+export function Dashboard({ name, photoURL, period, result, credits, today = new Date().toISOString().slice(0, 10), accountState, onSignIn, signInMessage, notice, onAddCredit, onOpenCredit, hasPastCycles, onOpenPastCycles, onSettings, onOpenReport, onOpenPrivacy, onOpenTerms }: DashboardProps) {
   const totalRule = result.progress.find(p => p.key === 'total')!
   // Carry-forward (M1 review, item 1): the headline count and the parent-complete gating both
   // come from buildDashboardRows — the same unified rows that are rendered, so "N requirements
@@ -105,6 +108,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
         <button className="btn" onClick={onAddCredit}>Add a certificate</button>
         <FooterNav hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} onSettings={onSettings} />
         <div className="note">Upload a certificate and we'll sort it into the right categories. Not legal advice — verify with the State Bar of California.</div>
+        {onOpenPrivacy && onOpenTerms && <LegalFooter onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} />}
       </div>
     )
   }
@@ -132,6 +136,7 @@ export function Dashboard({ name, photoURL, period, result, credits, today = new
       <button className="btn tinted" onClick={onOpenReport}>Export report (PDF)</button>
       <FooterNav hasPastCycles={hasPastCycles} onOpenPastCycles={onOpenPastCycles} onSettings={onSettings} />
       <Disclaimer />
+      {onOpenPrivacy && onOpenTerms && <LegalFooter onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} />}
     </div>
   )
 }

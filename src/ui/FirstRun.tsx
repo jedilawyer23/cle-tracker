@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { List } from './List'
 import { Row } from './Row'
 import { Disclaimer } from './Disclaimer'
+import { LegalFooter } from './LegalFooter'
 import { Wordmark } from './Wordmark'
 import { deriveGroup } from '../domain/deriveGroup'
 import { resolvePeriod } from '../domain/resolvePeriod'
@@ -27,6 +28,10 @@ export interface FirstRunProps {
   onBack?: () => void
   /** 'edit' swaps the setup copy/CTA for editing an existing name; defaults to onboarding. */
   mode?: 'setup' | 'edit'
+  /** Opens the Privacy Policy screen from the legal footer; footer is hidden when omitted. */
+  onOpenPrivacy?: () => void
+  /** Opens the Terms of Use screen from the legal footer; footer is hidden when omitted. */
+  onOpenTerms?: () => void
 }
 
 const LETTER_RANGE: Record<Group, string> = { 1: 'A–G', 2: 'H–M', 3: 'N–Z' }
@@ -37,6 +42,8 @@ export function FirstRun({
   initialName = '',
   onBack,
   mode = 'setup',
+  onOpenPrivacy,
+  onOpenTerms,
 }: FirstRunProps) {
   const [name, setName] = useState(initialName)
   // Surname derivation can be wrong for unusual name formats — lets the user pick their real
@@ -140,6 +147,7 @@ export function FirstRun({
       </button>
       {mode === 'setup' && <div className="note">Sign in with Google later to save your progress.</div>}
       <Disclaimer />
+      {onOpenPrivacy && onOpenTerms && <LegalFooter onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} />}
     </div>
   )
 }

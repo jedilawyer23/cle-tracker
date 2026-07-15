@@ -55,6 +55,16 @@
 
 .back { border: 0; background: none; color: var(--accent); font-size: 17px; font-weight: 400; min-height: 44px; padding: 0 6px 0 0; display: inline-flex; align-items: center; gap: 2px; }
 
+.legalfoot { text-align: center; margin-top: 20px; }
+.legalfoot .copy { font-size: 13px; color: var(--muted); }
+.legalfoot .links { display: flex; justify-content: center; align-items: center; gap: 2px; flex-wrap: wrap; margin-top: 2px; }
+.legalfoot .links .navlink { font-size: 13px; min-height: 36px; padding: 8px 6px; }
+.legalfoot .links .sep { color: var(--faint); font-size: 13px; }
+
+.legal { text-align: left; margin-top: 20px; }
+.legal h2 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin: 22px 0 0; }
+.legal p { font-size: 15px; line-height: 1.5; color: var(--ink); margin-top: 8px; }
+
 .field { padding: 12px 16px; }
 .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 .field input { font: inherit; font-size: 17px; font-weight: 400; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none; letter-spacing: -.01em; }

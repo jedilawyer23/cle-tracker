@@ -13,6 +13,8 @@ import { CreditDetail } from './ui/CreditDetail'
 import { PastCycles } from './ui/PastCycles'
 import { Settings } from './ui/Settings'
 import { DeleteAccountConfirm } from './ui/DeleteAccountConfirm'
+import { PrivacyPolicy } from './ui/PrivacyPolicy'
+import { Terms } from './ui/Terms'
 import { ToastView } from './ui/ToastView'
 import { ReportView } from './report/ReportView'
 import { buildReportContent } from './report/buildReportContent'
@@ -28,7 +30,7 @@ import type { Credit } from './domain/types'
 import { messageForOutcome, type LinkOutcome } from './auth/linkOutcome'
 import type { ConfirmState } from './parsing/parsedCreditToConfirmState'
 
-type Screen = 'dashboard' | 'confirm' | 'batch' | 'credit' | 'past' | 'settings' | 'editName' | 'deleteAccount' | 'report'
+type Screen = 'dashboard' | 'confirm' | 'batch' | 'credit' | 'past' | 'settings' | 'editName' | 'deleteAccount' | 'report' | 'privacy' | 'terms'
 
 // What seeds the Confirm screen: a successful parse's draft + flags, or just a fallback
 // message (parse failure, or "Enter manually instead") for a blank form.
@@ -300,8 +302,23 @@ function App({
     )
   }
 
+  if (screen === 'privacy') {
+    return <PrivacyPolicy onBack={() => setScreen('dashboard')} />
+  }
+
+  if (screen === 'terms') {
+    return <Terms onBack={() => setScreen('dashboard')} />
+  }
+
   if (!profile) {
-    return <FirstRun onContinue={handleContinue} today={today} />
+    return (
+      <FirstRun
+        onContinue={handleContinue}
+        today={today}
+        onOpenPrivacy={() => setScreen('privacy')}
+        onOpenTerms={() => setScreen('terms')}
+      />
+    )
   }
 
   if (screen === 'confirm') {
@@ -426,6 +443,8 @@ function App({
         onOpenPastCycles={() => { setNotice(null); setScreen('past') }}
         onSettings={() => { setNotice(null); setScreen('settings') }}
         onOpenReport={() => { setNotice(null); setScreen('report') }}
+        onOpenPrivacy={() => { setNotice(null); setScreen('privacy') }}
+        onOpenTerms={() => { setNotice(null); setScreen('terms') }}
       />
       {addSheetOpen && (
         <AddSheet

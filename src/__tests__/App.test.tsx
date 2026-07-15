@@ -768,6 +768,53 @@ it('Settings: Cancel from the delete confirmation returns to the Settings menu w
   expect(onDeleteAccount).not.toHaveBeenCalled()
 })
 
+it('opens the Privacy Policy from the dashboard footer and returns via Back', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /^privacy$/i }))
+  expect(await screen.findByRole('heading', { name: 'Privacy Policy' })).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /back/i }))
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Privacy Policy' })).not.toBeInTheDocument())
+  expect(screen.getByRole('button', { name: /settings/i })).toBeInTheDocument()
+})
+
+it('opens the Terms of Use from the dashboard footer and returns via Back', async () => {
+  const profile: UserProfile = {
+    name: 'Maya Hoffman', lastName: 'Hoffman', group: 2, admissionDate: null,
+    accountState: 'guest',
+    currentPeriod: { start: '2024-02-01', end: '2027-03-29', reportBy: '2027-03-30' },
+    requirementsVersion: '2026-07-10',
+  }
+  render(<App store={createFakeStore({ profile })} today="2026-07-10" />)
+  await screen.findByRole('button', { name: /settings/i })
+
+  fireEvent.click(screen.getByRole('button', { name: /^terms$/i }))
+  expect(await screen.findByRole('heading', { name: 'Terms of Use' })).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /back/i }))
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Terms of Use' })).not.toBeInTheDocument())
+  expect(screen.getByRole('button', { name: /settings/i })).toBeInTheDocument()
+})
+
+it('opens the Privacy Policy from the setup screen footer (no profile yet)', async () => {
+  render(<App store={createFakeStore()} today="2026-07-10" />)
+  await screen.findByLabelText(/full name/i)
+
+  fireEvent.click(screen.getByRole('button', { name: /^privacy$/i }))
+  expect(await screen.findByRole('heading', { name: 'Privacy Policy' })).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /back/i }))
+  await screen.findByLabelText(/full name/i)
+})
+
 // A real Store (FirestoreStore) has a live subscription on the profile doc, which fires with
 // profile=null the instant deleteAccountData removes it — before onDeleteAccount's own deleteUser
 // + reload finish. createFakeStore's saveProfile can't express "the profile doc disappeared out
