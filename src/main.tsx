@@ -7,12 +7,30 @@ import './ui/tokens.css'
 import './ui/components.css'
 import './ui/report.css'
 import { signOut } from 'firebase/auth'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import App from './App.tsx'
-import { auth, db } from './firebase.ts'
+import { app, auth, db } from './firebase.ts'
 import { ensureAnonymousUser } from './auth/bootstrap'
 import { FirestoreStore } from './store/firestoreStore'
 import { startGoogleLink, completeRedirectLink } from './auth/linkGoogle'
 import { deleteAccount } from './auth/deleteAccount'
+
+// App Check attaches a reCAPTCHA Enterprise attestation token to backend calls so bots/scripts
+// can't reach the paid certificate parser (denial-of-wallet defense). The key ID is public and
+// domain-restricted. In local dev we opt into a debug token so localhost can attest without a
+// real reCAPTCHA domain — register the token printed to the console under App Check → Manage
+// debug tokens. A failure here must never block boot, so it stays in a try/catch.
+if (import.meta.env.DEV) {
+  ;(self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean }).FIREBASE_APPCHECK_DEBUG_TOKEN = true
+}
+try {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider('6Le5BE8tAAAAAGgqoypF8-6KMSRU1YkZwSazn-LT'),
+    isTokenAutoRefreshEnabled: true,
+  })
+} catch (err) {
+  console.error('App Check init failed:', err)
+}
 
 function showBootError() {
   const root = document.getElementById('root')
